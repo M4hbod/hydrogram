@@ -29,6 +29,7 @@ class GetChatMember:
         self: hydrogram.Client,
         chat_id: int | str,
         user_id: int | str,
+        user: raw.types.InputPeerSelf | raw.types.InputPeerUser = None,
         chat: raw.types.InputPeerChat | raw.types.InputPeerChannel = None,
     ) -> types.ChatMember:
         """Get information about one member of a chat.
@@ -44,6 +45,9 @@ class GetChatMember:
                 For you yourself you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
+            user (:obj:`~hydrogram.raw.types.InputPeerSelf` | :obj:`~hydrogram.raw.types.InputPeerUser`, *optional*):
+                The user to get the member from. If not provided, it will be resolved from the user_id.
+
             chat (:obj:`~hydrogram.raw.types.InputPeerChat` | :obj:`~hydrogram.raw.types.InputPeerChannel`, *optional*):
                 The chat to get the member from. If not provided, it will be resolved from the chat_id.
 
@@ -58,7 +62,8 @@ class GetChatMember:
         """
         if not chat:
             chat = await self.resolve_peer(chat_id)
-        user = await self.resolve_peer(user_id)
+        if not user:
+            user = await self.resolve_peer(user_id)
 
         if isinstance(chat, raw.types.InputPeerChat):
             r = await self.invoke(raw.functions.messages.GetFullChat(chat_id=chat.chat_id))
