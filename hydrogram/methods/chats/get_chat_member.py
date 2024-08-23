@@ -26,7 +26,10 @@ from hydrogram.errors import UserNotParticipant
 
 class GetChatMember:
     async def get_chat_member(
-        self: hydrogram.Client, chat_id: int | str, user_id: int | str
+        self: hydrogram.Client,
+        chat_id: int | str,
+        user_id: int | str,
+        chat: raw.types.InputPeerChat | raw.types.InputPeerChannel = None,
     ) -> types.ChatMember:
         """Get information about one member of a chat.
 
@@ -41,6 +44,9 @@ class GetChatMember:
                 For you yourself you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
+            chat (:obj:`~hydrogram.raw.types.InputPeerChat` | :obj:`~hydrogram.raw.types.InputPeerChannel`, *optional*):
+                The chat to get the member from. If not provided, it will be resolved from the chat_id.
+
         Returns:
             :obj:`~hydrogram.types.ChatMember`: On success, a chat member is returned.
 
@@ -50,7 +56,8 @@ class GetChatMember:
                 member = await app.get_chat_member(chat_id, "me")
                 print(member)
         """
-        chat = await self.resolve_peer(chat_id)
+        if not chat:
+            chat = await self.resolve_peer(chat_id)
         user = await self.resolve_peer(user_id)
 
         if isinstance(chat, raw.types.InputPeerChat):
