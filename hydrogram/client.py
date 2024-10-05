@@ -287,9 +287,14 @@ class Client(Methods):
         self.executor = ThreadPoolExecutor(self.workers, thread_name_prefix="Handler")
 
         if self.session_string:
-            self.storage = SQLiteStorage(
-                self.name, session_string=self.session_string, use_memory=True
-            )
+            if self.in_memory:
+                self.storage = SQLiteStorage(
+                    self.name, session_string=self.session_string, use_memory=True
+                )
+            else:
+                self.storage = SQLiteStorage(
+                    self.name, self.workdir, session_string=self.session_string
+                )
         elif isinstance(session_storage_engine, BaseStorage):
             self.storage = session_storage_engine
         elif self.in_memory:
