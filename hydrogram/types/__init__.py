@@ -194,6 +194,7 @@ from .update import Update
 from .user_and_chats import (
     Chat,
     ChatAdminWithInviteLinks,
+    ChatBackground,
     ChatEvent,
     ChatEventFilter,
     ChatInviteLink,
