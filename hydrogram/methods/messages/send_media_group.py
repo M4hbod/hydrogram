@@ -123,7 +123,7 @@ class SendMediaGroup:
                             ),
                             spoiler=i.has_spoiler,
                         )
-                    elif re.match("^https?://", i.media):
+                    elif re.match(r"^https?://", i.media):
                         media = await self.invoke(
                             raw.functions.messages.UploadMedia(
                                 peer=await self.resolve_peer(chat_id),
@@ -197,7 +197,7 @@ class SendMediaGroup:
                             ),
                             spoiler=i.has_spoiler,
                         )
-                    elif re.match("^https?://", i.media):
+                    elif re.match(r"^https?://", i.media):
                         media = await self.invoke(
                             raw.functions.messages.UploadMedia(
                                 peer=await self.resolve_peer(chat_id),
@@ -284,7 +284,7 @@ class SendMediaGroup:
                                 file_reference=media.document.file_reference,
                             )
                         )
-                    elif re.match("^https?://", i.media):
+                    elif re.match(r"^https?://", i.media):
                         media = await self.invoke(
                             raw.functions.messages.UploadMedia(
                                 peer=await self.resolve_peer(chat_id),
@@ -359,7 +359,7 @@ class SendMediaGroup:
                                 file_reference=media.document.file_reference,
                             )
                         )
-                    elif re.match("^https?://", i.media):
+                    elif re.match(r"^https?://", i.media):
                         media = await self.invoke(
                             raw.functions.messages.UploadMedia(
                                 peer=await self.resolve_peer(chat_id),

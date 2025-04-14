@@ -350,9 +350,9 @@ class Client(Methods):
         try:
             return asyncio.get_running_loop()
         except RuntimeError:
-            _loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(_loop)
-            return _loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
 
     async def updates_watchdog(self):
         while True:

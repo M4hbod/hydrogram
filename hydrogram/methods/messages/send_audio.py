@@ -197,7 +197,7 @@ class SendAudio:
                             ),
                         ],
                     )
-                elif re.match("^https?://", audio):
+                elif re.match(r"^https?://", audio):
                     media = raw.types.InputMediaDocumentExternal(url=audio)
                 else:
                     media = utils.get_input_media_from_file_id(audio, FileType.AUDIO)

@@ -165,7 +165,7 @@ class SendPhoto:
             elif (
                 isinstance(photo, str)
                 and not Path(photo).is_file()
-                and re.match("^https?://", photo)
+                and re.match(r"^https?://", photo)
             ):
                 media = raw.types.InputMediaPhotoExternal(
                     url=photo, ttl_seconds=ttl_seconds, spoiler=has_spoiler

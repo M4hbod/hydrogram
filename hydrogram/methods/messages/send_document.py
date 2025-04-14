@@ -182,7 +182,7 @@ class SendDocument:
                             )
                         ],
                     )
-                elif re.match("^https?://", document):
+                elif re.match(r"^https?://", document):
                     media = raw.types.InputMediaDocumentExternal(url=document)
                 else:
                     media = utils.get_input_media_from_file_id(document, FileType.DOCUMENT)

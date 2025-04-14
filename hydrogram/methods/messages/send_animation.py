@@ -208,7 +208,7 @@ class SendAnimation:
                             raw.types.DocumentAttributeAnimated(),
                         ],
                     )
-                elif re.match("^https?://", animation):
+                elif re.match(r"^https?://", animation):
                     media = raw.types.InputMediaDocumentExternal(
                         url=animation, spoiler=has_spoiler
                     )

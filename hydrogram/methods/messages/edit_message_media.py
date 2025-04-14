@@ -108,7 +108,7 @@ class EditMessageMedia:
                     ),
                     spoiler=media.has_spoiler,
                 )
-            elif re.match("^https?://", media.media):
+            elif re.match(r"^https?://", media.media):
                 media = raw.types.InputMediaPhotoExternal(
                     url=media.media, spoiler=media.has_spoiler
                 )
@@ -148,7 +148,7 @@ class EditMessageMedia:
                     ),
                     spoiler=media.has_spoiler,
                 )
-            elif re.match("^https?://", media.media):
+            elif re.match(r"^https?://", media.media):
                 media = raw.types.InputMediaDocumentExternal(
                     url=media.media, spoiler=media.has_spoiler
                 )
@@ -185,7 +185,7 @@ class EditMessageMedia:
                         file_reference=media.document.file_reference,
                     )
                 )
-            elif re.match("^https?://", media.media):
+            elif re.match(r"^https?://", media.media):
                 media = raw.types.InputMediaDocumentExternal(url=media.media)
             else:
                 media = utils.get_input_media_from_file_id(media.media, FileType.AUDIO)
@@ -224,7 +224,7 @@ class EditMessageMedia:
                     ),
                     spoiler=media.has_spoiler,
                 )
-            elif re.match("^https?://", media.media):
+            elif re.match(r"^https?://", media.media):
                 media = raw.types.InputMediaDocumentExternal(
                     url=media.media, spoiler=media.has_spoiler
                 )
@@ -256,7 +256,7 @@ class EditMessageMedia:
                         file_reference=media.document.file_reference,
                     )
                 )
-            elif re.match("^https?://", media.media):
+            elif re.match(r"^https?://", media.media):
                 media = raw.types.InputMediaDocumentExternal(url=media.media)
             else:
                 media = utils.get_input_media_from_file_id(media.media, FileType.DOCUMENT)

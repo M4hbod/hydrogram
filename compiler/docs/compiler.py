@@ -17,7 +17,6 @@
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import ast
-import os
 import re
 import shutil
 from pathlib import Path
@@ -48,8 +47,8 @@ def generate(source_path: Path, base_name: str):
     def build(path: Path, level=0):
         last = path.name
 
-        for i in os.listdir(path):
-            if not i.startswith("__"):
+        for i in path.iterdir():
+            if not i.name.startswith("__"):
                 item_path = path / i
                 if item_path.is_dir():
                     build(item_path, level=level + 1)

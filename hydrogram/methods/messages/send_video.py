@@ -219,7 +219,7 @@ class SendVideo:
                             ),
                         ],
                     )
-                elif re.match("^https?://", video):
+                elif re.match(r"^https?://", video):
                     media = raw.types.InputMediaDocumentExternal(
                         url=video, ttl_seconds=ttl_seconds, spoiler=has_spoiler
                     )

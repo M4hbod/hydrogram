@@ -82,7 +82,7 @@ class EditInlineMedia:
         is_bytes_io = isinstance(media.media, io.BytesIO)
         is_uploaded_file = is_bytes_io or Path(media.media).is_file()
 
-        is_external_url = not is_uploaded_file and re.match("^https?://", media.media)
+        is_external_url = not is_uploaded_file and re.match(r"^https?://", media.media)
 
         if is_bytes_io and not hasattr(media.media, "name"):
             media.media.name = "media"
