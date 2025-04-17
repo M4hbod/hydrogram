@@ -50,7 +50,7 @@ changelog = "https://docs.hydrogram.org/en/latest/releases.html"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
 dev-dependencies = [
     "ruff>=0.11.6",
@@ -65,7 +65,7 @@ dev-dependencies = [
 
 [project.optional-dependencies]
 docs = [
-    "sphinx>=8.2.3",
+    "sphinx<8.0.0",
     "furo>=2024.8.6",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
@@ -136,20 +136,3 @@ showcontent = true
 directory = "misc"
 name = "Misc"
 showcontent = true
-
-[tool.rye.scripts]
-clean = { chain = ["clean:docs", "clean:api"] }
-"clean:api" = { cmd = "rm -rf hydrogram/errors/exceptions hydrogram/raw/all.py hydrogram/raw/base hydrogram/raw/functions hydrogram/raw/types" }
-"clean:docs" = { cmd = "rm -rf docs/build docs/source/api/bound-methods docs/source/api/methods docs/source/api/types docs/source/telegram" }
-
-api = { chain = ["api:raw", "api:errors"] }
-"api:raw" = { call = "compiler.api.compiler:start" }
-"api:errors" = { call = "compiler.errors.compiler:start" }
-
-docs = { chain = ["docs:compile", "docs:serve"] }
-"docs:compile" = { call = "compiler.docs.compiler:start" }
-"docs:serve" = { cmd = "sphinx-build -b html docs/source docs/build/html -j auto" }
-live-docs = { cmd = "sphinx-autobuild docs/source docs/build/html -j auto --watch hydrogram" }
-
-towncrier = { cmd = "towncrier build --yes" }
-towncrier-draft = { cmd = "towncrier build --draft" }
