@@ -19,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
@@ -43,6 +44,7 @@ tracker = "https://github.com/hydrogram/hydrogram/issues"
 community = "https://t.me/HydrogramNews"
 source = "https://github.com/hydrogram/hydrogram"
 documentation = "https://docs.hydrogram.org"
+changelog = "https://docs.hydrogram.org/en/latest/releases.html"
 
 [build-system]
 requires = ["hatchling"]
@@ -93,6 +95,7 @@ exclude = [
     "NEWS.rst",
     "requirements.lock",
     "requirements-dev.lock",
+    "ruff.toml",
 ]
 
 [tool.hatch.build.targets.wheel]

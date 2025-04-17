@@ -66,18 +66,17 @@ def rle_encode(s: bytes) -> bytes:
     Returns:
         ``bytes``: The encoded bytes
     """
-    r: list[int] = []
-    n: int = 0
+    r = bytearray()
+    n = 0
 
     for b in s:
-        if not b:
-            n += 1
-        else:
+        if b:
             if n:
                 r.extend((0, n))
                 n = 0
-
             r.append(b)
+        else:
+            n += 1
 
     if n:
         r.extend((0, n))
@@ -95,7 +94,7 @@ def rle_decode(s: bytes) -> bytes:
     Returns:
         ``bytes``: The decoded bytes
     """
-    r: list[int] = []
+    r = bytearray()
     z: bool = False
 
     for b in s:
@@ -104,7 +103,7 @@ def rle_decode(s: bytes) -> bytes:
             continue
 
         if z:
-            r.extend((0,) * b)
+            r.extend([0] * b)
             z = False
         else:
             r.append(b)
@@ -155,8 +154,9 @@ PHOTO_TYPES = {
 }
 DOCUMENT_TYPES = set(FileType) - PHOTO_TYPES
 
-# Since the file type values are small enough to fit them in few bits, Telegram thought it would be a good idea to
-# encode extra information about web url and file reference existence as flag inside the 4 bytes allocated for the field
+# Since the file type values are small enough to fit them in few bits, Telegram thought it would
+# be a good idea to encode extra information about web url and file reference existence as flag
+# inside the 4 bytes allocated for the field
 WEB_LOCATION_FLAG = 1 << 24
 FILE_REFERENCE_FLAG = 1 << 25
 
@@ -164,6 +164,27 @@ FILE_REFERENCE_FLAG = 1 << 25
 class FileId:
     MAJOR = 4
     MINOR = 30
+
+    __slots__ = (
+        "access_hash",
+        "chat_access_hash",
+        "chat_id",
+        "dc_id",
+        "file_reference",
+        "file_type",
+        "local_id",
+        "major",
+        "media_id",
+        "minor",
+        "secret",
+        "sticker_set_access_hash",
+        "sticker_set_id",
+        "thumbnail_file_type",
+        "thumbnail_size",
+        "thumbnail_source",
+        "url",
+        "volume_id",
+    )
 
     def __init__(
         self,
@@ -177,8 +198,8 @@ class FileId:
         media_id: int | None = None,
         access_hash: int | None = None,
         volume_id: int | None = None,
-        thumbnail_source: ThumbnailSource = None,
-        thumbnail_file_type: FileType = None,
+        thumbnail_source: ThumbnailSource | None = None,
+        thumbnail_file_type: FileType | None = None,
         thumbnail_size: str = "",
         secret: int | None = None,
         local_id: int | None = None,
@@ -230,8 +251,7 @@ class FileId:
         has_file_reference = bool(file_type & FILE_REFERENCE_FLAG)
 
         # Remove flags to restore the actual type id value
-        file_type &= ~WEB_LOCATION_FLAG
-        file_type &= ~FILE_REFERENCE_FLAG
+        file_type &= ~(WEB_LOCATION_FLAG | FILE_REFERENCE_FLAG)
         # endregion
 
         try:
@@ -422,7 +442,22 @@ class FileId:
         return b64_encode(rle_encode(buffer.getvalue()))
 
     def __str__(self):
-        return str({k: v for k, v in self.__dict__.items() if v is not None})
+        order = [
+            "major",
+            "minor",
+            "file_type",
+            "dc_id",
+            "file_reference",
+            "media_id",
+            "access_hash",
+            "thumbnail_size",
+        ]
+        result = {}
+        for key in order:
+            value = getattr(self, key)
+            if value is not None:
+                result[key] = value
+        return str(result)
 
 
 class FileUniqueType(IntEnum):
@@ -437,6 +472,8 @@ class FileUniqueType(IntEnum):
 
 
 class FileUniqueId:
+    __slots__ = ("file_unique_type", "local_id", "media_id", "url", "volume_id")
+
     def __init__(
         self,
         *,
@@ -485,12 +522,14 @@ class FileUniqueId:
 
         # TODO: Missing decoder for SECURE, ENCRYPTED and TEMP
         raise ValueError(
-            f"Unknown decoder for file_unique_type {file_unique_type} of file_unique_id {file_unique_id}"
+            f"Unknown decoder for file_unique_type {file_unique_type} "
+            f"of file_unique_id {file_unique_id}"
         )
 
     def encode(self):
         if self.file_unique_type == FileUniqueType.WEB:
-            string = struct.pack("<is", self.file_unique_type, String(self.url))
+            assert self.url is not None
+            string = struct.pack("<i", self.file_unique_type) + String(self.url)
         elif self.file_unique_type == FileUniqueType.PHOTO:
             string = struct.pack("<iqi", self.file_unique_type, self.volume_id, self.local_id)
         elif self.file_unique_type == FileUniqueType.DOCUMENT:
@@ -502,4 +541,16 @@ class FileUniqueId:
         return b64_encode(rle_encode(string))
 
     def __str__(self):
-        return str({k: v for k, v in self.__dict__.items() if v is not None})
+        order = [
+            "file_unique_type",
+            "local_id",
+            "media_id",
+            "url",
+            "volume_id",
+        ]
+        result = {}
+        for key in order:
+            value = getattr(self, key)
+            if value is not None:
+                result[key] = value
+        return str(result)
