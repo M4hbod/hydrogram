@@ -334,7 +334,7 @@ def hydrogram_api():
         """,
         "phone": """
         Phone:
-            create_group_call
+            create_video_chat
             discard_group_call
             invite_group_call_members
         """,
