@@ -248,13 +248,17 @@ class Session:
                     if time_diff > 30:
                         raise SecurityCheckMismatch(
                             "The msg_id belongs to over 30 seconds in the future. "
-                            "Most likely the client time has to be synchronized."
+                            "This usually means your system clock is ahead of the actual time. "
+                            "Please synchronize your system time with an NTP server to avoid "
+                            "this error in Hydrogram."
                         )
 
                     if time_diff < -300:
                         raise SecurityCheckMismatch(
                             "The msg_id belongs to over 300 seconds in the past. "
-                            "Most likely the client time has to be synchronized."
+                            "This usually means your system clock is behind the actual time. "
+                            "Please synchronize your system time with an NTP server to avoid "
+                            "this error in Hydrogram."
                         )
             except SecurityCheckMismatch as e:
                 log.info("Discarding packet: %s", e)
