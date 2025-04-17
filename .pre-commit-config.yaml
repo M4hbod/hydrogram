@@ -1,4 +1,13 @@
 repos:
+  - repo: local
+    hooks:
+      - id: news-fragment-filenames
+        name: NEWS fragment
+        language: fail
+        entry: NEWS fragment files must be named *.(removal|feature|bugfix|doc|misc).rst
+        exclude: ^news/(.gitignore|.template.rst.jinja2|.*\.(removal|feature|bugfix|doc|misc).rst)
+        files: ^news/
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
