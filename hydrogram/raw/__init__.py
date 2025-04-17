@@ -28,3 +28,4 @@ for k, v in objects.items():
 
 
 __all__ = ["base", "core", "functions", "objects", "types"]
+__all__ += list(objects.keys())  # type: ignore
