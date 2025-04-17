@@ -10,7 +10,7 @@ DOCS_BUILD = $(DOCS_DIR)/build
 API_DIRS = $(HYDROGRAM_DIR)/errors/exceptions $(HYDROGRAM_DIR)/raw/all.py $(HYDROGRAM_DIR)/raw/base $(HYDROGRAM_DIR)/raw/functions $(HYDROGRAM_DIR)/raw/types
 DOCS_API_DIRS = $(DOCS_SOURCE)/api/bound-methods $(DOCS_SOURCE)/api/methods $(DOCS_SOURCE)/api/types $(DOCS_SOURCE)/telegram
 
-.PHONY: all clean clean-api clean-docs api api-raw api-errors docs docs-compile docs-serve live-docs towncrier towncrier-draft help
+.PHONY: all clean clean-api clean-docs api api-raw api-errors docs docs-compile docs-serve live-docs towncrier towncrier-draft dev-tools check-api-schema generate-docs-json compare-bot-api cherry-pick-pyro help
 
 all: api docs
 
@@ -58,6 +58,22 @@ towncrier-draft:
 	@echo "Generating draft release notes..."
 	@$(TOWNCRIER) build --draft
 
+check-api-schema:
+	@echo "Checking Telegram API schema for updates..."
+	@$(PYTHON) dev_tools/check_api_schema_updates.py
+
+generate-docs-json:
+	@echo "Generating API documentation JSON..."
+	@$(PYTHON) dev_tools/generate_docs_json.py
+
+compare-bot-api:
+	@echo "Comparing implementation against Bot API..."
+	@$(PYTHON) dev_tools/compare_to_bot_api.py
+
+cherry-pick-pyro:
+	@echo "Usage: make cherry-pick-pyro TYPE=<pr|branch|commit> ID=<number|name|hash>"
+	@[ "$(TYPE)" ] && [ "$(ID)" ] && $(PYTHON) dev_tools/cherry_pick_pyro.py $(TYPE) $(ID) || echo "Please provide TYPE and ID parameters"
+
 help:
 	@echo "Available targets:"
 	@echo "  all            : Compile API and documentation"
@@ -67,3 +83,7 @@ help:
 	@echo "  live-docs      : Start documentation server with live reload"
 	@echo "  towncrier      : Generate release notes"
 	@echo "  towncrier-draft: Generate draft release notes"
+	@echo "  check-api-schema: Check Telegram API schema for updates"
+	@echo "  generate-docs-json: Generate API documentation JSON"
+	@echo "  compare-bot-api: Compare implementation against Bot API"
+	@echo "  cherry-pick-pyro: Cherry-pick code from Pyrogram (usage: make cherry-pick-pyro TYPE=<pr|branch|commit> ID=<number|name|hash>)"
