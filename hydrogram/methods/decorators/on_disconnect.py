@@ -17,20 +17,24 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, TypeVar
 
 import hydrogram
 
+F = TypeVar("F", bound=Callable)
+
 
 class OnDisconnect:
-    def on_disconnect(self=None) -> Callable:
+    def on_disconnect(self: hydrogram.Client | None | None = None) -> Callable[[F], F]:  # type: ignore
         """Decorator for handling disconnections.
 
         This does the same thing as :meth:`~hydrogram.Client.add_handler` using the
         :obj:`~hydrogram.handlers.DisconnectHandler`.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: F) -> F:
             if isinstance(self, hydrogram.Client):
                 self.add_handler(hydrogram.handlers.DisconnectHandler(func))
             else:

@@ -17,9 +17,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
 
 from .handler import Handler
+
+if TYPE_CHECKING:
+    from hydrogram.filters import Filter
 
 
 class InlineQueryHandler(Handler):
@@ -46,5 +51,5 @@ class InlineQueryHandler(Handler):
             The received inline query.
     """
 
-    def __init__(self, callback: Callable, filters=None):
+    def __init__(self, callback: Callable, filters: Filter | None = None):
         super().__init__(callback, filters)
