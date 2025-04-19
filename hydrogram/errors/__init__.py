@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 from .exceptions import *  # noqa: F403
+from .pyromod import ListenerStopped, ListenerTimeout
 from .rpc_error import UnknownError
 
 
@@ -73,6 +74,8 @@ class CDNFileHashMismatch(SecurityError):  # noqa: N818
 __all__ = [
     "BadMsgNotification",
     "CDNFileHashMismatch",
+    "ListenerStopped",
+    "ListenerTimeout",
     "SecurityCheckMismatch",
     "SecurityError",
     "UnknownError",
