@@ -19,21 +19,10 @@
 
 from __future__ import annotations
 
-import re
-from importlib import import_module
 from typing import ClassVar
 
-from .exceptions.all import exceptions
-from .exceptions.bad_request_400 import BadRequest
-from .exceptions.flood_420 import Flood
-from .exceptions.forbidden_403 import Forbidden
-from .exceptions.internal_server_error_500 import InternalServerError
-from .exceptions.not_acceptable_406 import NotAcceptable
-from .exceptions.see_other_303 import SeeOther
-from .exceptions.service_unavailable_503 import ServiceUnavailable
-from .exceptions.unauthorized_401 import Unauthorized
-from .pyromod import ListenerStopped, ListenerTimeout
-from .rpc_error import RPCError, UnknownError
+from .exceptions import *  # noqa: F403
+from .rpc_error import UnknownError
 
 
 class BadMsgNotification(Exception):  # noqa: N818
@@ -81,37 +70,10 @@ class CDNFileHashMismatch(SecurityError):  # noqa: N818
         super().__init__("A CDN file hash mismatch has occurred." if msg is None else msg)
 
 
-error_objects = {}
-for error_code, error_dict in exceptions.items():
-    for error_name, class_name in error_dict.items():
-        if error_name == "_":
-            continue
-        base = re.sub(r"(?<!^)(?=[A-Z])", "_", error_dict["_"]).lower()
-        module_name = f".exceptions.{base}_{error_code}"
-        try:
-            module = import_module(module_name, package="hydrogram.errors")
-            error_objects[class_name] = getattr(module, class_name)
-        except (ImportError, AttributeError):
-            continue
-
-locals().update(error_objects)
-
 __all__ = [
     "BadMsgNotification",
-    "BadRequest",
     "CDNFileHashMismatch",
-    "Flood",
-    "Forbidden",
-    "InternalServerError",
-    "ListenerStopped",
-    "ListenerTimeout",
-    "NotAcceptable",
-    "RPCError",
     "SecurityCheckMismatch",
     "SecurityError",
-    "SeeOther",
-    "ServiceUnavailable",
-    "Unauthorized",
     "UnknownError",
 ]
-__all__ += list(error_objects.keys())  # type: ignore
