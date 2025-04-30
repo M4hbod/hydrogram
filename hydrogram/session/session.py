@@ -185,7 +185,9 @@ class Session:
         await self.connection.close()
 
         if self.recv_task:
-            await self.recv_task
+            self.recv_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.recv_task
 
         if not self.is_media and callable(self.client.disconnect_handler):
             try:
