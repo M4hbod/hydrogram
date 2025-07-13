@@ -17,13 +17,20 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, TypeVar
 
 import hydrogram
 
+F = TypeVar("F", bound=Callable)
+
 
 class OnRawUpdate:
-    def on_raw_update(self=None, group: int = 0) -> Callable:
+    def on_raw_update(
+        self: hydrogram.Client | None = None,  # type: ignore
+        group: int = 0,
+    ) -> Callable[[F], F]:
         """Decorator for handling raw updates.
 
         This does the same thing as :meth:`~hydrogram.Client.add_handler` using the
@@ -34,7 +41,7 @@ class OnRawUpdate:
                 The group identifier, defaults to 0.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: F) -> F:
             if isinstance(self, hydrogram.Client):
                 self.add_handler(hydrogram.handlers.RawUpdateHandler(func), group)
             else:

@@ -17,14 +17,22 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, TypeVar
 
 import hydrogram
 from hydrogram.filters import Filter
 
+F = TypeVar("F", bound=Callable)
+
 
 class OnEditedMessage:
-    def on_edited_message(self=None, filters=None, group: int = 0) -> Callable:
+    def on_edited_message(
+        self: hydrogram.Client | Filter | None = None,  # type: ignore
+        filters: Filter | None = None,
+        group: int = 0,
+    ) -> Callable[[F], F]:
         """Decorator for handling edited messages.
 
         This does the same thing as :meth:`~hydrogram.Client.add_handler` using the
@@ -39,7 +47,7 @@ class OnEditedMessage:
                 The group identifier, defaults to 0.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: F) -> F:
             if isinstance(self, hydrogram.Client):
                 self.add_handler(hydrogram.handlers.EditedMessageHandler(func, filters), group)
             elif isinstance(self, Filter) or self is None:

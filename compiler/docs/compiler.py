@@ -17,7 +17,6 @@
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import ast
-import os
 import re
 import shutil
 from pathlib import Path
@@ -48,8 +47,8 @@ def generate(source_path: Path, base_name: str):
     def build(path: Path, level=0):
         last = path.name
 
-        for i in os.listdir(path):
-            if not i.startswith("__"):
+        for i in path.iterdir():
+            if not i.name.startswith("__"):
                 item_path = path / i
                 if item_path.is_dir():
                     build(item_path, level=level + 1)
@@ -97,7 +96,7 @@ def generate(source_path: Path, base_name: str):
         v = sorted(v)
         entities = []
 
-        entities = [f'{i} <{snake(i).replace("_", "-")}>' for i in v]
+        entities = [f"{i} <{snake(i).replace('_', '-')}>" for i in v]
 
         if k != base_name:
             inner_path = Path(base_name, k, "index.rst")
@@ -333,6 +332,12 @@ def hydrogram_api():
             resolve_peer
             save_file
         """,
+        "phone": """
+        Phone:
+            create_video_chat
+            discard_group_call
+            invite_group_call_members
+        """,
     }
 
     root = API_DOCS_DEST_PATH / "methods"
@@ -489,6 +494,7 @@ def hydrogram_api():
         "input_message_content": """
         InputMessageContent
             InputMessageContent
+            InputPollOption
             InputTextMessageContent
         """,
         "authorization": """

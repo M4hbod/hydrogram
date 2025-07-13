@@ -15,16 +15,21 @@ Install Hydrogram
 
         $ pip3 install -U hydrogram
 
--   or, with :doc:`TgCrypto <../topics/speedups>` as extra requirement (recommended):
+-   or, with :doc:`TgCrypto and uvloop <../topics/speedups>` as extra requirements (recommended for better performance):
 
     .. code-block:: text
 
-        $ pip3 install -U hydrogram tgcrypto
+        $ pip3 install -U "hydrogram[fast]"
 
 Bleeding Edge
 -------------
 
-You can install the development version from the git ``dev`` branch using this command:
+The development version from the git ``dev`` branch contains the latest features and fixes, but it
+may also include unfinished changes, bugs, or unstable code. Using this version can lead to unexpected
+behavior, or compatibility issues. It is recommended only for advanced users who want to
+test new features and are comfortable troubleshooting problems.
+
+You can install the development version using this command:
 
 .. code-block:: text
 

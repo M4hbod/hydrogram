@@ -19,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
@@ -43,31 +44,35 @@ tracker = "https://github.com/hydrogram/hydrogram/issues"
 community = "https://t.me/HydrogramNews"
 source = "https://github.com/hydrogram/hydrogram"
 documentation = "https://docs.hydrogram.org"
+changelog = "https://docs.hydrogram.org/en/latest/releases.html"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
 dev-dependencies = [
-    "ruff>=0.5.4",
+    "ruff>=0.11.7",
     "pytest>=7.4.3",
     "pytest-asyncio>=0.23.2",
     "pytest-cov>=4.1.0",
     "twine>=4.0.2",
-    "pre-commit>=3.7.1",
+    "pre-commit>=4.2.0",
+    "httpx[http2]>=0.28.1",
+    "lxml>=5.3.2",
+    "hatchling>=1.27.0",
 ]
 
 [project.optional-dependencies]
 docs = [
-    "sphinx>=7.4.7",
-    "furo>=2024.7.18",
-    "sphinx-autobuild>=2024.4.16",
+    "sphinx<8.0.0",
+    "furo>=2024.8.6",
+    "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
-    "pygments>=2.18.0",
-    "towncrier>=23.11.0",
-    "sphinxcontrib-towncrier>=0.4.0a0",
+    "pygments>=2.19.1",
+    "towncrier>=24.8.0",
+    "sphinxcontrib-towncrier>=0.5.0a0",
 ]
 fast = [
     "tgcrypto>=1.2.5",
@@ -91,58 +96,12 @@ exclude = [
     "NEWS.rst",
     "requirements.lock",
     "requirements-dev.lock",
+    "ruff.toml",
 ]
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true
 package = "hydrogram"
-
-[tool.ruff]
-line-length = 99
-target-version = "py39"
-
-[tool.ruff.lint]
-select = [
-    "FURB", # refurb
-    "I",    # isort
-    "E",    # pycodestyle: error
-    "W",    # pycodestyle: warning
-    "UP",   # pyupgrade
-    "F",    # pyflakes
-    "SIM",  # flake8-simplify
-    "RET",  # flake8-return
-    "C4",   # flake8-comprehensions
-    "PTH",  # flake8-use-pathlib
-    "PERF", # perflint
-    "N",    # pep8-naming
-    "RUF",  # ruff
-    "G",    # flake8-logging-format
-    "TID",  # flake8-tidy-imports
-    "TCH",  # flake8-type-checking
-    "FA",   # flake8-future-annotations
-    "PL",   # pylint
-]
-ignore = [
-    "RUF001",
-    "RUF002",
-    "RUF003",
-    "E203",
-    "PERF203",
-    "PLR09",
-    "PLR2004",
-    "PLR1702",
-    "PLW1514",
-    "PLW2901",
-    "PLW0603",
-]
-preview = true
-
-[tool.ruff.lint.isort]
-known-first-party = ["hydrogram"]
-
-[tool.ruff.format]
-docstring-code-format = true
-preview = true
 
 [tool.towncrier]
 package = "hydrogram"
@@ -178,20 +137,3 @@ showcontent = true
 directory = "misc"
 name = "Misc"
 showcontent = true
-
-[tool.rye.scripts]
-clean = { chain = ["clean:docs", "clean:api"] }
-"clean:api" = { cmd = "rm -rf hydrogram/errors/exceptions hydrogram/raw/all.py hydrogram/raw/base hydrogram/raw/functions hydrogram/raw/types" }
-"clean:docs" = { cmd = "rm -rf docs/build docs/source/api/bound-methods docs/source/api/methods docs/source/api/types docs/source/telegram" }
-
-api = { chain = ["api:raw", "api:errors"] }
-"api:raw" = { call = "compiler.api.compiler:start" }
-"api:errors" = { call = "compiler.errors.compiler:start" }
-
-docs = { chain = ["docs:compile", "docs:serve"] }
-"docs:compile" = { cmd = "python compiler/docs/compiler.py" }
-"docs:serve" = { cmd = "sphinx-build -b html docs/source docs/build/html -j auto" }
-live-docs = { cmd = "sphinx-autobuild docs/source docs/build/html -j auto --watch src" }
-
-towncrier = { cmd = "towncrier build --yes" }
-towncrier-draft = { cmd = "towncrier build --draft" }

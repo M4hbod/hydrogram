@@ -16,18 +16,24 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, TypeVar
 
 import hydrogram
-from hydrogram.filters import Filter
+
+F = TypeVar("F", bound=Callable)
 
 
 class OnError:
-    def on_error(self=None, errors=None) -> Callable:
+    def on_error(
+        self: hydrogram.Client | type[Exception] | None = None,  # type: ignore
+        errors: type[Exception] | list[type[Exception]] | None = None,
+    ) -> Callable[[F], F]:
         """Decorator for handling new errors.
 
         This does the same thing as :meth:`~hydrogram.Client.add_handler` using the
-        :obj:`~hydrogram.handlers.MessageHandler`.
+        :obj:`~hydrogram.handlers.ErrorHandler`.
 
         Parameters:
             errors (:obj:`~Exception`, *optional*):
@@ -35,10 +41,10 @@ class OnError:
                 in your function.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: F) -> F:
             if isinstance(self, hydrogram.Client):
                 self.add_handler(hydrogram.handlers.ErrorHandler(func, errors), 0)
-            elif isinstance(self, Filter) or self is None:
+            elif (isinstance(self, type) and issubclass(self, Exception)) or self is None:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
 

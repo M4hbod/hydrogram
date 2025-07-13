@@ -20,13 +20,16 @@
 from __future__ import annotations
 
 from asyncio import iscoroutinefunction
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import hydrogram
 from hydrogram.types import CallbackQuery, Identifier, Listener, ListenerTypes
 from hydrogram.utils import PyromodConfig
 
 from .handler import Handler
+
+if TYPE_CHECKING:
+    from hydrogram.filters import Filter
 
 
 class CallbackQueryHandler(Handler):
@@ -53,7 +56,7 @@ class CallbackQueryHandler(Handler):
             The received callback query.
     """
 
-    def __init__(self, callback: Callable, filters=None):
+    def __init__(self, callback: Callable, filters: Filter | None = None):
         self.original_callback = callback
         super().__init__(self.resolve_future_or_callback, filters)
 

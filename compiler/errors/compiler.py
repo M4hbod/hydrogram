@@ -18,7 +18,6 @@
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
-import os
 import re
 import shutil
 from pathlib import Path
@@ -45,7 +44,7 @@ def start():
     shutil.rmtree(ERRORS_DEST_PATH, ignore_errors=True)
     ERRORS_DEST_PATH.mkdir(parents=True)
 
-    files = os.listdir(f"{ERRORS_HOME_PATH}/source")
+    files = [i.name for i in (ERRORS_HOME_PATH / "source").iterdir()]
 
     with NOTICE_PATH.open(encoding="utf-8") as f:
         notice = [f"# {line}".strip() for line in f]
@@ -82,7 +81,7 @@ def start():
 
                 super_class = camel(name)
                 name = " ".join([
-                    i.capitalize() for i in re.sub(r"_", " ", name).lower().split(" ")
+                    i.capitalize() for i in name.replace(r"_", " ").lower().split(" ")
                 ])
 
                 sub_classes = []
@@ -100,9 +99,9 @@ def start():
 
                     error_id, error_message = row
 
-                    sub_class = camel(re.sub(r"_X", "_", error_id))
+                    sub_class = camel(error_id.replace(r"_X", "_"))
                     sub_class = re.sub(r"^2", "Two", sub_class)
-                    sub_class = re.sub(r" ", "", sub_class)
+                    sub_class = sub_class.replace(r" ", "")
 
                     f_all.write(f'        "{error_id}": "{sub_class}",\n')
 
@@ -144,7 +143,7 @@ def start():
         content = f.read()
 
     with (ERRORS_DEST_PATH / "all.py").open("w", encoding="utf-8") as f:
-        f.write(re.sub("{count}", str(count), content))  # noqa: RUF027
+        f.write(re.sub(r"{count}", str(count), content))  # noqa: RUF027
 
 
 if __name__ == "__main__":

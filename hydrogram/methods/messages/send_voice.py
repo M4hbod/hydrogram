@@ -158,7 +158,7 @@ class SendVoice:
                             raw.types.DocumentAttributeAudio(voice=True, duration=duration)
                         ],
                     )
-                elif re.match("^https?://", voice):
+                elif re.match(r"^https?://", voice):
                     media = raw.types.InputMediaDocumentExternal(url=voice)
                 else:
                     media = utils.get_input_media_from_file_id(voice, FileType.VOICE)

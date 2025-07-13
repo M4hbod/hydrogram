@@ -35,7 +35,7 @@ class TLObject:
 
     @classmethod
     def read(cls, b: BytesIO, *args: Any) -> Any:
-        return cast(TLObject, objects[int.from_bytes(b.read(4), "little")]).read(b, *args)
+        return cast("TLObject", objects[int.from_bytes(b.read(4), "little")]).read(b, *args)
 
     def write(self, *args: Any) -> bytes:
         pass
@@ -59,7 +59,7 @@ class TLObject:
 
     def __repr__(self) -> str:
         return (
-            f'hydrogram.raw.{self.QUALNAME}({", ".join(f"{attr}={getattr(self, attr)!r}" for attr in self.__slots__ if getattr(self, attr) is not None)})'
+            f"hydrogram.raw.{self.QUALNAME}({', '.join(f'{attr}={getattr(self, attr)!r}' for attr in self.__slots__ if getattr(self, attr) is not None)})"
             if hasattr(self, "QUALNAME")
             else repr(self)
         )

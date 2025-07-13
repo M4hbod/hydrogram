@@ -19,6 +19,7 @@
 
 from .authorization import (
     SentCode,
+    Session,
     TermsOfService,
     sent_code,
     terms_of_service,
@@ -135,8 +136,10 @@ from .input_media import (
 )
 from .input_message_content import (
     InputMessageContent,
+    InputPollOption,
     InputTextMessageContent,
     input_message_content,
+    input_poll_option,
     input_text_message_content,
 )
 from .list import List
@@ -267,6 +270,7 @@ __all__ = [
     "CallbackQuery",
     "Chat",
     "ChatAdminWithInviteLinks",
+    "ChatBackground",
     "ChatEvent",
     "ChatEventFilter",
     "ChatInviteLink",
@@ -325,6 +329,7 @@ __all__ = [
     "InputMediaVideo",
     "InputMessageContent",
     "InputPhoneContact",
+    "InputPollOption",
     "InputTextMessageContent",
     "InviteLinkImporter",
     "KeyboardButton",
@@ -353,6 +358,7 @@ __all__ = [
     "Restriction",
     "SentCode",
     "SentWebAppMessage",
+    "Session",
     "Sticker",
     "StrippedThumbnail",
     "TermsOfService",
@@ -436,7 +442,7 @@ __all__ = [
     "input_media_video",
     "input_message_content",
     "input_phone_contact",
-    "input_text_message_content",
+    "input_poll_option",
     "input_text_message_content",
     "invite_link_importer",
     "keyboard_button",

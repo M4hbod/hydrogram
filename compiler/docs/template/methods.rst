@@ -151,6 +151,19 @@ Authorization
 
     {authorization}
 
+Phone
+-----
+
+.. autosummary::
+    :nosignatures:
+
+    {phone}
+
+.. toctree::
+    :hidden:
+
+    {phone}
+
 Advanced
 --------
 

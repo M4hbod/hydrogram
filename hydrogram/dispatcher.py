@@ -23,7 +23,7 @@ import asyncio
 import inspect
 import logging
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, TypeVar, cast
 
 import hydrogram
 from hydrogram import raw, types, utils
@@ -65,6 +65,10 @@ if TYPE_CHECKING:
 
     from hydrogram.handlers.handler import Handler
 
+    UpdateType = TypeVar("UpdateType", bound=types.Update)
+    HandlerType = TypeVar("HandlerType", bound=type["Handler"])
+    RawUpdateType = TypeVar("RawUpdateType", bound=raw.core.TLObject)
+
 
 log = logging.getLogger(__name__)
 
@@ -83,7 +87,6 @@ class Dispatcher:
 
     def __init__(self, client: hydrogram.Client):
         self.client = client
-        self.loop = asyncio.get_event_loop()
         self.handler_worker_tasks: list[asyncio.Task] = []
         self.locks_list: list[asyncio.Lock] = []
         self.updates_queue = asyncio.Queue()
@@ -91,7 +94,7 @@ class Dispatcher:
         self.error_handlers: list[ErrorHandler] = []
         self._init_update_parsers()
 
-    def _init_update_parsers(self):
+    def _init_update_parsers(self) -> None:
         update_parsers = {
             (
                 UpdateNewMessage,
@@ -149,7 +152,7 @@ class Dispatcher:
 
     def _deleted_messages_parser(
         self,
-        update: UpdateNewMessage,
+        update: UpdateDeleteMessages | UpdateDeleteChannelMessages,
         users: dict[int, raw.types.User],
         chats: dict[int, raw.types.Chat],
     ) -> tuple[list[types.Message], type[DeletedMessagesHandler]]:
@@ -157,7 +160,7 @@ class Dispatcher:
 
     async def _callback_query_parser(
         self,
-        update: UpdateBotCallbackQuery,
+        update: UpdateBotCallbackQuery | UpdateInlineBotCallbackQuery,
         users: dict[int, raw.types.User],
         chats: dict[int, raw.types.Chat],
     ) -> tuple[types.CallbackQuery, type[CallbackQueryHandler]]:
@@ -219,15 +222,15 @@ class Dispatcher:
             self.client, update, users, chats
         ), ChatJoinRequestHandler
 
-    async def start(self):
+    async def start(self) -> None:
         if not self.client.no_updates:
             self.locks_list = [asyncio.Lock() for _ in range(self.client.workers)]
             self.handler_worker_tasks = [
-                self.loop.create_task(self.handler_worker(lock)) for lock in self.locks_list
+                self.client.loop.create_task(self.handler_worker(lock)) for lock in self.locks_list
             ]
             log.info("Started %s HandlerTasks", self.client.workers)
 
-    async def stop(self):
+    async def stop(self) -> None:
         if not self.client.no_updates:
             for _ in range(self.client.workers):
                 self.updates_queue.put_nowait(None)
@@ -238,38 +241,30 @@ class Dispatcher:
 
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
-    def add_handler(self, handler: Handler, group: int):
-        async def fn():
-            async with asyncio.Lock():
-                if isinstance(handler, ErrorHandler):
-                    if handler not in self.error_handlers:
-                        self.error_handlers.append(handler)
-                else:
-                    if group not in self.groups:
-                        self.groups[group] = []
-                        self.groups = OrderedDict(sorted(self.groups.items()))
-                    self.groups[group].append(handler)
+    def add_handler(self, handler: Handler, group: int) -> None:
+        if isinstance(handler, ErrorHandler):
+            if handler not in self.error_handlers:
+                self.error_handlers.append(handler)
+        else:
+            if group not in self.groups:
+                self.groups[group] = []
+                self.groups = OrderedDict(sorted(self.groups.items()))
+            self.groups[group].append(handler)
 
-        self.loop.create_task(fn())
+    def remove_handler(self, handler: Handler, group: int) -> None:
+        if isinstance(handler, ErrorHandler):
+            if handler not in self.error_handlers:
+                raise ValueError(
+                    f"Error handler {handler} does not exist. Handler was not removed."
+                )
 
-    def remove_handler(self, handler: Handler, group: int):
-        async def fn():
-            async with asyncio.Lock():
-                if isinstance(handler, ErrorHandler):
-                    if handler not in self.error_handlers:
-                        raise ValueError(
-                            f"Error handler {handler} does not exist. Handler was not removed."
-                        )
+            self.error_handlers.remove(handler)
+        else:
+            if group not in self.groups:
+                raise ValueError(f"Group {group} does not exist. Handler was not removed.")
+            self.groups[group].remove(handler)
 
-                    self.error_handlers.remove(handler)
-                else:
-                    if group not in self.groups:
-                        raise ValueError(f"Group {group} does not exist. Handler was not removed.")
-                    self.groups[group].remove(handler)
-
-        self.loop.create_task(fn())
-
-    async def handler_worker(self, lock: asyncio.Lock):
+    async def handler_worker(self, lock: asyncio.Lock) -> None:
         while True:
             packet = await self.updates_queue.get()
             if packet is None:
@@ -278,9 +273,9 @@ class Dispatcher:
 
     async def _process_packet(
         self,
-        packet: tuple[raw.core.TLObject, dict[int, types.Update], dict[int, types.Update]],
+        packet: tuple[raw.core.TLObject, dict[int, raw.types.User], dict[int, raw.types.Chat]],
         lock: asyncio.Lock,
-    ):
+    ) -> None:
         try:
             update, users, chats = packet
             parser = self.update_parsers.get(type(update))
@@ -290,29 +285,14 @@ class Dispatcher:
                 if inspect.isawaitable(parsed_result):
                     parsed_update, handler_type = await parsed_result
                 else:
-                    parsed_update, handler_type = parsed_result
+                    parsed_update, handler_type = cast(
+                        "tuple[types.Update, type[Handler]]", parsed_result
+                    )
             else:
-                parsed_update, handler_type = (None, type(None))
+                parsed_update = None
+                handler_type = None
 
-            async with lock:
-                for group in self.groups.values():
-                    for handler in group:
-                        try:
-                            if parsed_update is not None:
-                                if isinstance(handler, handler_type) and await handler.check(
-                                    self.client, parsed_update
-                                ):
-                                    await self._execute_callback(handler, parsed_update)
-                                    break
-                            elif isinstance(handler, RawUpdateHandler):
-                                await self._execute_callback(handler, update, users, chats)
-                                break
-                        except (hydrogram.StopPropagation, hydrogram.ContinuePropagation) as e:
-                            if isinstance(e, hydrogram.StopPropagation):
-                                raise
-                        except Exception as exception:
-                            if parsed_update is not None:
-                                await self._handle_exception(parsed_update, exception)
+            await self._process_update(lock, update, users, chats, parsed_update, handler_type)
         except hydrogram.StopPropagation:
             pass
         except Exception as e:
@@ -320,8 +300,39 @@ class Dispatcher:
         finally:
             self.updates_queue.task_done()
 
-    async def _handle_exception(self, parsed_update: types.Update, exception: Exception):
+    async def _process_update(
+        self,
+        lock: asyncio.Lock,
+        raw_update: raw.core.TLObject,
+        users: dict[int, raw.types.User],
+        chats: dict[int, raw.types.Chat],
+        parsed_update: types.Update | None,
+        handler_type: type[Handler] | None,
+    ) -> None:
+        async with lock:
+            for group in self.groups.values():
+                for handler in group:
+                    try:
+                        if isinstance(handler, RawUpdateHandler):
+                            await self._execute_callback(handler, raw_update, users, chats)
+                            continue
+                        if (
+                            parsed_update is not None
+                            and isinstance(handler, handler_type)
+                            and await handler.check(self.client, parsed_update)
+                        ):
+                            await self._execute_callback(handler, parsed_update)
+                            break
+                    except (hydrogram.StopPropagation, hydrogram.ContinuePropagation) as e:
+                        if isinstance(e, hydrogram.StopPropagation):
+                            raise
+                    except Exception as exception:
+                        if parsed_update is not None:
+                            await self._handle_exception(parsed_update, exception)
+
+    async def _handle_exception(self, parsed_update: types.Update, exception: Exception) -> None:
         handled_error = False
+
         for error_handler in self.error_handlers:
             try:
                 if await error_handler.check(self.client, parsed_update, exception):
@@ -337,10 +348,10 @@ class Dispatcher:
         if not handled_error:
             log.exception("Unhandled exception: %s", exception)
 
-    async def _execute_callback(self, handler: Handler, *args):
+    async def _execute_callback(self, handler: Handler, *args) -> None:
         if inspect.iscoroutinefunction(handler.callback):
             await handler.callback(self.client, *args)
         else:
-            await self.loop.run_in_executor(
+            await self.client.loop.run_in_executor(
                 self.client.executor, handler.callback, self.client, *args
             )

@@ -17,9 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
+import struct
+
 import pytest
 
-from hydrogram.file_id import FileId, FileType, FileUniqueId, FileUniqueType
+from hydrogram.file_id import FileId, FileType, FileUniqueId, FileUniqueType, rle_encode
 
 
 def check(file_id: str, expected_file_type: FileType):
@@ -195,3 +198,32 @@ def test_stringify_file_unique_id():
     string = "{'file_unique_type': <FileUniqueType.DOCUMENT: 2>, 'media_id': 5312458109417947140}"
 
     assert str(FileUniqueId.decode(file_unique_id)) == string
+
+
+def test_file_unique_id_unknown_type_decode():
+    data = struct.pack("<i", 99)
+    uid = base64.urlsafe_b64encode(rle_encode(data)).decode().strip("=")
+    with pytest.raises(ValueError, match=r"Unknown file_unique_type 99 of file_unique_id"):
+        FileUniqueId.decode(uid)
+
+
+def test_file_unique_id_missing_decoder():
+    data = struct.pack("<i", FileUniqueType.SECURE)
+    uid = base64.urlsafe_b64encode(rle_encode(data)).decode().strip("=")
+    with pytest.raises(
+        ValueError, match=r"Unknown decoder for file_unique_type 3 of file_unique_id"
+    ):
+        FileUniqueId.decode(uid)
+
+
+def test_file_unique_id_unsupported_encode():
+    fu = FileUniqueId(file_unique_type=FileUniqueType.TEMP)
+    with pytest.raises(ValueError, match=r"Unknown encoder for file_unique_type 5"):
+        fu.encode()
+
+
+def test_stringify_file_unique_web():
+    fu = FileUniqueId(file_unique_type=FileUniqueType.WEB, url="https://example.com")
+    s = str(fu)
+    assert "'file_unique_type': <FileUniqueType.WEB: 0>" in s
+    assert "'url': 'https://example.com'" in s

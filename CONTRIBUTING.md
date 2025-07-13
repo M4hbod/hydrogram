@@ -75,13 +75,13 @@ git remote add upstream https://github.com/hydrogram/hydrogram
 
 5. Install dependencies:
 
-Hydrogram uses and recommends [Rye](https://rye-up.com/) for managing virtual environmens and dependencies.
+Hydrogram uses and recommends [uv](https://docs.astral.sh/uv/) for managing virtual environmens and dependencies.
 
 ```bash
-rye sync --all-features
+uv sync --all-extras
 ```
 
-> We use `--all-features` to install all the optional dependencies, which are required to run the tests and build the documentation.
+> We use `--all-extras` to install all the optional dependencies, which are required to run the tests and build the documentation.
 
 6. Install pre-commit hooks:
 

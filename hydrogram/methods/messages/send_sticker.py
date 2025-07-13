@@ -139,7 +139,7 @@ class SendSticker:
                             raw.types.DocumentAttributeFilename(file_name=Path(sticker).name)
                         ],
                     )
-                elif re.match("^https?://", sticker):
+                elif re.match(r"^https?://", sticker):
                     media = raw.types.InputMediaDocumentExternal(url=sticker)
                 else:
                     media = utils.get_input_media_from_file_id(sticker, FileType.STICKER)

@@ -17,15 +17,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Callable
 
-from hydrogram.filters import Filter
-from hydrogram.types import Message
+import hydrogram
 
 from .handler import Handler
 
 if TYPE_CHECKING:
     import hydrogram
+    from hydrogram.filters import Filter
+    from hydrogram.types import Message
 
 
 class DeletedMessagesHandler(Handler):
@@ -52,10 +55,10 @@ class DeletedMessagesHandler(Handler):
             The deleted messages, as list.
     """
 
-    def __init__(self, callback: Callable, filters: Filter = None):
+    def __init__(self, callback: Callable, filters: Filter | None = None):
         super().__init__(callback, filters)
 
-    async def check(self, client: "hydrogram.Client", messages: list[Message]):
+    async def check(self, client: hydrogram.Client, messages: list[Message]):
         # Every message should be checked, if at least one matches the filter True is returned
         # otherwise, or if the list is empty, False is returned
         for message in messages:
