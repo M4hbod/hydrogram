@@ -111,6 +111,7 @@ class Session:
         self.recv_task = None
 
         self.is_started = asyncio.Event()
+        self.restart_lock = asyncio.Lock()
 
         self.last_reconnect_attempt = None
 
@@ -182,12 +183,16 @@ class Session:
 
         self.ping_task_event.clear()
 
-        await self.connection.close()
+        if self.connection:
+            await self.connection.close()
 
-        if self.recv_task:
+        if self.recv_task and not self.recv_task.done():
             self.recv_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self.recv_task
+
+            with contextlib.suppress(asyncio.CancelledError, asyncio.TimeoutError, RuntimeError):
+                await asyncio.wait_for(self.recv_task, timeout=1.0)
+
+            self.recv_task = None
 
         if not self.is_media and callable(self.client.disconnect_handler):
             try:
@@ -198,17 +203,18 @@ class Session:
         log.info("Session stopped")
 
     async def restart(self):
-        now = datetime.now()
-        if (
-            self.last_reconnect_attempt
-            and now - self.last_reconnect_attempt < self.RECONNECT_THRESHOLD
-        ):
-            log.info("Reconnecting too frequently, sleeping for a while")
-            await asyncio.sleep(5)
+        async with self.restart_lock:
+            now = datetime.now()
+            if (
+                self.last_reconnect_attempt
+                and now - self.last_reconnect_attempt < self.RECONNECT_THRESHOLD
+            ):
+                log.info("Reconnecting too frequently, sleeping for a while")
+                await asyncio.sleep(5)
 
-        self.last_reconnect_attempt = now
-        await self.stop()
-        await self.start()
+            self.last_reconnect_attempt = now
+            await self.stop()
+            await self.start()
 
     async def handle_packet(self, packet):
         data = await self.client.loop.run_in_executor(
