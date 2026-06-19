@@ -162,6 +162,7 @@ class CopyMediaGroup:
                         r.updates,
                     )
                 ],
+                topics=r.topics,
                 users=r.users,
                 chats=r.chats,
             ),

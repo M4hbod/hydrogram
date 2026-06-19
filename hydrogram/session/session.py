@@ -183,9 +183,9 @@ class Session:
 
         self.ping_task_event.clear()
 
-        if self.connection:
-            await self.connection.close()
-
+        # Cancel recv_task first to avoid race condition with connection close
+        # If connection closes before recv_task finishes, asyncio transport callbacks
+        # can become None while still being invoked, causing TypeError
         if self.recv_task and not self.recv_task.done():
             self.recv_task.cancel()
 
@@ -193,6 +193,9 @@ class Session:
                 await asyncio.wait_for(self.recv_task, timeout=1.0)
 
             self.recv_task = None
+
+        if self.connection:
+            await self.connection.close()
 
         if not self.is_media and callable(self.client.disconnect_handler):
             try:

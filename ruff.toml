@@ -25,6 +25,7 @@ ignore = [
     "RUF001",
     "RUF002",
     "RUF003",
+    "RUF067", # Allow implementation code in __init__.py files (library design pattern)
     "E203",
     "PERF203",
     "PLR09",

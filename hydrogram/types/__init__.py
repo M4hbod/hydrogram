@@ -334,7 +334,6 @@ __all__ = [
     "InviteLinkImporter",
     "KeyboardButton",
     "List",
-    "List",
     "Listener",
     "ListenerTypes",
     "Location",
