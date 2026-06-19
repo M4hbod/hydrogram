@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from hydrogram import raw, types
+from hydrogram import enums, raw, types
 from hydrogram.types.object import Object
 
 
@@ -56,6 +56,8 @@ class KeyboardButton(Object):
         request_contact: bool | None = None,
         request_location: bool | None = None,
         web_app: types.WebAppInfo = None,
+        style: enums.ButtonStyle = enums.ButtonStyle.DEFAULT,
+        icon_custom_emoji_id: str | None = None,
     ):
         super().__init__()
 
@@ -63,6 +65,18 @@ class KeyboardButton(Object):
         self.request_contact = request_contact
         self.request_location = request_location
         self.web_app = web_app
+        self.style = style or enums.ButtonStyle.DEFAULT
+        self.icon_custom_emoji_id = icon_custom_emoji_id
+
+    def _raw_style(self):
+        if self.style == enums.ButtonStyle.DEFAULT and self.icon_custom_emoji_id is None:
+            return None
+        return raw.types.KeyboardButtonStyle(
+            bg_primary=self.style == enums.ButtonStyle.PRIMARY,
+            bg_danger=self.style == enums.ButtonStyle.DANGER,
+            bg_success=self.style == enums.ButtonStyle.SUCCESS,
+            icon=int(self.icon_custom_emoji_id) if self.icon_custom_emoji_id is not None else None,
+        )
 
     @staticmethod
     def read(b):
@@ -80,10 +94,13 @@ class KeyboardButton(Object):
         return None
 
     def write(self):
+        style = self._raw_style()
         if self.request_contact:
-            return raw.types.KeyboardButtonRequestPhone(text=self.text)
+            return raw.types.KeyboardButtonRequestPhone(text=self.text, style=style)
         if self.request_location:
-            return raw.types.KeyboardButtonRequestGeoLocation(text=self.text)
+            return raw.types.KeyboardButtonRequestGeoLocation(text=self.text, style=style)
         if self.web_app:
-            return raw.types.KeyboardButtonSimpleWebView(text=self.text, url=self.web_app.url)
-        return raw.types.KeyboardButton(text=self.text)
+            return raw.types.KeyboardButtonSimpleWebView(
+                text=self.text, url=self.web_app.url, style=style
+            )
+        return raw.types.KeyboardButton(text=self.text, style=style)

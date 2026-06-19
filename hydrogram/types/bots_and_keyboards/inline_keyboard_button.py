@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 import hydrogram
-from hydrogram import raw, types
+from hydrogram import enums, raw, types
 from hydrogram.types.object import Object
 
 
@@ -71,6 +71,14 @@ class InlineKeyboardButton(Object):
         callback_game (:obj:`~hydrogram.types.CallbackGame`, *optional*):
             Description of the game that will be launched when the user presses the button.
             **NOTE**: This type of button **must** always be the first button in the first row.
+
+        style (:obj:`~hydrogram.enums.ButtonStyle`, *optional*):
+            Background style of the button (default, primary, danger, success). Requires the bot
+            owner to have Telegram Premium.
+
+        icon_custom_emoji_id (``str``, *optional*):
+            Unique identifier of a custom emoji shown as an icon before the button text. Requires the
+            bot owner to have Telegram Premium.
     """
 
     def __init__(
@@ -84,6 +92,8 @@ class InlineKeyboardButton(Object):
         switch_inline_query: str | None = None,
         switch_inline_query_current_chat: str | None = None,
         callback_game: types.CallbackGame = None,
+        style: enums.ButtonStyle = enums.ButtonStyle.DEFAULT,
+        icon_custom_emoji_id: str | None = None,
     ):
         super().__init__()
 
@@ -96,10 +106,41 @@ class InlineKeyboardButton(Object):
         self.switch_inline_query = switch_inline_query
         self.switch_inline_query_current_chat = switch_inline_query_current_chat
         self.callback_game = callback_game
+        self.style = style or enums.ButtonStyle.DEFAULT
+        self.icon_custom_emoji_id = icon_custom_emoji_id
         # self.pay = pay
+
+    def _raw_style(self):
+        """Build the raw KeyboardButtonStyle, or None when nothing is set (default + no icon)."""
+        if self.style == enums.ButtonStyle.DEFAULT and self.icon_custom_emoji_id is None:
+            return None
+        return raw.types.KeyboardButtonStyle(
+            bg_primary=self.style == enums.ButtonStyle.PRIMARY,
+            bg_danger=self.style == enums.ButtonStyle.DANGER,
+            bg_success=self.style == enums.ButtonStyle.SUCCESS,
+            icon=int(self.icon_custom_emoji_id) if self.icon_custom_emoji_id is not None else None,
+        )
+
+    @staticmethod
+    def _read_style(b):
+        """Map a raw button's optional ``style`` to (ButtonStyle, icon_custom_emoji_id)."""
+        raw_style = getattr(b, "style", None)
+        style = enums.ButtonStyle.DEFAULT
+        icon = None
+        if raw_style is not None:
+            if raw_style.bg_primary:
+                style = enums.ButtonStyle.PRIMARY
+            elif raw_style.bg_danger:
+                style = enums.ButtonStyle.DANGER
+            elif raw_style.bg_success:
+                style = enums.ButtonStyle.SUCCESS
+            if raw_style.icon is not None:
+                icon = str(raw_style.icon)
+        return style, icon
 
     @staticmethod
     def read(b: raw.base.KeyboardButton):
+        style, icon = InlineKeyboardButton._read_style(b)
         if isinstance(b, raw.types.KeyboardButtonCallback):
             # Try decode data to keep it as string, but if fails, fallback to bytes so we don't lose any information,
             # instead of decoding by ignoring/replacing errors.
@@ -108,30 +149,59 @@ class InlineKeyboardButton(Object):
             except UnicodeDecodeError:
                 data = b.data
 
-            return InlineKeyboardButton(text=b.text, callback_data=data)
+            return InlineKeyboardButton(
+                text=b.text, callback_data=data, style=style, icon_custom_emoji_id=icon
+            )
 
         if isinstance(b, raw.types.KeyboardButtonUrl):
-            return InlineKeyboardButton(text=b.text, url=b.url)
+            return InlineKeyboardButton(
+                text=b.text, url=b.url, style=style, icon_custom_emoji_id=icon
+            )
 
         if isinstance(b, raw.types.KeyboardButtonUrlAuth):
-            return InlineKeyboardButton(text=b.text, login_url=types.LoginUrl.read(b))
+            return InlineKeyboardButton(
+                text=b.text,
+                login_url=types.LoginUrl.read(b),
+                style=style,
+                icon_custom_emoji_id=icon,
+            )
 
         if isinstance(b, raw.types.KeyboardButtonUserProfile):
-            return InlineKeyboardButton(text=b.text, user_id=b.user_id)
+            return InlineKeyboardButton(
+                text=b.text, user_id=b.user_id, style=style, icon_custom_emoji_id=icon
+            )
 
         if isinstance(b, raw.types.KeyboardButtonSwitchInline):
             if b.same_peer:
-                return InlineKeyboardButton(text=b.text, switch_inline_query_current_chat=b.query)
-            return InlineKeyboardButton(text=b.text, switch_inline_query=b.query)
+                return InlineKeyboardButton(
+                    text=b.text,
+                    switch_inline_query_current_chat=b.query,
+                    style=style,
+                    icon_custom_emoji_id=icon,
+                )
+            return InlineKeyboardButton(
+                text=b.text, switch_inline_query=b.query, style=style, icon_custom_emoji_id=icon
+            )
 
         if isinstance(b, raw.types.KeyboardButtonGame):
-            return InlineKeyboardButton(text=b.text, callback_game=types.CallbackGame())
+            return InlineKeyboardButton(
+                text=b.text,
+                callback_game=types.CallbackGame(),
+                style=style,
+                icon_custom_emoji_id=icon,
+            )
 
         if isinstance(b, raw.types.KeyboardButtonWebView):
-            return InlineKeyboardButton(text=b.text, web_app=types.WebAppInfo(url=b.url))
+            return InlineKeyboardButton(
+                text=b.text,
+                web_app=types.WebAppInfo(url=b.url),
+                style=style,
+                icon_custom_emoji_id=icon,
+            )
         return None
 
     async def write(self, client: hydrogram.Client):
+        style = self._raw_style()
         if self.callback_data is not None:
             # Telegram only wants bytes, but we are allowed to pass strings too, for convenience.
             data = (
@@ -140,10 +210,10 @@ class InlineKeyboardButton(Object):
                 else self.callback_data
             )
 
-            return raw.types.KeyboardButtonCallback(text=self.text, data=data)
+            return raw.types.KeyboardButtonCallback(text=self.text, data=data, style=style)
 
         if self.url is not None:
-            return raw.types.KeyboardButtonUrl(text=self.text, url=self.url)
+            return raw.types.KeyboardButtonUrl(text=self.text, url=self.url, style=style)
 
         if self.login_url is not None:
             return self.login_url.write(
@@ -153,12 +223,12 @@ class InlineKeyboardButton(Object):
 
         if self.user_id is not None:
             return raw.types.InputKeyboardButtonUserProfile(
-                text=self.text, user_id=await client.resolve_peer(self.user_id)
+                text=self.text, user_id=await client.resolve_peer(self.user_id), style=style
             )
 
         if self.switch_inline_query is not None:
             return raw.types.KeyboardButtonSwitchInline(
-                text=self.text, query=self.switch_inline_query
+                text=self.text, query=self.switch_inline_query, style=style
             )
 
         if self.switch_inline_query_current_chat is not None:
@@ -166,11 +236,14 @@ class InlineKeyboardButton(Object):
                 text=self.text,
                 query=self.switch_inline_query_current_chat,
                 same_peer=True,
+                style=style,
             )
 
         if self.callback_game is not None:
-            return raw.types.KeyboardButtonGame(text=self.text)
+            return raw.types.KeyboardButtonGame(text=self.text, style=style)
 
         if self.web_app is not None:
-            return raw.types.KeyboardButtonWebView(text=self.text, url=self.web_app.url)
+            return raw.types.KeyboardButtonWebView(
+                text=self.text, url=self.web_app.url, style=style
+            )
         return None
