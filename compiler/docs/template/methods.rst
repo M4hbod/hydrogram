@@ -1,13 +1,13 @@
 Available Methods
 =================
 
-This page is about Hydrogram methods. All the methods listed here are bound to a :class:`~hydrogram.Client` instance,
-except for :meth:`~hydrogram.idle()` and :meth:`~hydrogram.compose()`, which are special functions that can be found in
+This page is about Pyrogram methods. All the methods listed here are bound to a :class:`~pyrogram.Client` instance,
+except for :meth:`~pyrogram.idle()` and :meth:`~pyrogram.compose()`, which are special functions that can be found in
 the main package directly.
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     app = Client("my_account")
 
@@ -16,7 +16,7 @@ the main package directly.
 
 -----
 
-.. currentmodule:: hydrogram.Client
+.. currentmodule:: pyrogram.Client
 
 Utilities
 ---------
@@ -31,7 +31,7 @@ Utilities
 
     {utilities}
 
-.. currentmodule:: hydrogram
+.. currentmodule:: pyrogram
 
 .. autosummary::
     :nosignatures:
@@ -45,7 +45,7 @@ Utilities
     idle
     compose
 
-.. currentmodule:: hydrogram.Client
+.. currentmodule:: pyrogram.Client
 
 Messages
 --------

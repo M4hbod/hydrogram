@@ -1,13 +1,13 @@
 Test Servers
 ============
 
-If you wish to test your application in a separate environment, Hydrogram is able to authorize your account into
+If you wish to test your application in a separate environment, Pyrogram is able to authorize your account into
 Telegram's test servers without hassle. All you need to do is start a new session (e.g.: "my_account_test") using
 ``test_mode=True``:
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     async with Client("my_account_test", test_mode=True) as app:
         print(await app.get_me())

@@ -7,5 +7,5 @@ Filters are objects that can be used to filter the content of incoming updates.
 Details
 -------
 
-.. automodule:: hydrogram.filters
+.. automodule:: pyrogram.filters
     :members:

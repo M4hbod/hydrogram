@@ -537,7 +537,7 @@ http2 = [
 ]
 
 [[package]]
-name = "hydrogram"
+name = "pyrogram"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },

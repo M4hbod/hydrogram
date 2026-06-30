@@ -1,8 +1,8 @@
-# Hydrogram AGENTS.md
+# Pyrogram AGENTS.md
 
 ## Project Overview
 
-Hydrogram is a Python MTProto client library for the Telegram API. It's an async-first framework supporting Python 3.9+ (CPython and PyPy), forked from Pyrogram with continued development.
+Pyrogram is a Python MTProto client library for the Telegram API. It's an async-first framework supporting Python 3.9+ (CPython and PyPy), forked from Pyrogram with continued development.
 
 **Key Characteristics:**
 - **License**: LGPL-3.0
@@ -15,7 +15,7 @@ Hydrogram is a Python MTProto client library for the Telegram API. It's an async
 ## Project Structure
 
 ```
-hydrogram/
+pyrogram/
 ├── client.py              # Main Client class (extends Methods)
 ├── methods/               # API method implementations
 │   ├── __init__.py        # Methods class (mixin of all method categories)
@@ -79,26 +79,26 @@ hydrogram/
 All new Python files must include the following LGPL header:
 
 ```python
-#  Hydrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #
-#  Hydrogram is free software: you can redistribute it and/or modify
+#  Pyrogram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Hydrogram is distributed in the hope that it will be useful,
+#  Pyrogram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 ```
 
-**Note**: Existing files retain both copyright holders (Dan + Hydrogram). New files should ONLY have the Hydrogram copyright line.
+**Note**: Existing files retain both copyright holders (Dan + Pyrogram). New files should ONLY have the Pyrogram copyright line.
 
 **2. Future Annotations**
 Always use `from __future__ import annotations` for forward references.
@@ -130,10 +130,10 @@ class Client(Methods):
 All Telegram types inherit from `Object`:
 ```python
 class Object:
-    def __init__(self, client: "hydrogram.Client" = None):
+    def __init__(self, client: "pyrogram.Client" = None):
         self._client = client
 
-    def bind(self, client: "hydrogram.Client"):
+    def bind(self, client: "pyrogram.Client"):
         """Bind client to this and nested objects"""
 
     def __str__(self) -> str:  # JSON serialization
@@ -147,8 +147,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import hydrogram
-from hydrogram import enums, raw, types, utils
+import pyrogram
+from pyrogram import enums, raw, types, utils
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -156,7 +156,7 @@ if TYPE_CHECKING:
 
 class SendMessage:  # Class name in PascalCase matching method name
     async def send_message(
-        self: hydrogram.Client,
+        self: pyrogram.Client,
         chat_id: int | str,
         text: str,
         *,  # Force keyword-only arguments after required params
@@ -190,11 +190,11 @@ class SendMessage:  # Class name in PascalCase matching method name
                 Unique identifier for the target message thread (topic) of the forum.
                 for forum supergroups only.
 
-            parse_mode (:obj:`~hydrogram.enums.ParseMode`, *optional*):
+            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            entities (List of :obj:`~hydrogram.types.MessageEntity`):
+            entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
             disable_web_page_preview (``bool``, *optional*):
@@ -205,7 +205,7 @@ class SendMessage:  # Class name in PascalCase matching method name
                 Users will receive a notification with no sound.
 
         Returns:
-            :obj:`~hydrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
 
         Example:
             .. code-block:: python
@@ -222,7 +222,7 @@ class SendMessage:  # Class name in PascalCase matching method name
 **CRITICAL**: After creating the method file, you MUST add it to the category mixin class:
 
 ```python
-# File: hydrogram/methods/messages/__init__.py
+# File: pyrogram/methods/messages/__init__.py
 from .send_message import SendMessage  # Import the new method class
 # ... other imports ...
 
@@ -239,7 +239,7 @@ The mixin class inherits from all individual method classes, making their method
 Filters are callable classes:
 ```python
 class Filter:
-    async def __call__(self, client: hydrogram.Client, update: Update) -> bool:
+    async def __call__(self, client: pyrogram.Client, update: Update) -> bool:
         raise NotImplementedError
 
     # Support logical operators
@@ -259,9 +259,9 @@ import inspect
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
-    import hydrogram
-    from hydrogram.filters import Filter
-    from hydrogram.types import Update
+    import pyrogram
+    from pyrogram.filters import Filter
+    from pyrogram.types import Update
 
 
 class Handler:
@@ -269,7 +269,7 @@ class Handler:
         self.callback = callback
         self.filters = filters
 
-    async def check(self, client: hydrogram.Client, update: Update):
+    async def check(self, client: pyrogram.Client, update: Update):
         if callable(self.filters):
             if inspect.iscoroutinefunction(self.filters.__call__):
                 return await self.filters(client, update)
@@ -292,7 +292,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Union
 
-from hydrogram import raw
+from pyrogram import raw
 
 InputPeer = Union[raw.types.InputPeerUser, raw.types.InputPeerChat, raw.types.InputPeerChannel]
 
@@ -345,15 +345,15 @@ class SomeTelegramError(Exception):
 Tests use pytest and follow this pattern:
 
 ```python
-#  Hydrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #  ... (license header)
 
 import pytest
 
-from hydrogram.module import ThingToTest
+from pyrogram.module import ThingToTest
 
 
 def test_something():
@@ -370,7 +370,7 @@ async def test_async_something():
 ```bash
 pytest tests/           # Run all tests
 pytest tests/test_file.py::test_func  # Run specific test
-pytest --cov=hydrogram  # With coverage
+pytest --cov=pyrogram  # With coverage
 ```
 
 ---
@@ -386,7 +386,7 @@ pytest --cov=hydrogram  # With coverage
 ```bash
 pytest tests/           # Run all tests
 pytest tests/test_file.py::test_func  # Run specific test
-pytest --cov=hydrogram  # With coverage
+pytest --cov=pyrogram  # With coverage
 ```
 
 ### Pre-commit
@@ -442,7 +442,7 @@ Run via hatch build hooks.
 ## Documentation
 
 - Sphinx docs in `docs/`
-- Live preview: `sphinx-autobuild docs/source/ docs/build/ --watch hydrogram/`
+- Live preview: `sphinx-autobuild docs/source/ docs/build/ --watch pyrogram/`
 - Follow Google docstring style
 - Reference external Telegram docs where applicable
 
@@ -457,7 +457,7 @@ Run via hatch build hooks.
   - `.doc.rst` - documentation
   - `.removal.rst` - deprecations
   - `.misc.rst` - other changes
-- Version defined in `hydrogram/__init__.py:__version__`
+- Version defined in `pyrogram/__init__.py:__version__`
 
 ---
 
@@ -470,14 +470,14 @@ Run via hatch build hooks.
 | `hatch_build.py` | Custom build hooks (generates raw layer) |
 | `.pre-commit-config.yaml` | Pre-commit hooks |
 | `compiler/api/source/main_api.tl` | TL schema source |
-| `hydrogram/__init__.py` | Public API exports |
+| `pyrogram/__init__.py` | Public API exports |
 
 ---
 
 ## Resources
 
-- Docs: https://docs.hydrogram.org
-- Homepage: https://hydrogram.org
-- Telegram: https://t.me/HydrogramNews
-- Issues: https://github.com/hydrogram/hydrogram/issues
+- Docs: https://docs.pyrogram.org
+- Homepage: https://pyrogram.org
+- Telegram: https://t.me/PyrogramNews
+- Issues: https://github.com/pyrogram/pyrogram/issues
 - Based on: https://github.com/pyrogram/pyrogram

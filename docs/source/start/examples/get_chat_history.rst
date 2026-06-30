@@ -5,7 +5,7 @@ This example shows how to get the full message history of a chat, starting from 
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     app = Client("my_account")
 

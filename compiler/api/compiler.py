@@ -1,21 +1,21 @@
-#  Hydrogram - Telegram MTProto API Client Library for Python
+#  Pyrogram - Telegram MTProto API Client Library for Python
 #  Copyright (C) 2017-2023 Dan <https://github.com/delivrance>
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #
-#  Hydrogram is free software: you can redistribute it and/or modify
+#  Pyrogram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Hydrogram is distributed in the hope that it will be useful,
+#  Pyrogram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
 import json
@@ -28,7 +28,7 @@ from typing import NamedTuple
 API_HOME_PATH = Path(__file__).parent.resolve()
 REPO_HOME_PATH = API_HOME_PATH.parent.parent
 
-DESTINATION_PATH = REPO_HOME_PATH / "hydrogram" / "raw"
+DESTINATION_PATH = REPO_HOME_PATH / "pyrogram" / "raw"
 NOTICE_PATH = REPO_HOME_PATH / "NOTICE"
 
 
@@ -179,12 +179,12 @@ def get_docstring_arg_type(t: str):
             return "``bool``"
         return f"``{t.lower()}``"
     if t in {"TLObject", "X"}:
-        return "Any object from :obj:`~hydrogram.raw.types`"
+        return "Any object from :obj:`~pyrogram.raw.types`"
     if t == "!X":
-        return "Any function from :obj:`~hydrogram.raw.functions`"
+        return "Any function from :obj:`~pyrogram.raw.functions`"
     if t.lower().startswith("vector"):
         return "List of " + get_docstring_arg_type(t.split("<", 1)[1][:-1])
-    return f":obj:`{t} <hydrogram.raw.base.{t}>`"
+    return f":obj:`{t} <pyrogram.raw.base.{t}>`"
 
 
 def get_references(t: str, kind: str):
@@ -322,7 +322,7 @@ def start(format: bool = False):
         docstring += (
             f"\n\n    Constructors:\n"
             f"        This base type has {constr_count} constructor{'s' if constr_count > 1 else ''} available.\n\n"
-            f"        .. currentmodule:: hydrogram.raw.types\n\n"
+            f"        .. currentmodule:: pyrogram.raw.types\n\n"
             f"        .. autosummary::\n"
             f"            :nosignatures:\n\n"
             f"            {items}"
@@ -331,7 +331,7 @@ def start(format: bool = False):
         references, ref_count = get_references(qualtype, "types")
 
         if references:
-            docstring += f"\n\n    Functions:\n        This object can be returned by {ref_count} function{'s' if ref_count > 1 else ''}.\n\n        .. currentmodule:: hydrogram.raw.functions\n\n        .. autosummary::\n            :nosignatures:\n\n            {references}"
+            docstring += f"\n\n    Functions:\n        This object can be returned by {ref_count} function{'s' if ref_count > 1 else ''}.\n\n        .. currentmodule:: pyrogram.raw.functions\n\n        .. autosummary::\n            :nosignatures:\n\n            {references}"
 
         with open(dir_path / f"{snake(module)}.py", "w") as f:
             f.write(
@@ -386,7 +386,7 @@ def start(format: bool = False):
                 constructor_docs["desc"] if constructor_docs else "Telegram API type."
             )
             docstring += constructor_docs + "\n"
-            docstring += f"\n    Constructor of :obj:`~hydrogram.raw.base.{c.qualtype}`."
+            docstring += f"\n    Constructor of :obj:`~pyrogram.raw.base.{c.qualtype}`."
         elif function_docs := docs["method"].get(c.qualname, None):
             docstring += function_docs["desc"] + "\n"
         else:
@@ -403,7 +403,7 @@ def start(format: bool = False):
             references, count = get_references(c.qualname, "constructors")
 
             if references:
-                docstring += f"\n    Functions:\n        This object can be returned by {count} function{'s' if count > 1 else ''}.\n\n        .. currentmodule:: hydrogram.raw.functions\n\n        .. autosummary::\n            :nosignatures:\n\n            {references}"
+                docstring += f"\n    Functions:\n        This object can be returned by {count} function{'s' if count > 1 else ''}.\n\n        .. currentmodule:: pyrogram.raw.functions\n\n        .. autosummary::\n            :nosignatures:\n\n            {references}"
 
         write_types = read_types = "" if c.has_flags else "# No flags\n        "
 
@@ -616,16 +616,16 @@ def start(format: bool = False):
         f.write("objects = {")
 
         for c in combinators:
-            f.write(f'\n    {c.id}: "hydrogram.raw.{c.section}.{c.qualname}",')
+            f.write(f'\n    {c.id}: "pyrogram.raw.{c.section}.{c.qualname}",')
 
-        f.write('\n    0xbc799737: "hydrogram.raw.core.BoolFalse",')
-        f.write('\n    0x997275b5: "hydrogram.raw.core.BoolTrue",')
-        f.write('\n    0x1cb5c415: "hydrogram.raw.core.Vector",')
-        f.write('\n    0x73f1f8dc: "hydrogram.raw.core.MsgContainer",')
-        f.write('\n    0xae500895: "hydrogram.raw.core.FutureSalts",')
-        f.write('\n    0x0949d9dc: "hydrogram.raw.core.FutureSalt",')
-        f.write('\n    0x3072cfa1: "hydrogram.raw.core.GzipPacked",')
-        f.write('\n    0x5bb8e511: "hydrogram.raw.core.Message",')
+        f.write('\n    0xbc799737: "pyrogram.raw.core.BoolFalse",')
+        f.write('\n    0x997275b5: "pyrogram.raw.core.BoolTrue",')
+        f.write('\n    0x1cb5c415: "pyrogram.raw.core.Vector",')
+        f.write('\n    0x73f1f8dc: "pyrogram.raw.core.MsgContainer",')
+        f.write('\n    0xae500895: "pyrogram.raw.core.FutureSalts",')
+        f.write('\n    0x0949d9dc: "pyrogram.raw.core.FutureSalt",')
+        f.write('\n    0x3072cfa1: "pyrogram.raw.core.GzipPacked",')
+        f.write('\n    0x5bb8e511: "pyrogram.raw.core.Message",')
 
         f.write("\n}\n")
 

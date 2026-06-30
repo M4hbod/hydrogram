@@ -1,12 +1,12 @@
 Quick Start
 ===========
 
-Welcome to Hydrogram! This guide will help you set up and run your first Telegram bot or client application in minutes.
+Welcome to Pyrogram! This guide will help you set up and run your first Telegram bot or client application in minutes.
 
-What is Hydrogram?
+What is Pyrogram?
 ------------------
 
-Hydrogram is a modern, elegant Python framework that allows you to interact with the Telegram API. With Hydrogram, you can:
+Pyrogram is a modern, elegant Python framework that allows you to interact with the Telegram API. With Pyrogram, you can:
 
 - Create Telegram bots with advanced features
 - Build user clients (userbot)
@@ -19,7 +19,7 @@ Let's get started with a simple example:
 Getting Started
 ---------------
 
-1. **Install Hydrogram** with ``pip3 install -U hydrogram``.
+1. **Install Pyrogram** with ``pip3 install -U pyrogram``.
 
 2. **Obtain your API credentials** from Telegram:
 
@@ -35,7 +35,7 @@ Getting Started
     .. code-block:: python
 
         import asyncio
-        from hydrogram import Client
+        from pyrogram import Client
 
         # Replace these with your own values
         api_id = 12345
@@ -46,7 +46,7 @@ Getting Started
             # Create a new client instance
             async with Client("my_account", api_id, api_hash) as app:
                 # Send a message to yourself
-                await app.send_message("me", "Greetings from **Hydrogram**!")
+                await app.send_message("me", "Greetings from **Pyrogram**!")
 
                 # Get information about yourself
                 me = await app.get_me()
@@ -63,12 +63,12 @@ Getting Started
 
 7. **Log in to your account** by following the prompts. You'll only need to do this once.
 
-8. **Watch Hydrogram in action** as it sends a message to your Saved Messages.
+8. **Watch Pyrogram in action** as it sends a message to your Saved Messages.
 
 What's Next?
 ------------
 
-This was just a brief introduction to get you started quickly. Hydrogram offers many more powerful features for building Telegram applications.
+This was just a brief introduction to get you started quickly. Pyrogram offers many more powerful features for building Telegram applications.
 
 - Learn about different ways to :doc:`../start/invoking` from the API
 - Explore how to :doc:`../start/updates` from Telegram
@@ -76,4 +76,4 @@ This was just a brief introduction to get you started quickly. Hydrogram offers 
 
 Join our `community`_ on Telegram for support and updates.
 
-.. _community: https://t.me/HydrogramNews
+.. _community: https://t.me/PyrogramNews

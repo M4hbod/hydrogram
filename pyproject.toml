@@ -1,8 +1,8 @@
 [project]
-name = "Hydrogram"
+name = "Pyrogram"
 dynamic = ["version"]
 description = "Sleek, advanced, and asynchronous Telegram MTProto API framework in Python, designed for fluid user and bot interactions."
-authors = [{ name = "Hydrogram", email = "contact@hydrogram.org" }]
+authors = [{ name = "Pyrogram", email = "contact@pyrogram.org" }]
 dependencies = ["pyaes==1.6.1", "pysocks==1.7.1", "aiosqlite>=0.19.0"]
 readme = "README.md"
 license = "LGPL-3.0-or-later"
@@ -33,18 +33,18 @@ classifiers = [
 keywords = ["telegram chat messenger mtproto api client library python"]
 
 [tool.hatch.version]
-path = "hydrogram/__init__.py"
+path = "pyrogram/__init__.py"
 
 # Used to call hatch_build.py
 [tool.hatch.build.hooks.custom]
 
 [project.urls]
-homepage = "https://hydrogram.org"
-tracker = "https://github.com/hydrogram/hydrogram/issues"
-community = "https://t.me/HydrogramNews"
-source = "https://github.com/hydrogram/hydrogram"
-documentation = "https://docs.hydrogram.org"
-changelog = "https://docs.hydrogram.org/en/latest/releases.html"
+homepage = "https://pyrogram.org"
+tracker = "https://github.com/pyrogram/pyrogram/issues"
+community = "https://t.me/PyrogramNews"
+source = "https://github.com/pyrogram/pyrogram"
+documentation = "https://docs.pyrogram.org"
+changelog = "https://docs.pyrogram.org/en/latest/releases.html"
 
 [build-system]
 requires = ["hatchling"]
@@ -101,14 +101,14 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true
-package = "hydrogram"
+package = "pyrogram"
 
 [tool.towncrier]
-package = "hydrogram"
+package = "pyrogram"
 filename = "NEWS.rst"
 directory = "news/"
 template = "news/.template.rst.jinja2"
-issue_format = "`#{issue} <https://github.com/hydrogram/hydrogram/issues/{issue}>`_"
+issue_format = "`#{issue} <https://github.com/pyrogram/pyrogram/issues/{issue}>`_"
 
 [[tool.towncrier.section]]
 path = ""

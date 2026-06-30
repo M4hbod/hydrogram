@@ -1,9 +1,9 @@
 MTProto vs. Bot API
 ===================
 
-Hydrogram is a framework written from the ground up that acts as a fully-fledged Telegram client based on the MTProto
-API. This means that Hydrogram is able to execute any official client and bot API action and more. This page will
-therefore show you why Hydrogram might be a better choice for your project by comparing the two APIs, but first, let's
+Pyrogram is a framework written from the ground up that acts as a fully-fledged Telegram client based on the MTProto
+API. This means that Pyrogram is able to execute any official client and bot API action and more. This page will
+therefore show you why Pyrogram might be a better choice for your project by comparing the two APIs, but first, let's
 make it clear what actually is the MTProto and the Bot API.
 
 -----
@@ -18,7 +18,7 @@ The MTProto API on the other hand, is what people for convenience call the main 
 from the Bot API. The main Telegram API is able to authorize both users and bots and is built on top of the MTProto
 encryption protocol by means of `binary data serialized`_ in a specific way, as described by the `TL language`_, and
 delivered using UDP, TCP or even HTTP as transport-layer protocol. Clients that make use of Telegram's main API, such as
-Hydrogram, implement all these details.
+Pyrogram, implement all these details.
 
 .. _MTProto: https://core.telegram.org/mtproto
 .. _binary data serialized: https://core.telegram.org/mtproto/serialize
@@ -40,8 +40,8 @@ servers using MTProto.
 Advantages of the MTProto API
 -----------------------------
 
-Here is a non-exhaustive list of all the advantages in using MTProto-based libraries -- such as Hydrogram -- instead of
-the official HTTP Bot API. Using Hydrogram you can:
+Here is a non-exhaustive list of all the advantages in using MTProto-based libraries -- such as Pyrogram -- instead of
+the official HTTP Bot API. Using Pyrogram you can:
 
 .. hlist::
     :columns: 1

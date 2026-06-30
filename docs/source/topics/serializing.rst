@@ -1,8 +1,8 @@
 Object Serialization
 ====================
 
-Serializing means converting a Hydrogram object, which exists as Python class instance, to a text string that can be
-easily shared and stored anywhere. Hydrogram provides two formats for serializing its objects: one good looking for
+Serializing means converting a Pyrogram object, which exists as Python class instance, to a text string that can be
+easily shared and stored anywhere. Pyrogram provides two formats for serializing its objects: one good looking for
 humans and another more compact for machines that is able to recover the original structures.
 
 -----
@@ -23,19 +23,19 @@ If you want a nicely formatted, human readable JSON representation of any object
 .. tip::
 
     When using ``print()`` you don't actually need to use ``str()`` on the object because it is called automatically, we
-    have done that above just to show you how to explicitly convert a Hydrogram object to JSON.
+    have done that above just to show you how to explicitly convert a Pyrogram object to JSON.
 
 For Machines - repr(obj)
 ------------------------
 
 If you want to share or store objects for future references in a more compact way, you can use ``repr(obj)``. While
 still pretty much readable, this format is not intended for humans. The advantage of this format is that once you
-serialize your object, you can use ``eval()`` to get back the original structure; just make sure to ``import hydrogram``,
+serialize your object, you can use ``eval()`` to get back the original structure; just make sure to ``import pyrogram``,
 as the process requires the package to be in scope.
 
 .. code-block:: python
 
-    import hydrogram
+    import pyrogram
 
     ...
 
@@ -48,4 +48,4 @@ as the process requires the package to be in scope.
 .. note::
 
     Type definitions are subject to changes between versions. You should make sure to store and load objects using the
-    same Hydrogram version.
+    same Pyrogram version.

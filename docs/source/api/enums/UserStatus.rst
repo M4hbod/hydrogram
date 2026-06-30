@@ -1,7 +1,7 @@
 UserStatus
 ==========
 
-.. autoclass:: hydrogram.enums.UserStatus()
+.. autoclass:: pyrogram.enums.UserStatus()
     :members:
 
 .. raw:: html

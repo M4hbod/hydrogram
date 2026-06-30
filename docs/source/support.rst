@@ -1,4 +1,4 @@
-Support Hydrogram
+Support Pyrogram
 =================
 
 .. raw:: html
@@ -7,42 +7,42 @@ Support Hydrogram
 
     <div style="float: right; margin-bottom: 10px">
         <a class="github-button"
-           href="https://github.com/hydrogram/hydrogram"
+           href="https://github.com/pyrogram/pyrogram"
            data-color-scheme="no-preference: light; light: light; dark: dark;"
            data-icon="octicon-star" data-size="large" data-show-count="true"
-           aria-label="Star hydrogram/hydrogram on GitHub">Star</a>
+           aria-label="Star pyrogram/pyrogram on GitHub">Star</a>
 
         <a class="github-button"
-           href="https://github.com/hydrogram/hydrogram/fork"
+           href="https://github.com/pyrogram/pyrogram/fork"
            data-color-scheme="no-preference: light; light: light; dark: dark;"
            data-icon="octicon-repo-forked" data-size="large"
-           data-show-count="true" aria-label="Fork hydrogram/hydrogram on GitHub">Fork</a>
+           data-show-count="true" aria-label="Fork pyrogram/pyrogram on GitHub">Fork</a>
     </div>
 
     <br style="clear: both"/>
 
-Hydrogram is a free and open source project.
-If you enjoy Hydrogram and would like to show your appreciation, consider donating or becoming
-a sponsor of the project. You can support Hydrogram via the ways shown below:
+Pyrogram is a free and open source project.
+If you enjoy Pyrogram and would like to show your appreciation, consider donating or becoming
+a sponsor of the project. You can support Pyrogram via the ways shown below:
 
 -----
 
 LiberaPay Patron
 ----------------
 
-`Become a LiberaPay patron <https://liberapay.com/hydrogram>`_.
+`Become a LiberaPay patron <https://liberapay.com/pyrogram>`_.
 
 .. raw:: html
 
-    <script src="https://liberapay.com/hydrogram/widgets/button.js"></script>
+    <script src="https://liberapay.com/pyrogram/widgets/button.js"></script>
 
 -----
 
 OpenCollective Backer
 ---------------------
 
-`Become an OpenCollective backer <https://opencollective.com/hydrogram>`_
+`Become an OpenCollective backer <https://opencollective.com/pyrogram>`_
 
 .. raw:: html
 
-    <script src="https://opencollective.com/hydrogram/banner.js"></script>
+    <script src="https://opencollective.com/pyrogram/banner.js"></script>

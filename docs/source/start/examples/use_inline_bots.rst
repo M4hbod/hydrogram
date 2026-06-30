@@ -5,7 +5,7 @@ This example shows how to query an inline bot (as user).
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     # Create a new Client
     app = Client("my_account")

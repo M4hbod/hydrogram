@@ -1,10 +1,10 @@
-Hydrogram vs Pyrogram
+Pyrogram vs Pyrogram
 =====================
 
 Introduction
 ------------
 
-This is a non-exhaustive list of differences between Hydrogram and Pyrogram.
+This is a non-exhaustive list of differences between Pyrogram and Pyrogram.
 It is updated periodically.
 
 Key changes

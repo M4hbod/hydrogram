@@ -1,7 +1,7 @@
 Authorization
 =============
 
-Once a :doc:`project is set up <setup>`, you will still have to follow a few steps before you can actually use Hydrogram to make
+Once a :doc:`project is set up <setup>`, you will still have to follow a few steps before you can actually use Pyrogram to make
 API calls. This section provides all the information you need in order to authorize yourself as user or bot.
 
 -----
@@ -10,13 +10,13 @@ User Authorization
 ------------------
 
 In order to use the API, Telegram requires that users be authorized via their phone numbers.
-Hydrogram automatically manages this process, all you need to do is create an instance of the
-:class:`~hydrogram.Client` class by passing to it a ``name`` of your choice (e.g.: "my_account") and call
-the :meth:`~hydrogram.Client.run` method:
+Pyrogram automatically manages this process, all you need to do is create an instance of the
+:class:`~pyrogram.Client` class by passing to it a ``name`` of your choice (e.g.: "my_account") and call
+the :meth:`~pyrogram.Client.run` method:
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     api_id = 12345
     api_hash = "0123456789abcdef0123456789abcdef"
@@ -36,7 +36,7 @@ authorized or via SMS:
     Enter phone code: 12345
     Logged in successfully
 
-After successfully authorizing yourself, a new file called ``my_account.session`` will be created allowing Hydrogram to
+After successfully authorizing yourself, a new file called ``my_account.session`` will be created allowing Pyrogram to
 execute API calls with your identity. This file is personal and will be loaded again when you restart your app.
 You can now remove the api_id and api_hash values from the code as they are not needed anymore.
 
@@ -50,7 +50,7 @@ Bot Authorization
 
 Bots are a special kind of users that are authorized via their tokens (instead of phone numbers), which are created by
 the `Bot Father`_. Bot tokens replace the users' phone numbers only — you still need to
-:doc:`configure a Telegram API key <../start/setup>` with Hydrogram, even when using bots.
+:doc:`configure a Telegram API key <../start/setup>` with Pyrogram, even when using bots.
 
 The authorization process is automatically managed. All you need to do is choose a ``name`` (can be anything,
 usually your bot username) and pass your bot token using the ``bot_token`` parameter. The session file will be named
@@ -58,7 +58,7 @@ after the session name, which will be ``my_bot.session`` for the example below.
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     api_id = 12345
     api_hash = "0123456789abcdef0123456789abcdef"
@@ -82,7 +82,7 @@ after the session name, which will be ``my_bot.session`` for the example below.
 
     .. code-block:: python
 
-        from hydrogram import Client
+        from pyrogram import Client
 
         app = Client("my_account")
         app.run()

@@ -1,7 +1,7 @@
 ParseMode
 =========
 
-.. autoclass:: hydrogram.enums.ParseMode()
+.. autoclass:: pyrogram.enums.ParseMode()
     :members:
 
 .. raw:: html

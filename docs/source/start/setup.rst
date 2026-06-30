@@ -1,7 +1,7 @@
 Project Setup
 =============
 
-We have just :doc:`installed Hydrogram <../intro/install>`. In this page we'll discuss what you need to do in order to set up a
+We have just :doc:`installed Pyrogram <../intro/install>`. In this page we'll discuss what you need to do in order to set up a
 project with the framework.
 
 -----
@@ -21,11 +21,11 @@ and make sure you understand and abide to the rules for third-party clients and 
 Configuration
 -------------
 
-Having the API key from the previous step in handy, we can now begin to configure a Hydrogram project: pass your API key to Hydrogram by using the *api_id* and *api_hash* parameters of the Client class:
+Having the API key from the previous step in handy, we can now begin to configure a Pyrogram project: pass your API key to Pyrogram by using the *api_id* and *api_hash* parameters of the Client class:
 
 .. code-block:: python
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     api_id = 12345
     api_hash = "0123456789abcdef0123456789abcdef"

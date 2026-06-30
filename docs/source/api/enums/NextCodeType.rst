@@ -1,7 +1,7 @@
 NextCodeType
 ============
 
-.. autoclass:: hydrogram.enums.NextCodeType()
+.. autoclass:: pyrogram.enums.NextCodeType()
     :members:
 
 .. raw:: html

@@ -1,7 +1,7 @@
 ChatType
 ========
 
-.. autoclass:: hydrogram.enums.ChatType()
+.. autoclass:: pyrogram.enums.ChatType()
     :members:
 
 .. raw:: html

@@ -1,21 +1,21 @@
 #!/bin/env python
-#  Hydrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #
-#  Hydrogram is free software: you can redistribute it and/or modify
+#  Pyrogram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Hydrogram is distributed in the hope that it will be useful,
+#  Pyrogram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import shutil
 import subprocess
@@ -64,15 +64,15 @@ def search_and_replace(root_dir: Path, replacements: dict[str, str], exclude_dir
                 continue
 
 
-def hydrogramify(repo: Repo):
+def pyrogramify(repo: Repo):
     # Use our pyproject.toml file, where our Ruff settings live
     shutil.copyfile(HYDRO_ROOT_DIR / "pyproject.toml", PATCH_DIR / "pyproject.toml")
 
-    # Rename everything from "pyrogram" to "hydrogram"
-    print('Renaming everything from "pyrogram" to "hydrogram"…')
-    shutil.move(PATCH_DIR / "pyrogram", PATCH_DIR / "hydrogram")
+    # Rename everything from "pyrogram" to "pyrogram"
+    print('Renaming everything from "pyrogram" to "pyrogram"…')
+    shutil.move(PATCH_DIR / "pyrogram", PATCH_DIR / "pyrogram")
 
-    search_and_replace(PATCH_DIR, {"pyrogram": "hydrogram", "Pyrogram": "Hydrogram"})
+    search_and_replace(PATCH_DIR, {"pyrogram": "pyrogram", "Pyrogram": "Pyrogram"})
 
     # Format the code
     print("Formatting code…")
@@ -131,7 +131,7 @@ def fetch_commit(repo: Repo, temp_dir: Path, commit: str):
     repo.git.fetch(temp_dir, commit, quiet=True)
 
 
-def apply_patch_to_hydrogram(
+def apply_patch_to_pyrogram(
     repo: Repo, commit: str, changes_author: str, changes_date: str, changes_message: str
 ):
     print("Applying commit…")
@@ -185,8 +185,8 @@ def main():
     # Switch to the formatted origin branch
     patch_repo.git.switch("-c", formatted_origin_branch, quiet=True)
 
-    # Hydrogramify the code (without the changes applied)
-    hydrogramify(patch_repo)
+    # Pyrogramify the code (without the changes applied)
+    pyrogramify(patch_repo)
 
     # Fetch commits/branches to make them available for cherry-picking
     if cp_type in {"branch", "commit"}:
@@ -219,8 +219,8 @@ def main():
     # Get the date of the changes
     changes_date = patch_repo.git.log("-1", target_commit, pretty="format:%aD")
 
-    # Hydrogramify the code (with the changes applied)
-    hydrogramify(patch_repo)
+    # Pyrogramify the code (with the changes applied)
+    pyrogramify(patch_repo)
 
     # Create a patch between the two branches
     patch = create_patch(patch_repo, formatted_origin_branch, target_branch)
@@ -234,8 +234,8 @@ def main():
     # Fetch the commit from the temporary repository
     fetch_commit(hydro_repo, PATCH_DIR, commit)
 
-    # Apply the patch to the Hydrogram repository
-    apply_patch_to_hydrogram(hydro_repo, commit, changes_author, changes_date, changes_message)
+    # Apply the patch to the Pyrogram repository
+    apply_patch_to_pyrogram(hydro_repo, commit, changes_author, changes_date, changes_message)
 
     # Clean up
     cleanup(PATCH_DIR)

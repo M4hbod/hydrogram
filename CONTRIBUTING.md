@@ -1,24 +1,24 @@
-# Contributing to Hydrogram
+# Contributing to Pyrogram
 
-Welcome, and thank you for your interest in contributing to Hydrogram!
+Welcome, and thank you for your interest in contributing to Pyrogram!
 
-Hydrogram is an open source project that depends on the generous help of contributors who volunteer their time and skills. We appreciate your involvement and support.
+Pyrogram is an open source project that depends on the generous help of contributors who volunteer their time and skills. We appreciate your involvement and support.
 
 You can contribute in many ways, not only by writing code. This document aims to give you a high-level overview of how you can get involved.
 
 ## Asking Questions
 
-If you have a question, please use the [discussions](https://github.com/orgs/hydrogram/discussions) instead of opening an issue. Simply start a discussion with the Q&A topic and our community will gladly answer.
+If you have a question, please use the [discussions](https://github.com/orgs/pyrogram/discussions) instead of opening an issue. Simply start a discussion with the Q&A topic and our community will gladly answer.
 
 ## Providing Feedback
 
-Feedback from the community is very important to us at Hydrogram. If you have any suggestions, ideas, or concerns, please share them with us. You can use the [discussions](https://github.com/orgs/hydrogram/discussions) to start a conversation.
+Feedback from the community is very important to us at Pyrogram. If you have any suggestions, ideas, or concerns, please share them with us. You can use the [discussions](https://github.com/orgs/pyrogram/discussions) to start a conversation.
 
 You might be wondering about the difference between asking questions, providing feedback, and making feature requests. Asking questions is about seeking help or clarification. Providing feedback involves sharing your thoughts and opinions on the existing features and the project as a whole. Feature requests, on the other hand, are about suggesting new features or improvements. See the next section for more details on feature requests.
 
 ## Creating Issues
 
-Have you identified a reproducible problem in Hydrogram? Do you have a feature request? Here's how you can report your issue as efficiently as possible.
+Have you identified a reproducible problem in Pyrogram? Do you have a feature request? Here's how you can report your issue as efficiently as possible.
 
 ### Look For an Existing Issue
 
@@ -39,7 +39,7 @@ A bug report should contain the following information:
 - A brief description of what you were doing when the bug occurred, and what you expected to happen.
 - A detailed description of the actual behavior and how it differs from the expected behavior.
 - Steps to reproduce the bug, preferably with screenshots or a video recording.
-- The version of Hydrogram and the operating system you are using.
+- The version of Pyrogram and the operating system you are using.
 - Any relevant error messages or logs.
 
 ### How to Write a Feature Request
@@ -53,29 +53,29 @@ A feature request should contain the following information:
 
 ## Creating a Pull Request
 
-To contribute code to Hydrogram, simply open a pull request by following the guide below.
+To contribute code to Pyrogram, simply open a pull request by following the guide below.
 
 You can read more about pull requests in the [GitHub docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
 
 ### Setting Up Development Environment
 
-1. Fork the Hydrogram repository to your GitHub account.
-2. Clone your forked repository of Hydrogram to your computer:
+1. Fork the Pyrogram repository to your GitHub account.
+2. Clone your forked repository of Pyrogram to your computer:
 
 ```bash
-git clone https://github.com/<your username>/hydrogram
-cd hydrogram
+git clone https://github.com/<your username>/pyrogram
+cd pyrogram
 ```
 
 4. Add a track to the original repository:
 
 ```bash
-git remote add upstream https://github.com/hydrogram/hydrogram
+git remote add upstream https://github.com/pyrogram/pyrogram
 ```
 
 5. Install dependencies:
 
-Hydrogram uses and recommends [uv](https://docs.astral.sh/uv/) for managing virtual environmens and dependencies.
+Pyrogram uses and recommends [uv](https://docs.astral.sh/uv/) for managing virtual environmens and dependencies.
 
 ```bash
 uv sync --all-extras
@@ -93,7 +93,7 @@ pre-commit install
 
 ### Format the code (code-style)
 
-Hydrogram uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting the code to maintain it consistent and clean. You should [install](https://docs.astral.sh/ruff/installation/) and run Ruff on your code before committing:
+Pyrogram uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting the code to maintain it consistent and clean. You should [install](https://docs.astral.sh/ruff/installation/) and run Ruff on your code before committing:
 
 ```bash
 ruff check .
@@ -120,7 +120,7 @@ Remember to write tests for your new features or modify the existing tests to co
 We use Sphinx to generate documentation in the `docs` directory. You can edit the sources and preview the changes using a live-preview server with:
 
 ```bash
-sphinx-autobuild docs/source/ docs/build/ --watch hydrogram/
+sphinx-autobuild docs/source/ docs/build/ --watch pyrogram/
 ```
 
 ### Commit Messages
@@ -159,7 +159,7 @@ Closes #123
 
 Write a concise summary of your changes in one or more sentences, so that bot developers can see what's new or updated in the library. Create a file named `<code>.<category>.rst` in the `news` directory and include your description there.
 
-`<code>` is the issue or pull request number. After the release, a link to this issue will be added to the [changelog](https://docs.hydrogram.org/en/latest/releases.html) page.
+`<code>` is the issue or pull request number. After the release, a link to this issue will be added to the [changelog](https://docs.pyrogram.org/en/latest/releases.html) page.
 
 `<category>` is a marker for the type of change, which can be one of:
 

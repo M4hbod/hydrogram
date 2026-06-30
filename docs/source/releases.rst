@@ -1,3 +1,3 @@
-.. _hydrogram_changes:
+.. _pyrogram_changes:
 
 .. include:: ../../NEWS.rst

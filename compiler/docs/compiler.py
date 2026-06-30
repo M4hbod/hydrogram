@@ -1,20 +1,20 @@
-#  Hydrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #
-#  Hydrogram is free software: you can redistribute it and/or modify
+#  Pyrogram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Hydrogram is distributed in the hope that it will be useful,
+#  Pyrogram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import ast
 import re
@@ -27,9 +27,9 @@ REPO_HOME_PATH = DOCS_HOME_PATH.parent.parent
 DOCS_DEST_PATH = REPO_HOME_PATH / "docs" / "source" / "telegram"
 API_DOCS_DEST_PATH = REPO_HOME_PATH / "docs" / "source" / "api"
 
-FUNCTIONS_PATH = REPO_HOME_PATH / "hydrogram" / "raw" / "functions"
-TYPES_PATH = REPO_HOME_PATH / "hydrogram" / "raw" / "types"
-BASE_PATH = REPO_HOME_PATH / "hydrogram" / "raw" / "base"
+FUNCTIONS_PATH = REPO_HOME_PATH / "pyrogram" / "raw" / "functions"
+TYPES_PATH = REPO_HOME_PATH / "pyrogram" / "raw" / "types"
+BASE_PATH = REPO_HOME_PATH / "pyrogram" / "raw" / "base"
 
 FUNCTIONS_BASE = "functions"
 TYPES_BASE = "types"
@@ -79,7 +79,7 @@ def generate(source_path: Path, base_name: str):
                             page_template.format(
                                 title=full_name,
                                 title_markup="=" * len(full_name),
-                                full_class_path="hydrogram.raw.{}".format(
+                                full_class_path="pyrogram.raw.{}".format(
                                     ".".join(full_path.parts[:-1]) + "." + name
                                 ),
                             )
@@ -100,14 +100,14 @@ def generate(source_path: Path, base_name: str):
 
         if k != base_name:
             inner_path = Path(base_name, k, "index.rst")
-            module = f"hydrogram.raw.{base_name}.{k}"
+            module = f"pyrogram.raw.{base_name}.{k}"
         else:
             for i in sorted(all_entities, reverse=True):
                 if i != base_name:
                     entities.insert(0, f"{i}/index")
 
             inner_path = Path(base_name, "index.rst")
-            module = f"hydrogram.raw.{base_name}"
+            module = f"pyrogram.raw.{base_name}"
 
         with (DOCS_DEST_PATH / inner_path).open("w", encoding="utf-8") as f:
             if k == base_name:
@@ -126,7 +126,7 @@ def generate(source_path: Path, base_name: str):
             f.write("\n")
 
 
-def hydrogram_api():
+def pyrogram_api():
     def get_title_list(s: str) -> list[str]:
         return [i.strip() for i in [j.strip() for j in s.split("\n") if j] if i]
 
@@ -360,7 +360,7 @@ def hydrogram_api():
                     title = f"{method}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(f".. automethod:: hydrogram.Client.{method}()")
+                    f2.write(f".. automethod:: pyrogram.Client.{method}()")
 
             functions = ["idle", "compose"]
 
@@ -369,7 +369,7 @@ def hydrogram_api():
                     title = f"{func}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(f".. autofunction:: hydrogram.{func}()")
+                    f2.write(f".. autofunction:: pyrogram.{func}()")
 
         f.write(template.format(**fmt_keys))
 
@@ -523,7 +523,7 @@ def hydrogram_api():
             for type in types:
                 with (root / f"{type}.rst").open("w") as f2:
                     f2.write(f"{type}\n" + "=" * len(type) + "\n\n")
-                    f2.write(f".. autoclass:: hydrogram.types.{type}()\n")
+                    f2.write(f".. autoclass:: pyrogram.types.{type}()\n")
 
         f.write(template.format(**fmt_keys))
 
@@ -643,7 +643,7 @@ def hydrogram_api():
                     title = f"{bm}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(f".. automethod:: hydrogram.types.{bm}()")
+                    f2.write(f".. automethod:: pyrogram.types.{bm}()")
 
         f.write(template.format(**fmt_keys))
 
@@ -662,7 +662,7 @@ def start():
     generate(TYPES_PATH, TYPES_BASE)
     generate(FUNCTIONS_PATH, FUNCTIONS_BASE)
     generate(BASE_PATH, BASE_BASE)
-    hydrogram_api()
+    pyrogram_api()
 
 
 if __name__ == "__main__":

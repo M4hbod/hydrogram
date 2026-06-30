@@ -1,7 +1,7 @@
 ChatMemberStatus
 ================
 
-.. autoclass:: hydrogram.enums.ChatMemberStatus()
+.. autoclass:: pyrogram.enums.ChatMemberStatus()
     :members:
 
 .. raw:: html

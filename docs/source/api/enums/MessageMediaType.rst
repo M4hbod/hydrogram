@@ -1,7 +1,7 @@
 MessageMediaType
 ================
 
-.. autoclass:: hydrogram.enums.MessageMediaType()
+.. autoclass:: pyrogram.enums.MessageMediaType()
     :members:
 
 .. raw:: html

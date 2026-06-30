@@ -4,7 +4,7 @@ Scheduling Tasks
 Scheduling tasks means executing one or more functions periodically at pre-defined intervals or after a delay. This is
 useful, for example, to send recurring messages to specific chats or users.
 
-This page will show examples on how to integrate Hydrogram with ``apscheduler`` in both asynchronous and
+This page will show examples on how to integrate Pyrogram with ``apscheduler`` in both asynchronous and
 non-asynchronous contexts. For more detailed information, you can visit and learn from the library documentation.
 
 -----
@@ -22,7 +22,7 @@ Asynchronously
 
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     app = Client("my_account")
 
@@ -44,7 +44,7 @@ Non-Asynchronously
 
     from apscheduler.schedulers.background import BackgroundScheduler
 
-    from hydrogram import Client
+    from pyrogram import Client
 
     app = Client("my_account")
 

@@ -11,8 +11,8 @@ like send_audio(), send_document(), send_location(), etc...
 
 .. code-block:: python
 
-    from hydrogram import Client
-    from hydrogram.types import (ReplyKeyboardMarkup, InlineKeyboardMarkup,
+    from pyrogram import Client
+    from pyrogram.types import (ReplyKeyboardMarkup, InlineKeyboardMarkup,
                                 InlineKeyboardButton)
 
     # Create a client using your bot token
@@ -47,17 +47,17 @@ like send_audio(), send_document(), send_location(), etc...
                             ),
                             InlineKeyboardButton(  # Opens a web URL
                                 "URL",
-                                url="https://docs.hydrogram.org"
+                                url="https://docs.pyrogram.org"
                             ),
                         ],
                         [  # Second row
                             InlineKeyboardButton(  # Opens the inline interface
                                 "Choose chat",
-                                switch_inline_query="hydrogram"
+                                switch_inline_query="pyrogram"
                             ),
                             InlineKeyboardButton(  # Opens the inline interface in the current chat
                                 "Inline here",
-                                switch_inline_query_current_chat="hydrogram"
+                                switch_inline_query_current_chat="pyrogram"
                             )
                         ]
                     ]

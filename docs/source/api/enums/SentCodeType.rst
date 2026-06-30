@@ -1,7 +1,7 @@
 SentCodeType
 ============
 
-.. autoclass:: hydrogram.enums.SentCodeType()
+.. autoclass:: pyrogram.enums.SentCodeType()
     :members:
 
 .. raw:: html

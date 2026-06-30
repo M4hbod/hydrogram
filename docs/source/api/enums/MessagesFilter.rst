@@ -1,7 +1,7 @@
 MessagesFilter
 ==============
 
-.. autoclass:: hydrogram.enums.MessagesFilter()
+.. autoclass:: pyrogram.enums.MessagesFilter()
     :members:
 
 .. raw:: html

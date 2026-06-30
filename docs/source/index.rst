@@ -1,15 +1,15 @@
-Welcome to Hydrogram
+Welcome to Pyrogram
 ====================
 
 .. raw:: html
 
     <div align="center">
         <a href="/">
-            <div class="hydrogram-logo-index">
-                <img class="only-dark" src="_static/hydrogram-dark.png" alt="Hydrogram">
-                <img class="only-light" src="_static/hydrogram-light.png" alt="Hydrogram">
+            <div class="pyrogram-logo-index">
+                <img class="only-dark" src="_static/pyrogram-dark.png" alt="Pyrogram">
+                <img class="only-light" src="_static/pyrogram-light.png" alt="Pyrogram">
             </div>
-            <div class="hydrogram-text hydrogram-text-index">Hydrogram</div>
+            <div class="pyrogram-text pyrogram-text-index">Pyrogram</div>
         </a>
     </div>
 
@@ -17,48 +17,48 @@ Welcome to Hydrogram
         <b>Python Framework for the Telegram MTProto API</b>
 
         <br>
-        <a href="https://hydrogram.org">
+        <a href="https://pyrogram.org">
             Homepage
         </a>
         •
-        <a href="https://github.com/hydrogram/hydrogram">
+        <a href="https://github.com/pyrogram/pyrogram">
             Development
         </a>
         •
-        <a href="https://docs.hydrogram.org/en/latest/releases.html">
+        <a href="https://docs.pyrogram.org/en/latest/releases.html">
             Releases
         </a>
         •
-        <a href="https://t.me/HydrogramNews">
+        <a href="https://t.me/PyrogramNews">
             News
         </a>
     </p>
 
 .. code-block:: python
 
-    from hydrogram import Client, filters
+    from pyrogram import Client, filters
 
     app = Client("my_account")
 
 
     @app.on_message(filters.private)
     async def hello(client, message):
-        await message.reply("Hello from Hydrogram!")
+        await message.reply("Hello from Pyrogram!")
 
 
     app.run()
 
-Hydrogram is a Python library for interacting with the :doc:`Telegram MTProto API <topics/mtproto-vs-botapi>`.
+Pyrogram is a Python library for interacting with the :doc:`Telegram MTProto API <topics/mtproto-vs-botapi>`.
 It provides a simple and intuitive interface for developers to leverage the power of Telegram's API in their Python applications.
 
 Support
 -------
 
-Hydrogram is an open source project. Your support helps us maintain and improve the library.
-You can support the development of Hydrogram through the following platforms:
+Pyrogram is an open source project. Your support helps us maintain and improve the library.
+You can support the development of Pyrogram through the following platforms:
 
-- `LiberaPay <https://liberapay.com/hydrogram>`_.
-- `OpenCollective <https://opencollective.com/hydrogram>`_.
+- `LiberaPay <https://liberapay.com/pyrogram>`_.
+- `OpenCollective <https://opencollective.com/pyrogram>`_.
 
 How the Documentation is Organized
 ----------------------------------
@@ -78,7 +78,7 @@ First Steps
 
     - :doc:`Migration Guide <start/migration-guide>`: Migration guide from Pyrogram.
     - :doc:`Quick Start <intro/quickstart>`: Overview to get you started quickly.
-    - :doc:`Invoking Methods <start/invoking>`: How to call Hydrogram's methods.
+    - :doc:`Invoking Methods <start/invoking>`: How to call Pyrogram's methods.
     - :doc:`Handling Updates <start/updates>`: How to handle Telegram updates.
     - :doc:`Error Handling <start/errors>`: How to handle API errors correctly.
 
@@ -88,7 +88,7 @@ API Reference
 .. hlist::
     :columns: 1
 
-    - :doc:`Hydrogram Client <api/client>`: Reference details about the Client class.
+    - :doc:`Pyrogram Client <api/client>`: Reference details about the Client class.
     - :doc:`Available Methods <api/methods/index>`: List of available high-level methods.
     - :doc:`Available Types <api/types/index>`: List of available high-level types.
     - :doc:`Enumerations <api/enums/index>`: List of available enumerations.
@@ -100,10 +100,10 @@ Meta
 .. hlist::
     :columns: 1
 
-    - :doc:`Hydrogram FAQ <faq/index>`: Answers to common Hydrogram questions.
-    - :doc:`Support Hydrogram <support>`: Ways to show your appreciation.
-    - :doc:`Release Notes <releases>`: Release notes for Hydrogram releases.
-    - :doc:`Hydrogram vs Pyrogram <hydrogram-vs-pyrogram>`: Comparison between Hydrogram and Pyrogram.
+    - :doc:`Pyrogram FAQ <faq/index>`: Answers to common Pyrogram questions.
+    - :doc:`Support Pyrogram <support>`: Ways to show your appreciation.
+    - :doc:`Release Notes <releases>`: Release notes for Pyrogram releases.
+    - :doc:`Pyrogram vs Pyrogram <pyrogram-vs-pyrogram>`: Comparison between Pyrogram and Pyrogram.
 
 .. toctree::
     :hidden:
@@ -165,7 +165,7 @@ Meta
     faq/index
     support
     releases
-    hydrogram-vs-pyrogram
+    pyrogram-vs-pyrogram
 
 .. toctree::
     :hidden:

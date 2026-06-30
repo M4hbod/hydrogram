@@ -1,20 +1,20 @@
-#  Hydrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #
-#  Hydrogram is free software: you can redistribute it and/or modify
+#  Pyrogram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Hydrogram is distributed in the hope that it will be useful,
+#  Pyrogram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 import sys
@@ -24,13 +24,13 @@ from pathlib import Path
 docs_dir = Path(__file__).parent.parent
 sys.path.insert(0, docs_dir.resolve().as_posix())
 
-import hydrogram  # noqa: E402
+import pyrogram  # noqa: E402
 
 # Project information
-project = "Hydrogram"
-author = "Hydrogram"
+project = "Pyrogram"
+author = "Pyrogram"
 copyright = f"{datetime.date.today().year}, {author}"
-release = hydrogram.__version__
+release = pyrogram.__version__
 
 # Sphinx extensions
 extensions = [
@@ -150,25 +150,25 @@ html_theme_options = {
         "admonition-font-size": "0.92rem",
     },
     # Logo configuration
-    "light_logo": "hydrogram-light.png",
-    "dark_logo": "hydrogram-dark.png",
+    "light_logo": "pyrogram-light.png",
+    "dark_logo": "pyrogram-dark.png",
     # Footer icons
     "footer_icons": [
         {
             "name": "Telegram Channel",
-            "url": "https://t.me/HydrogramNews/",
+            "url": "https://t.me/PyrogramNews/",
             "html": TELEGRAM_ICON,
             "class": "",
         },
         {
             "name": "GitHub Organization",
-            "url": "https://github.com/hydrogram/",
+            "url": "https://github.com/pyrogram/",
             "html": GITHUB_ICON,
             "class": "",
         },
         {
-            "name": "Hydrogram Website",
-            "url": "https://hydrogram.org/",
+            "name": "Pyrogram Website",
+            "url": "https://pyrogram.org/",
             "html": WEBSITE_ICON,
             "class": "",
         },

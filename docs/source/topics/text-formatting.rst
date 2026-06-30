@@ -13,7 +13,7 @@ Text Formatting
 .. role:: strike-italic
     :class: strike-italic
 
-Hydrogram uses a custom Markdown dialect for text formatting which adds some unique features that make writing styled
+Pyrogram uses a custom Markdown dialect for text formatting which adds some unique features that make writing styled
 texts easier in both Markdown and HTML. You can send sophisticated text messages and media captions using a
 variety of decorations that can also be nested in order to combine multiple styles together.
 
@@ -23,14 +23,14 @@ Basic Styles
 ------------
 
 When formatting your messages, you can choose between Markdown-style, HTML-style or both (default). The following is a
-list of the basic styles currently supported by Hydrogram.
+list of the basic styles currently supported by Pyrogram.
 
 - **bold**
 - *italic*
 - :strike:`strike`
 - :underline:`underline`
 - spoiler
-- `text URL <https://hydrogram.org>`_
+- `text URL <https://pyrogram.org>`_
 - `user text mention <tg://user?id=123456789>`_
 - ``inline fixed-width code``
 - .. code-block:: text
@@ -42,8 +42,8 @@ list of the basic styles currently supported by Hydrogram.
 Markdown Style
 --------------
 
-To strictly use this mode, pass :obj:`~hydrogram.enums.ParseMode.MARKDOWN` to the *parse_mode* parameter when using
-:meth:`~hydrogram.Client.send_message`. Use the following syntax in your message:
+To strictly use this mode, pass :obj:`~pyrogram.enums.ParseMode.MARKDOWN` to the *parse_mode* parameter when using
+:meth:`~pyrogram.Client.send_message`. Use the following syntax in your message:
 
 .. code-block:: text
 
@@ -57,7 +57,7 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.ParseMode.MARKDOWN` to th
 
     ||spoiler||
 
-    [text URL](https://hydrogram.org/)
+    [text URL](https://pyrogram.org/)
 
     [text user mention](tg://user?id=123456789)
 
@@ -73,7 +73,7 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.ParseMode.MARKDOWN` to th
 
 .. code-block:: python
 
-    from hydrogram import enums
+    from pyrogram import enums
 
     await app.send_message(
         "me",
@@ -83,7 +83,7 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.ParseMode.MARKDOWN` to th
             "--underline--, "
             "~~strike~~, "
             "||spoiler||, "
-            "[URL](https://hydrogram.org), "
+            "[URL](https://pyrogram.org), "
             "`code`, "
             "```"
             "for i in range(10):\n"
@@ -96,8 +96,8 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.ParseMode.MARKDOWN` to th
 HTML Style
 ----------
 
-To strictly use this mode, pass :obj:`~hydrogram.enums.HTML` to the *parse_mode* parameter when using
-:meth:`~hydrogram.Client.send_message`. The following tags are currently supported:
+To strictly use this mode, pass :obj:`~pyrogram.enums.HTML` to the *parse_mode* parameter when using
+:meth:`~pyrogram.Client.send_message`. The following tags are currently supported:
 
 .. code-block:: text
 
@@ -111,7 +111,7 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.HTML` to the *parse_mode*
 
     <spoiler>spoiler</spoiler>
 
-    <a href="https://hydrogram.org/">text URL</a>
+    <a href="https://pyrogram.org/">text URL</a>
 
     <a href="tg://user?id=123456789">inline mention</a>
 
@@ -129,7 +129,7 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.HTML` to the *parse_mode*
 
 .. code-block:: python
 
-    from hydrogram import enums
+    from pyrogram import enums
 
     await app.send_message(
         "me",
@@ -139,7 +139,7 @@ To strictly use this mode, pass :obj:`~hydrogram.enums.HTML` to the *parse_mode*
             "<u>underline</u>, "
             "<s>strike</s>, "
             "<spoiler>spoiler</spoiler>, "
-            "<a href=\"https://hydrogram.org/\">URL</a>, "
+            "<a href=\"https://pyrogram.org/\">URL</a>, "
             "<code>code</code>\n\n"
             "<pre>"
             "for i in range(10):\n"
@@ -183,11 +183,11 @@ Result:
     **bold**, *italic*
 
 If you don't like this behaviour you can always choose to only enable either Markdown or HTML in strict mode by passing
-:obj:`~hydrogram.enums.MARKDOWN` or :obj:`~hydrogram.enums.HTML` as argument to the *parse_mode* parameter.
+:obj:`~pyrogram.enums.MARKDOWN` or :obj:`~pyrogram.enums.HTML` as argument to the *parse_mode* parameter.
 
 .. code-block:: python
 
-    from hydrogram import enums
+    from pyrogram import enums
 
     await app.send_message("me", "**bold**, <i>italic</i>", parse_mode=enums.ParseMode.MARKDOWN)
     await app.send_message("me", "**bold**, <i>italic</i>", parse_mode=enums.ParseMode.HTML)
@@ -198,12 +198,12 @@ Result:
 
     \*\*bold**, *italic*
 
-In case you want to completely turn off the style parser, simply pass :obj:`~hydrogram.enums.DISABLED` to *parse_mode*.
+In case you want to completely turn off the style parser, simply pass :obj:`~pyrogram.enums.DISABLED` to *parse_mode*.
 The text will be sent as-is.
 
 .. code-block:: python
 
-    from hydrogram import enums
+    from pyrogram import enums
 
     await app.send_message("me", "**bold**, <i>italic</i>", parse_mode=enums.ParseMode.DISABLED)
 

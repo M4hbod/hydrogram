@@ -1,7 +1,7 @@
 ChatMembersFilter
 =================
 
-.. autoclass:: hydrogram.enums.ChatMembersFilter()
+.. autoclass:: pyrogram.enums.ChatMembersFilter()
     :members:
 
 .. raw:: html

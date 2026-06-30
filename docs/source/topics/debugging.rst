@@ -2,7 +2,7 @@ Debugging
 =========
 
 When working with the API, chances are you'll stumble upon bugs, get stuck and start wondering how to continue. Nothing
-to actually worry about since Hydrogram provides some commodities to help you in this.
+to actually worry about since Pyrogram provides some commodities to help you in this.
 
 -----
 
@@ -14,7 +14,7 @@ Caveman Debugging
     -- Brian Kernighan, "Unix for Beginners" (1979)
 
 Adding ``print()`` statements in crucial parts of your code is by far the most ancient, yet efficient technique for
-debugging programs, especially considering the concurrent nature of the framework itself. Hydrogram goodness in this
+debugging programs, especially considering the concurrent nature of the framework itself. Pyrogram goodness in this
 respect comes with the fact that any object can be nicely printed just by calling ``print(obj)``, thus giving to you
 an insight of all its inner details.
 
@@ -25,8 +25,8 @@ Consider the following code:
     me = await app.get_users("me")
     print(me)  # User
 
-This will show a JSON representation of the object returned by :meth:`~hydrogram.Client.get_users`, which is a
-:class:`~hydrogram.types.User` instance, in this case. The output on your terminal will be something similar to this:
+This will show a JSON representation of the object returned by :meth:`~pyrogram.Client.get_users`, which is a
+:class:`~pyrogram.types.User` instance, in this case. The output on your terminal will be something similar to this:
 
 .. code-block:: json
 
@@ -41,7 +41,7 @@ This will show a JSON representation of the object returned by :meth:`~hydrogram
         "is_verified": false,
         "is_restricted": false,
         "is_support": false,
-        "first_name": "Hydrogram",
+        "first_name": "Pyrogram",
         "photo": {
             "_": "ChatPhoto",
             "small_file_id": "AbCdE...EdCbA",
@@ -51,13 +51,13 @@ This will show a JSON representation of the object returned by :meth:`~hydrogram
         }
     }
 
-As you've probably guessed already, Hydrogram objects can be nested. That's how compound data are built, and nesting
+As you've probably guessed already, Pyrogram objects can be nested. That's how compound data are built, and nesting
 keeps going until we are left with base data types only, such as ``str``, ``int``, ``bool``, etc.
 
 Accessing Attributes
 --------------------
 
-Even though you see a JSON output, it doesn't mean we are dealing with dictionaries; in fact, all Hydrogram types are
+Even though you see a JSON output, it doesn't mean we are dealing with dictionaries; in fact, all Pyrogram types are
 fully-fledged Python objects and the correct way to access any attribute of them is by using the dot notation ``.``:
 
 .. code-block:: python
@@ -91,14 +91,14 @@ error. The correct way to get the object type is by using the built-in function 
 
 .. code-block:: text
 
-    <class 'hydrogram.types.UserStatus'>
+    <class 'pyrogram.types.UserStatus'>
 
 And to check if an object is an instance of a given class, you use the built-in function ``isinstance()``:
 
 .. code-block:: python
     :name: this-py
 
-    from hydrogram.types import UserStatus
+    from pyrogram.types import UserStatus
 
     status = me.status
     print(isinstance(status, UserStatus))

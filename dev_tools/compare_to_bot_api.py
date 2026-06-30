@@ -1,21 +1,21 @@
 #!/bin/env python
-#  Hydrogram - Telegram MTProto API Client Library for Python
-#  Copyright (C) 2023-present Hydrogram <https://hydrogram.org>
+#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
-#  This file is part of Hydrogram.
+#  This file is part of Pyrogram.
 #
-#  Hydrogram is free software: you can redistribute it and/or modify
+#  Pyrogram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Hydrogram is distributed in the hope that it will be useful,
+#  Pyrogram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Hydrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from typing import Literal
 import httpx
 from lxml import html
 
-from hydrogram import Client, types
+from pyrogram import Client, types
 
 # Item can be ignored entirely (True) or have specific fields ignored with optional aliases
 IgnoreSpec = Literal[True] | dict[str, str | Literal[True]]
@@ -58,16 +58,16 @@ def snake(s: str) -> str:
     return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s).lower()
 
 
-def check_field_ignored(field: str, ignore_spec: IgnoreSpec, hydrogram_fields: list[str]) -> bool:
+def check_field_ignored(field: str, ignore_spec: IgnoreSpec, pyrogram_fields: list[str]) -> bool:
     """Check if a field should be ignored based on ignore specs"""
-    if field in hydrogram_fields:
+    if field in pyrogram_fields:
         return True
 
     if isinstance(ignore_spec, dict):
         alias = ignore_spec.get(field)
         if isinstance(alias, bool):
             return True
-        if alias and alias in hydrogram_fields:
+        if alias and alias in pyrogram_fields:
             return True
 
     wildcard_spec = ignored_items.get("*", {})
@@ -75,7 +75,7 @@ def check_field_ignored(field: str, ignore_spec: IgnoreSpec, hydrogram_fields: l
         alias = wildcard_spec.get(field)
         if isinstance(alias, bool):
             return True
-        if alias and alias in hydrogram_fields:
+        if alias and alias in pyrogram_fields:
             return True
 
     return False
@@ -141,13 +141,13 @@ class BotAPISchema:
         return self.methods, self.objects
 
 
-class HydrogramSchema:
+class PyrogramSchema:
     def __init__(self):
         self.methods: dict[str, list[str]] = {}
         self.objects: dict[str, list[str]] = {}
 
     def parse_methods(self):
-        """Parses methods in hydrogram.Client and extracts their arguments."""
+        """Parses methods in pyrogram.Client and extracts their arguments."""
         client_methods = inspect.getmembers(Client, predicate=inspect.isfunction)
         for method_name, method in client_methods:
             sig = inspect.signature(method)
@@ -155,7 +155,7 @@ class HydrogramSchema:
             self.methods[method_name] = args
 
     def parse_objects(self):
-        """Parses classes in hydrogram.types and extracts their arguments."""
+        """Parses classes in pyrogram.types and extracts their arguments."""
         types_classes = inspect.getmembers(types, predicate=inspect.isclass)
         for class_name, cls in types_classes:
             if hasattr(cls, "__init__"):
@@ -177,21 +177,21 @@ class HydrogramSchema:
 def compare_item(
     bot_api_item: str,
     bot_api_fields: list[str],
-    hydrogram_fields: list[str],
+    pyrogram_fields: list[str],
     ignore_spec: IgnoreSpec,
 ) -> list[str]:
-    """Compare fields between bot API and hydrogram implementations"""
+    """Compare fields between bot API and pyrogram implementations"""
     if ignore_spec is True:
         return []
 
     return [
         field
         for field in bot_api_fields
-        if not check_field_ignored(field, ignore_spec, hydrogram_fields)
+        if not check_field_ignored(field, ignore_spec, pyrogram_fields)
     ]
 
 
-def compare_schemas(bot_api_methods, bot_api_objects, hydrogram_methods, hydrogram_objects):
+def compare_schemas(bot_api_methods, bot_api_objects, pyrogram_methods, pyrogram_objects):
     missing_methods = {}
     missing_objects = {}
     method_mismatches = {}
@@ -203,11 +203,11 @@ def compare_schemas(bot_api_methods, bot_api_objects, hydrogram_methods, hydrogr
         if ignore_spec is True:
             continue
 
-        if method_name not in hydrogram_methods:
+        if method_name not in pyrogram_methods:
             missing_methods[method_name] = bot_api_args
         else:
             missing_args = compare_item(
-                method_name, bot_api_args, hydrogram_methods[method_name], ignore_spec
+                method_name, bot_api_args, pyrogram_methods[method_name], ignore_spec
             )
             if missing_args:
                 method_mismatches[method_name] = missing_args
@@ -218,11 +218,11 @@ def compare_schemas(bot_api_methods, bot_api_objects, hydrogram_methods, hydrogr
         if ignore_spec is True:
             continue
 
-        if obj_name not in hydrogram_objects:
+        if obj_name not in pyrogram_objects:
             missing_objects[obj_name] = bot_api_fields
         else:
             missing_fields = compare_item(
-                obj_name, bot_api_fields, hydrogram_objects[obj_name], ignore_spec
+                obj_name, bot_api_fields, pyrogram_objects[obj_name], ignore_spec
             )
             if missing_fields:
                 object_mismatches[obj_name] = missing_fields
@@ -243,7 +243,7 @@ def generate_implementation_stats(total: int, unimplemented: int, partial: int) 
 
 
 def generate_report(
-    comparison_results, bot_api_methods, bot_api_objects, hydrogram_methods, hydrogram_objects
+    comparison_results, bot_api_methods, bot_api_objects, pyrogram_methods, pyrogram_objects
 ):
     report = []
 
@@ -315,14 +315,14 @@ if __name__ == "__main__":
     bot_api_parser.parse()
     bot_api_methods, bot_api_objects = bot_api_parser.get_schema()
 
-    hydrogram_parser = HydrogramSchema()
-    hydrogram_parser.parse()
-    hydrogram_methods, hydrogram_objects = hydrogram_parser.get_schema()
+    pyrogram_parser = PyrogramSchema()
+    pyrogram_parser.parse()
+    pyrogram_methods, pyrogram_objects = pyrogram_parser.get_schema()
 
     comparison_results = compare_schemas(
-        bot_api_methods, bot_api_objects, hydrogram_methods, hydrogram_objects
+        bot_api_methods, bot_api_objects, pyrogram_methods, pyrogram_objects
     )
     report = generate_report(
-        comparison_results, bot_api_methods, bot_api_objects, hydrogram_methods, hydrogram_objects
+        comparison_results, bot_api_methods, bot_api_objects, pyrogram_methods, pyrogram_objects
     )
     print(report)

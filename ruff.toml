@@ -39,7 +39,7 @@ ignore = [
 preview = true
 
 [lint.isort]
-known-first-party = ["hydrogram"]
+known-first-party = ["pyrogram"]
 
 [format]
 docstring-code-format = true

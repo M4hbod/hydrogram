@@ -1,7 +1,7 @@
 PollType
 ========
 
-.. autoclass:: hydrogram.enums.PollType()
+.. autoclass:: pyrogram.enums.PollType()
     :members:
 
 .. raw:: html

@@ -1,9 +1,9 @@
 Smart Plugins
 =============
 
-Hydrogram embeds a smart, lightweight yet powerful plugin system that is meant to further simplify the organization
+Pyrogram embeds a smart, lightweight yet powerful plugin system that is meant to further simplify the organization
 of large projects and to provide a way for creating pluggable (modular) components that can be easily shared across
-different Hydrogram applications with minimal boilerplate code.
+different Pyrogram applications with minimal boilerplate code.
 
 .. tip::
 
@@ -23,7 +23,7 @@ after importing your modules, like this:
     This is an example application that replies in private chats with two messages: one containing the same
     text message you sent and the other containing the reversed text message.
 
-    Example: *"Hydrogram"* replies with *"Hydrogram"* and *"margoryP"*
+    Example: *"Pyrogram"* replies with *"Pyrogram"* and *"margoryP"*
 
 .. code-block:: text
 
@@ -46,8 +46,8 @@ after importing your modules, like this:
 
     .. code-block:: python
 
-        from hydrogram import Client, filters
-        from hydrogram.handlers import MessageHandler
+        from pyrogram import Client, filters
+        from pyrogram.handlers import MessageHandler
 
         from handlers import echo, echo_reversed
 
@@ -67,14 +67,14 @@ after importing your modules, like this:
         app.run()
 
 This is already nice and doesn't add *too much* boilerplate code, but things can get boring still; you have to
-manually ``import``, manually :meth:`~hydrogram.Client.add_handler` and manually instantiate each
-:class:`~hydrogram.handlers.MessageHandler` object because you can't use decorators for your functions.
+manually ``import``, manually :meth:`~pyrogram.Client.add_handler` and manually instantiate each
+:class:`~pyrogram.handlers.MessageHandler` object because you can't use decorators for your functions.
 So, what if you could? Smart Plugins solve this issue by taking care of handlers registration automatically.
 
 Using Smart Plugins
 -------------------
 
-Setting up your Hydrogram project to accommodate Smart Plugins is pretty straightforward:
+Setting up your Pyrogram project to accommodate Smart Plugins is pretty straightforward:
 
 #. Create a new folder to store all the plugins (e.g.: "plugins", "handlers", ...).
 #. Put your python files full of plugins inside. Organize them as you wish.
@@ -95,7 +95,7 @@ Setting up your Hydrogram project to accommodate Smart Plugins is pretty straigh
 
     .. code-block:: python
 
-        from hydrogram import Client, filters
+        from pyrogram import Client, filters
 
 
         @Client.on_message(filters.text & filters.private)
@@ -111,7 +111,7 @@ Setting up your Hydrogram project to accommodate Smart Plugins is pretty straigh
 
     .. code-block:: python
 
-        from hydrogram import Client
+        from pyrogram import Client
 
         plugins = dict(root="plugins")
 
@@ -122,8 +122,8 @@ The first important thing to note is the new ``plugins`` folder. You can put *an
 each file can contain *any decorated function* (handlers) with one limitation: within a single module (file) you must
 use different names for each decorated function.
 
-The second thing is telling Hydrogram where to look for your plugins: you can use the Client parameter "plugins";
-the *root* value must match the name of your plugins root folder. Your Hydrogram Client instance will **automatically**
+The second thing is telling Pyrogram where to look for your plugins: you can use the Client parameter "plugins";
+the *root* value must match the name of your plugins root folder. Your Pyrogram Client instance will **automatically**
 scan the folder upon starting to search for valid handlers and register them for you.
 
 Then you'll notice you can now use decorators. That's right, you can apply the usual decorators to your callback
@@ -258,7 +258,7 @@ Unloading
 ^^^^^^^^^
 
 In order to unload a plugin, all you need to do is obtain a reference to it by importing the relevant module and call
-:meth:`~hydrogram.Client.remove_handler` Client's method with your function's *handler* instance:
+:meth:`~pyrogram.Client.remove_handler` Client's method with your function's *handler* instance:
 
 -   ``main.py``
 
@@ -285,7 +285,7 @@ Loading
 ^^^^^^^
 
 Similarly to the unloading process, in order to load again a previously unloaded plugin you do the same, but this time
-using :meth:`~hydrogram.Client.add_handler` instead. Example:
+using :meth:`~pyrogram.Client.add_handler` instead. Example:
 
 -   ``main.py``
 

@@ -4,7 +4,7 @@ Using Filters
 So far we've seen :doc:`how to register a callback function <../start/updates>` that executes every time an update comes
 from the server, but there's much more than that to come.
 
-Here we'll discuss about :obj:`~hydrogram.filters`. Filters enable a fine-grain control over what kind of
+Here we'll discuss about :obj:`~pyrogram.filters`. Filters enable a fine-grain control over what kind of
 updates are allowed or not to be passed in your callback functions, based on their inner details.
 
 -----
@@ -14,12 +14,12 @@ Single Filters
 
 Let's start right away with a simple example:
 
--   This example will show you how to **only** handle messages containing a :class:`~hydrogram.types.Sticker` object and
+-   This example will show you how to **only** handle messages containing a :class:`~pyrogram.types.Sticker` object and
     ignore any other message. Filters are passed as the first argument of the decorator:
 
     .. code-block:: python
 
-        from hydrogram import filters
+        from pyrogram import filters
 
 
         @app.on_message(filters.sticker)
@@ -31,8 +31,8 @@ Let's start right away with a simple example:
 
     .. code-block:: python
 
-        from hydrogram import filters
-        from hydrogram.handlers import MessageHandler
+        from pyrogram import filters
+        from pyrogram.handlers import MessageHandler
 
 
         async def my_handler(client, message):
@@ -71,7 +71,7 @@ Here are some examples:
 Advanced Filters
 ----------------
 
-Some filters, like :meth:`~hydrogram.filters.command` or :meth:`~hydrogram.filters.regex`
+Some filters, like :meth:`~pyrogram.filters.command` or :meth:`~pyrogram.filters.regex`
 can also accept arguments:
 
 -   Message is either a */start* or */help* **command**.
@@ -86,7 +86,7 @@ can also accept arguments:
 
     .. code-block:: python
 
-        @app.on_message(filters.regex("hydrogram"))
+        @app.on_message(filters.regex("pyrogram"))
         async def my_handler(client, message):
             print(message)
 
@@ -104,6 +104,6 @@ More handlers using different filters can also live together.
         print("This is the /help command")
 
 
-    @app.on_message(filters.chat("HydrogramChat"))
-    async def from_hydrogramchat(client, message):
-        print("New message in @HydrogramChat")
+    @app.on_message(filters.chat("PyrogramChat"))
+    async def from_pyrogramchat(client, message):
+        print("New message in @PyrogramChat")

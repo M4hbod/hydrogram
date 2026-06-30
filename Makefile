@@ -3,11 +3,11 @@ SPHINX_BUILD = sphinx-build
 SPHINX_AUTOBUILD = sphinx-autobuild
 TOWNCRIER = towncrier
 
-HYDROGRAM_DIR = hydrogram
+PYROGRAM_DIR = pyrogram
 DOCS_DIR = docs
 DOCS_SOURCE = $(DOCS_DIR)/source
 DOCS_BUILD = $(DOCS_DIR)/build
-API_DIRS = $(HYDROGRAM_DIR)/errors/exceptions $(HYDROGRAM_DIR)/raw/all.py $(HYDROGRAM_DIR)/raw/base $(HYDROGRAM_DIR)/raw/functions $(HYDROGRAM_DIR)/raw/types
+API_DIRS = $(PYROGRAM_DIR)/errors/exceptions $(PYROGRAM_DIR)/raw/all.py $(PYROGRAM_DIR)/raw/base $(PYROGRAM_DIR)/raw/functions $(PYROGRAM_DIR)/raw/types
 DOCS_API_DIRS = $(DOCS_SOURCE)/api/bound-methods $(DOCS_SOURCE)/api/methods $(DOCS_SOURCE)/api/types $(DOCS_SOURCE)/telegram
 
 .PHONY: all clean clean-api clean-docs api api-raw api-errors docs docs-compile docs-serve live-docs towncrier towncrier-draft dev-tools check-api-schema generate-docs-json compare-bot-api cherry-pick-pyro help
@@ -48,7 +48,7 @@ docs-serve:
 
 live-docs:
 	@echo "Starting documentation server with live reload..."
-	@$(SPHINX_AUTOBUILD) $(DOCS_SOURCE) $(DOCS_BUILD)/html -j auto --watch $(HYDROGRAM_DIR)
+	@$(SPHINX_AUTOBUILD) $(DOCS_SOURCE) $(DOCS_BUILD)/html -j auto --watch $(PYROGRAM_DIR)
 
 towncrier:
 	@echo "Generating release notes..."

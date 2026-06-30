@@ -1,7 +1,7 @@
 MessageEntityType
 =================
 
-.. autoclass:: hydrogram.enums.MessageEntityType()
+.. autoclass:: pyrogram.enums.MessageEntityType()
     :members:
 
 .. raw:: html

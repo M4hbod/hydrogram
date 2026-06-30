@@ -1,13 +1,13 @@
 Update Handlers
 ===============
 
-Handlers are used to instruct Hydrogram about which kind of updates you'd like to handle with your callback functions.
+Handlers are used to instruct Pyrogram about which kind of updates you'd like to handle with your callback functions.
 For a much more convenient way of registering callback functions have a look at :doc:`Decorators <decorators>` instead.
 
 .. code-block:: python
 
-    from hydrogram import Client
-    from hydrogram.handlers import MessageHandler
+    from pyrogram import Client
+    from pyrogram.handlers import MessageHandler
 
     app = Client("my_account")
 
@@ -22,7 +22,7 @@ For a much more convenient way of registering callback functions have a look at 
 
 -----
 
-.. currentmodule:: hydrogram.handlers
+.. currentmodule:: pyrogram.handlers
 
 Index
 -----

@@ -1,13 +1,13 @@
 RPC Errors
 ==========
 
-All Hydrogram API errors live inside the ``errors`` sub-package: ``hydrogram.errors``.
-The errors ids listed here are shown as *UPPER_SNAKE_CASE*, but the actual exception names to import from Hydrogram
+All Pyrogram API errors live inside the ``errors`` sub-package: ``pyrogram.errors``.
+The errors ids listed here are shown as *UPPER_SNAKE_CASE*, but the actual exception names to import from Pyrogram
 follow the usual *PascalCase* convention.
 
 .. code-block:: python
 
-    from hydrogram.errors import FloodWait
+    from pyrogram.errors import FloodWait
 
     try:
         ...

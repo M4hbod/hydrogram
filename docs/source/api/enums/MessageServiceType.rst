@@ -1,7 +1,7 @@
 MessageServiceType
 ==================
 
-.. autoclass:: hydrogram.enums.MessageServiceType()
+.. autoclass:: pyrogram.enums.MessageServiceType()
     :members:
 
 .. raw:: html

@@ -1,14 +1,14 @@
 Speedups
 ========
 
-Hydrogram's speed can be boosted up by using TgCrypto and uvloop.
+Pyrogram's speed can be boosted up by using TgCrypto and uvloop.
 
 -----
 
 TgCrypto
 --------
 
-TgCrypto_ is a high-performance, easy-to-install cryptography library specifically written in C for Hydrogram as a Python
+TgCrypto_ is a high-performance, easy-to-install cryptography library specifically written in C for Pyrogram as a Python
 extension. It is a replacement for a slower Python-only alternative and implements the cryptographic algorithms Telegram
 requires, namely: AES-256-IGE, AES-256-CTR and AES-256-CBC.
 
@@ -22,7 +22,7 @@ Installation
 Usage
 ^^^^^
 
-Hydrogram will automatically make use of TgCrypto when detected, all you need to do is to install it.
+Pyrogram will automatically make use of TgCrypto when detected, all you need to do is to install it.
 
 uvloop
 ------
@@ -47,7 +47,7 @@ Call ``uvloop.install()`` before calling ``asyncio.run()`` or ``app.run()``.
     import asyncio
     import uvloop
 
-    from hydrogram import Client
+    from pyrogram import Client
 
 
     async def main():
@@ -65,7 +65,7 @@ The ``uvloop.install()`` call also needs to be placed before creating a Client i
 .. code-block:: python
 
     import uvloop
-    from hydrogram import Client
+    from pyrogram import Client
 
     uvloop.install()
 

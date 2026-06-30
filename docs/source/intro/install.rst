@@ -1,25 +1,25 @@
 Install Guide
 =============
 
-Being a modern Python framework, Hydrogram requires an up to date version of Python to be installed in your system.
+Being a modern Python framework, Pyrogram requires an up to date version of Python to be installed in your system.
 We recommend using the latest versions of both Python 3 and pip.
 
 -----
 
-Install Hydrogram
+Install Pyrogram
 -----------------
 
--   The easiest way to install and upgrade Hydrogram to its latest stable version is by using **pip**:
+-   The easiest way to install and upgrade Pyrogram to its latest stable version is by using **pip**:
 
     .. code-block:: text
 
-        $ pip3 install -U hydrogram
+        $ pip3 install -U pyrogram
 
 -   or, with :doc:`TgCrypto and uvloop <../topics/speedups>` as extra requirements (recommended for better performance):
 
     .. code-block:: text
 
-        $ pip3 install -U "hydrogram[fast]"
+        $ pip3 install -U "pyrogram[fast]"
 
 Bleeding Edge
 -------------
@@ -33,18 +33,18 @@ You can install the development version using this command:
 
 .. code-block:: text
 
-    $ pip3 install -U https://github.com/hydrogram/hydrogram/archive/dev.zip
+    $ pip3 install -U https://github.com/pyrogram/pyrogram/archive/dev.zip
 
 Verifying
 ---------
 
-To verify that Hydrogram is correctly installed, open a Python shell and import it.
+To verify that Pyrogram is correctly installed, open a Python shell and import it.
 If no error shows up you are good to go.
 
 .. parsed-literal::
 
-    >>> import hydrogram
-    >>> hydrogram.__version__
+    >>> import pyrogram
+    >>> pyrogram.__version__
     'x.y.z'
 
-.. _`Github repo`: http://github.com/hydrogram/hydrogram
+.. _`Github repo`: http://github.com/pyrogram/pyrogram
