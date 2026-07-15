@@ -92,7 +92,13 @@ class ChatBackground(Object):
     def _parse(
         client,
         wallpaper: raw.types.Wallpaper,
-    ) -> ChatBackground:
+    ) -> ChatBackground | None:
+        # A chat can set a document-less background (WallPaperNoFile: a solid
+        # colour / gradient with only settings, no file). There's nothing to build
+        # a downloadable ChatBackground from, so skip it instead of crashing on the
+        # missing `.document`.
+        if getattr(wallpaper, "document", None) is None:
+            return None
         return ChatBackground(
             file_id=FileId(
                 dc_id=wallpaper.document.dc_id,
