@@ -88,7 +88,11 @@ class EditMessageMedia:
         if caption is not None:
             message, entities = (await self.parser.parse(caption, parse_mode)).values()
 
-        if file_name is None and not isinstance(media.media, io.BytesIO) and Path(media.media).is_file():
+        if (
+            file_name is None
+            and not isinstance(media.media, io.BytesIO)
+            and Path(media.media).is_file()
+        ):
             file_name = Path(media.media).name
 
         if isinstance(media, types.InputMediaPhoto):

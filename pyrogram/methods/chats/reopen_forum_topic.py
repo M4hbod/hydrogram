@@ -23,9 +23,7 @@ from pyrogram import raw
 
 
 class ReopenForumTopic:
-    async def reopen_forum_topic(
-        self: pyrogram.Client, chat_id: int | str, topic_id: int
-    ) -> bool:
+    async def reopen_forum_topic(self: pyrogram.Client, chat_id: int | str, topic_id: int) -> bool:
         """Reopen a forum topic.
 
         .. include:: /_includes/usable-by/users-bots.rst
