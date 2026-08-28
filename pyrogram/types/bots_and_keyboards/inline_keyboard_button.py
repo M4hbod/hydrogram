@@ -219,6 +219,7 @@ class InlineKeyboardButton(Object):
             return self.login_url.write(
                 text=self.text,
                 bot=await client.resolve_peer(self.login_url.bot_username or "self"),
+                style=style,
             )
 
         if self.user_id is not None:
