@@ -23,10 +23,12 @@ from .bots import Bots
 from .chats import Chats
 from .contacts import Contacts
 from .decorators import Decorators
+from .folders import Folders
 from .invite_links import InviteLinks
 from .messages import Messages
 from .password import Password
 from .phone import Phone
+from .premium import Premium
 from .pyromod import Pyromod
 from .users import Users
 from .utilities import Utilities
@@ -46,5 +48,7 @@ class Methods(
     Utilities,
     InviteLinks,
     Phone,
+    Premium,
+    Folders,
 ):
     pass

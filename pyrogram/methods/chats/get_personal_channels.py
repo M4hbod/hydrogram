@@ -17,24 +17,28 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .add_contact import AddContact
-from .delete_contacts import DeleteContacts
-from .get_blocked_message_senders import GetBlockedMessageSenders
-from .get_contacts import GetContacts
-from .get_contacts_count import GetContactsCount
-from .import_contacts import ImportContacts
-from .search_contacts import SearchContacts
-from .set_contact_note import SetContactNote
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw, types
 
 
-class Contacts(
-    GetContacts,
-    DeleteContacts,
-    ImportContacts,
-    GetContactsCount,
-    AddContact,
-    GetBlockedMessageSenders,
-    SearchContacts,
-    SetContactNote,
-):
-    pass
+class GetPersonalChannels:
+    async def get_personal_channels(self: pyrogram.Client) -> list[types.Chat] | None:
+        """Get all your public channels.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Returns:
+            List of :obj:`~pyrogram.types.Chat` | ``None``: On success, a list of personal channels is
+            returned, otherwise, in case there is no personal channel, None is returned.
+
+        Example:
+            .. code-block:: python
+
+                # Get all your personal channels
+                await app.get_personal_channels()
+        """
+        r = await self.invoke(raw.functions.channels.GetAdminedPublicChannels(for_personal=True))
+
+        return types.List([types.Chat._parse_chat(self, i) for i in r.chats]) or None

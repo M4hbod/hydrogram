@@ -17,24 +17,40 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .add_contact import AddContact
-from .delete_contacts import DeleteContacts
-from .get_blocked_message_senders import GetBlockedMessageSenders
-from .get_contacts import GetContacts
-from .get_contacts_count import GetContactsCount
-from .import_contacts import ImportContacts
-from .search_contacts import SearchContacts
-from .set_contact_note import SetContactNote
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw, types
 
 
-class Contacts(
-    GetContacts,
-    DeleteContacts,
-    ImportContacts,
-    GetContactsCount,
-    AddContact,
-    GetBlockedMessageSenders,
-    SearchContacts,
-    SetContactNote,
-):
-    pass
+class GetBoosts:
+    async def get_boosts(
+        self: pyrogram.Client,
+    ) -> bool:
+        """Get your boosts list
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Returns:
+            List of :obj:`~pyrogram.types.MyBoost`: On success.
+
+        Example:
+            .. code-block:: python
+
+                # get boosts list
+                await app.get_boosts()
+        """
+        r = await self.invoke(raw.functions.premium.GetMyBoosts())
+
+        users = {i.id: i for i in r.users}
+        chats = {i.id: i for i in r.chats}
+
+        return await types.List(
+            types.MyBoost._parse(
+                self,
+                boost,
+                users,
+                chats,
+            )
+            for boost in r.my_boosts
+        )

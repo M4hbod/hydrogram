@@ -17,24 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .add_contact import AddContact
-from .delete_contacts import DeleteContacts
-from .get_blocked_message_senders import GetBlockedMessageSenders
-from .get_contacts import GetContacts
-from .get_contacts_count import GetContactsCount
-from .import_contacts import ImportContacts
-from .search_contacts import SearchContacts
-from .set_contact_note import SetContactNote
+from __future__ import annotations
+
+from .check_chat_folder_invite_link import CheckChatFolderInviteLink
 
 
-class Contacts(
-    GetContacts,
-    DeleteContacts,
-    ImportContacts,
-    GetContactsCount,
-    AddContact,
-    GetBlockedMessageSenders,
-    SearchContacts,
-    SetContactNote,
-):
+class Folders(CheckChatFolderInviteLink):
     pass

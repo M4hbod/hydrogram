@@ -17,24 +17,29 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .add_contact import AddContact
-from .delete_contacts import DeleteContacts
-from .get_blocked_message_senders import GetBlockedMessageSenders
-from .get_contacts import GetContacts
-from .get_contacts_count import GetContactsCount
-from .import_contacts import ImportContacts
-from .search_contacts import SearchContacts
-from .set_contact_note import SetContactNote
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw
 
 
-class Contacts(
-    GetContacts,
-    DeleteContacts,
-    ImportContacts,
-    GetContactsCount,
-    AddContact,
-    GetBlockedMessageSenders,
-    SearchContacts,
-    SetContactNote,
-):
-    pass
+class SetUpgradedGiftColors:
+    async def set_upgraded_gift_colors(
+        self: pyrogram.Client, upgraded_gift_colors_id: int
+    ) -> bool:
+        """Changes color scheme for the current user based on an owned or a hosted upgraded gift.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Parameters:
+            upgraded_gift_colors_id (``int``):
+                Identifier of the color scheme to use.
+
+        Returns:
+            ``bool``: On success, True is returned.
+        """
+        return await self.invoke(
+            raw.functions.account.UpdateColor(
+                color=raw.types.InputPeerColorCollectible(collectible_id=upgraded_gift_colors_id)
+            )
+        )

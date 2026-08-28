@@ -18,8 +18,14 @@
 
 from .create_video_chat import CreateVideoChat
 from .discard_group_call import DiscardGroupCall
+from .get_call_members import GetCallMembers
 from .invite_group_call_members import InviteGroupCallMembers
 
 
-class Phone(CreateVideoChat, DiscardGroupCall, InviteGroupCallMembers):
+class Phone(
+    CreateVideoChat,
+    DiscardGroupCall,
+    InviteGroupCallMembers,
+    GetCallMembers,
+):
     pass

@@ -17,24 +17,31 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .add_contact import AddContact
-from .delete_contacts import DeleteContacts
-from .get_blocked_message_senders import GetBlockedMessageSenders
-from .get_contacts import GetContacts
-from .get_contacts_count import GetContactsCount
-from .import_contacts import ImportContacts
-from .search_contacts import SearchContacts
-from .set_contact_note import SetContactNote
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw
 
 
-class Contacts(
-    GetContacts,
-    DeleteContacts,
-    ImportContacts,
-    GetContactsCount,
-    AddContact,
-    GetBlockedMessageSenders,
-    SearchContacts,
-    SetContactNote,
-):
-    pass
+class ToggleFolderTags:
+    async def toggle_folder_tags(self: pyrogram.Client, are_tags_enabled: bool) -> bool:
+        """Toggles whether chat folder tags are enabled.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Parameters:
+            are_tags_enabled (``bool``):
+                Pass True to enable folder tags.
+                Pass False to disable them.
+
+        Returns:
+            ``bool``: On success, True is returned.
+
+        Example:
+            .. code-block:: python
+
+                await app.toggle_folder_tags(True)
+        """
+        return await self.invoke(
+            raw.functions.messages.ToggleDialogFilterTags(enabled=are_tags_enabled)
+        )
