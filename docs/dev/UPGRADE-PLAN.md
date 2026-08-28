@@ -217,7 +217,24 @@ as constructor parameters too, along with `requires_password`.
 **Exit criteria met:** layer 229 compiled, 1266 tests green, coverage 54 %, and the keyboard tests
 cover every button kind against write, read and style/custom-emoji preservation.
 
-**Not done:** a live smoke-run against Telegram. Nothing here has touched a real account.
+**Live smoke-run (2026-08-28).** Done, against production Telegram, with a user session and a
+bot:
+
+- Layer 229 negotiates and authorises; `get_me`, `send_message`, `get_chat_history` all work.
+- `message.date` comes back timezone-aware UTC, and `date > zero_datetime()` returns `True` rather
+  than raising — the fix in `699e609c` confirmed on a real message.
+- **Keyboard write path**: a bot sent all eight modellable button kinds (`callback_data`, `url`,
+  `switch_inline_query`, `switch_inline_query_current_chat`, `copy_text`, `web_app`, `user_id`,
+  `disabled`) and read every one back intact, with `style=DANGER` preserved on all eight.
+- **Keyboard read path**: a keyboard produced by Telegram's own Bot API parsed correctly through
+  the layer-229 `InlineButtonType` dispatch, `copy_text` included — a kind that had no `read()`
+  branch before stage 2 and would previously have vanished from the parsed markup.
+- Two documentation errors found and corrected: `style` does **not** require Premium (it worked
+  from a non-Premium bot owner), and `icon_custom_emoji_id` is accepted and then silently dropped
+  by the server, with no error, when it will not be honoured.
+
+Not covered live: `login_url` (needs a configured domain), `pay` (needs an invoice), `callback_game`
+(needs a registered game), and the forum-topic namespace migration (needs a forum supergroup).
 
 ---
 

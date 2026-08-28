@@ -90,12 +90,18 @@ class InlineKeyboardButton(Object):
             is sent to the bot.
 
         style (:obj:`~pyrogram.enums.ButtonStyle`, *optional*):
-            Background style of the button (default, primary, danger, success). Requires the bot
-            owner to have Telegram Premium.
+            Background style of the button (default, primary, danger, success).
+            Verified working against production Telegram from a bot whose owner does **not** have
+            Premium, so it carries no such requirement.
 
         icon_custom_emoji_id (``str``, *optional*):
-            Unique identifier of a custom emoji shown as an icon before the button text. Requires the
-            bot owner to have Telegram Premium.
+            Unique identifier of a custom emoji shown as an icon before the button text.
+
+            **The server drops this silently when it will not honour it.** Sending a button with an
+            icon from a bot whose owner lacks Telegram Premium succeeds, and the button comes back
+            with ``icon_custom_emoji_id`` set to ``None`` -- no error, no warning. Confirmed against
+            production with a genuine custom emoji document id, so read the value back if you need
+            to know whether it took.
     """
 
     def __init__(
