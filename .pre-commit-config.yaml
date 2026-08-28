@@ -25,3 +25,16 @@ repos:
       - id: ruff-check
         args: [--fix, --ignore=E501, --unsafe-fixes, --exit-non-zero-on-fix]
       - id: ruff-format
+
+  # Tests run on push, not on commit: commits stay fast, but nothing broken
+  # reaches the remote. Install with `pre-commit install --hook-type pre-push`
+  # (`make dev-setup` does it for you).
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (unit + contract)
+        entry: uv run pytest -q -m "not integration"
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

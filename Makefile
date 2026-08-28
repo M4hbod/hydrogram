@@ -10,9 +10,23 @@ DOCS_BUILD = $(DOCS_DIR)/build
 API_DIRS = $(PYROGRAM_DIR)/errors/exceptions $(PYROGRAM_DIR)/raw/all.py $(PYROGRAM_DIR)/raw/base $(PYROGRAM_DIR)/raw/functions $(PYROGRAM_DIR)/raw/types
 DOCS_API_DIRS = $(DOCS_SOURCE)/api/bound-methods $(DOCS_SOURCE)/api/methods $(DOCS_SOURCE)/api/types $(DOCS_SOURCE)/telegram
 
-.PHONY: all clean clean-api clean-docs api api-raw api-errors docs docs-compile docs-serve live-docs towncrier towncrier-draft dev-tools check-api-schema generate-docs-json compare-bot-api cherry-pick-pyro help
+.PHONY: all clean clean-api clean-docs api api-raw api-errors docs docs-compile docs-serve live-docs towncrier towncrier-draft dev-tools dev-setup test test-cov check-api-schema generate-docs-json compare-bot-api cherry-pick-pyro sync-upstream sync-upstream-check help
 
 all: api docs
+
+dev-setup:
+	@echo "Installing dependencies..."
+	@uv sync --all-extras --dev
+	@echo "Installing git hooks..."
+	@uv run pre-commit install
+	@uv run pre-commit install --hook-type pre-push
+	@echo "Ready. Style runs on commit, tests run on push."
+
+test:
+	@uv run pytest -q -m "not integration"
+
+test-cov:
+	@uv run pytest -m "not integration" --cov --cov-report=term-missing --cov-report=xml
 
 clean: clean-api clean-docs
 	@echo "All directories cleaned successfully"
@@ -62,6 +76,14 @@ check-api-schema:
 	@echo "Checking Telegram API schema for updates..."
 	@$(PYTHON) dev_tools/check_api_schema_updates.py
 
+sync-upstream:
+	@echo "Replaying unsynced upstream commits with the namespace rename applied..."
+	@$(PYTHON) dev_tools/sync_upstream.py
+
+sync-upstream-check:
+	@echo "Checking upstream for unsynced commits..."
+	@$(PYTHON) dev_tools/sync_upstream.py --check
+
 generate-docs-json:
 	@echo "Generating API documentation JSON..."
 	@$(PYTHON) dev_tools/generate_docs_json.py
@@ -76,6 +98,9 @@ cherry-pick-pyro:
 
 help:
 	@echo "Available targets:"
+	@echo "  dev-setup      : Install dependencies and git hooks (run this first)"
+	@echo "  test           : Run unit + contract tests"
+	@echo "  test-cov       : Run tests with a coverage report"
 	@echo "  all            : Compile API and documentation"
 	@echo "  clean          : Remove all generated files"
 	@echo "  api            : Compile all API components"
@@ -84,6 +109,8 @@ help:
 	@echo "  towncrier      : Generate release notes"
 	@echo "  towncrier-draft: Generate draft release notes"
 	@echo "  check-api-schema: Check Telegram API schema for updates"
+	@echo "  sync-upstream  : Replay upstream commits onto dev with the rename applied"
+	@echo "  sync-upstream-check: Report unsynced upstream commits without applying them"
 	@echo "  generate-docs-json: Generate API documentation JSON"
 	@echo "  compare-bot-api: Compare implementation against Bot API"
 	@echo "  cherry-pick-pyro: Cherry-pick code from Pyrogram (usage: make cherry-pick-pyro TYPE=<pr|branch|commit> ID=<number|name|hash>)"

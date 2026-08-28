@@ -205,11 +205,18 @@ def main() -> int:
     Main function to check for and apply schema updates.
 
     Returns:
-        int: Exit code (0: update applied, 1: error, 2: no update needed)
+        int: Exit code. Without --check: 0 update applied, 1 error, 2 no update needed.
+            With --check: 0 in sync, 1 drift detected or error. The --check convention matches
+            dev_tools/sync_upstream.py, so a scheduled CI job goes red when there is drift.
     """
     parser = argparse.ArgumentParser(description="Check for updates to the Telegram API schema")
     parser.add_argument(
         "--force-update", action="store_true", help="Force update even if no changes detected"
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="report drift without writing the schema; exit 1 if the local layer is behind",
     )
     args = parser.parse_args()
 
@@ -218,6 +225,18 @@ def main() -> int:
 
     if not schema_data:
         logger.error("Failed to fetch schema data")
+        return 1
+
+    if args.check:
+        if current_hash == schema_data["hash"]:
+            logger.info("Schema is up to date. Current layer: %s", get_current_layer())
+            return 0
+        logger.warning(
+            "Schema drift: local layer %s, Telegram layer %s. Run `make check-api-schema` to "
+            "update, then `make api` and run the tests.",
+            get_current_layer(),
+            schema_data["layer"],
+        )
         return 1
 
     if args.force_update or current_hash != schema_data["hash"]:

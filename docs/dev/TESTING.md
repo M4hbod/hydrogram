@@ -153,8 +153,8 @@ highest-value class of breakage.
 ## CI
 
 `.github/workflows/python.yml` runs `make api` then `uv run pytest` on
-{ubuntu, macos} × py3.9–3.13. It has not produced a successful run since 2026-04-10 — getting it
-green again is stage-0 work. Extend it to:
+{ubuntu, macos} × py3.9–3.13, and has passed on every push. `code-style.yml` was failing on 5
+unformatted files until `77b0dc1d`. Extend them to:
 
 1. run `pytest -m "not integration"` explicitly,
 2. upload coverage,

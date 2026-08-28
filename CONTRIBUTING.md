@@ -73,36 +73,41 @@ cd pyrogram
 git remote add upstream https://github.com/pyrogram/pyrogram
 ```
 
-5. Install dependencies:
+5. Install dependencies and hooks:
 
-Pyrogram uses and recommends [uv](https://docs.astral.sh/uv/) for managing virtual environmens and dependencies.
+Pyrogram uses and recommends [uv](https://docs.astral.sh/uv/) for managing virtual environments and dependencies.
 
 ```bash
-uv sync --all-extras
+make dev-setup
 ```
+
+That is the whole setup. It runs `uv sync --all-extras --dev` and installs both git hooks
+(`pre-commit` and `pre-push`).
 
 > We use `--all-extras` to install all the optional dependencies, which are required to run the tests and build the documentation.
 
-6. Install pre-commit hooks:
-
-[Pre-commit](https://pre-commit.com/) is a tool that runs various checks before you make a commit. It helps you avoid committing any errors or warnings that might break your code or violate the coding standards.
+If you prefer to do it by hand:
 
 ```bash
-pre-commit install
+uv sync --all-extras --dev
+uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
 ```
 
 ### Format the code (code-style)
 
-Pyrogram uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting the code to maintain it consistent and clean. You should [install](https://docs.astral.sh/ruff/installation/) and run Ruff on your code before committing:
+**Do not run Ruff by hand.** [Pre-commit](https://pre-commit.com/) runs
+[Ruff](https://docs.astral.sh/ruff/) lint and format on every commit, along with a few
+correctness checks (merge-conflict markers, private keys, trailing whitespace, TOML/YAML
+validity, NEWS fragment naming). If `make dev-setup` has been run, this is automatic and there
+is nothing to remember.
+
+The unit and contract tests run on `git push`, not on commit, so commits stay fast.
+
+To sweep the whole tree — for example after a large port — run:
 
 ```bash
-ruff check .
-```
-
-However, you can also rely on [pre-commit](https://pre-commit.com/) for it:
-
-```bash
-pre-commit run --run-all-files
+uv run pre-commit run --all-files
 ```
 
 ### Run tests

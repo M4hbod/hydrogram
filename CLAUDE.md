@@ -81,6 +81,8 @@ make check-api-schema          # diff local TL against Telegram's published sche
   Kurigram at layer 229 has 407 / 308 / 44.
 - Test suite: 39 tests across 3 files. This is the first thing being fixed.
 - Pre-commit hook installed 2026-08-28; it reformatted 5 files that had been failing
-  `code-style.yml` on `dev`. No commit since 2026-04-10 had been CI-verified.
+  `code-style.yml`. The `Pyrogram` test workflow has been green on every push throughout.
+- When checking CI, always pass `-R M4hbod/hydrogram` to `gh` — with two remotes it resolves to
+  `hydrogram/hydrogram` and reports upstream's failures as if they were ours.
 - `make api` on Kurigram's layer-229 TL was verified to compile and import cleanly with this
   repo's compiler; only 19 high-level `raw.*` references break. See `docs/dev/UPGRADE-PLAN.md`.

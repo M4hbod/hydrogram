@@ -42,12 +42,15 @@ compiler:
    exist in Kurigram and not here: gifts/stars (44 methods), stories (21), business (5), payments,
    folders, checklists, suggested posts, web apps, privacy/account settings.
 
-6. **Nothing has been CI-verified since 2026-04-10.** The last successful `Check style` run on
-   `origin` is `edb10c60` (an upstream commit). None of the local work — the rename stack, the
-   keyboard feature, the `WallPaperNoFile` fix — has been through CI, and `dev` was in fact
-   failing `ruff format --check` on 5 files until 2026-08-28. Only the daily
-   `Check MTProto API Schema Updates` job has been running, and it has been failing every day.
-   Restoring a green pipeline is stage-0 work, not stage-6 polish.
+6. **CI runs on the fork and is half-green.** Measured on `M4hbod/hydrogram`, not upstream:
+   the `Pyrogram` workflow (`python.yml`, `make api` + `pytest`) has **passed on every push**,
+   including `fe2caeff` on 2026-08-28. The `Check style` workflow has **failed on every push**
+   since the rename stack landed, for one reason — `5 files would be reformatted, 466 files
+   already formatted`, the same 5 files `77b0dc1d` has now fixed. That commit should turn it
+   green.
+   (The daily `Check MTProto API Schema Updates` failures belong to **upstream**
+   `hydrogram/hydrogram`, not to this fork; `gh` resolves to upstream unless `-R` is passed.)
+   So stage-0 CI work is *extension*, not resurrection.
 
 Conclusion: **the layer bump is a day. The surface catch-up is the project.** Staging below
 reflects that.
@@ -94,9 +97,9 @@ Kurigram replaced `reply_to_message_id`/`quote_text` with `reply_parameters`, an
   is picked up — it is recorded, not scheduled.
 
 **Q4. Does CI matter?**
-- *Decision (owner, 2026-08-28):* **yes, get it green and extend it.** Restoring the pipeline is
-  stage-0 work, and stage 1 adds the coverage gate, a `windows-latest` leg and the scheduled schema
-  drift check.
+- *Decision (owner, 2026-08-28):* **yes, get it green and extend it.** The one red check is fixed
+  by `77b0dc1d`; stage 0 adds the coverage gate, a `windows-latest` leg and a scheduled schema
+  drift check of our own.
 
 ## Stages
 
@@ -104,53 +107,58 @@ Each stage has a hard exit criterion. Do not start stage N+1 until stage N's cri
 **This round ends after stage 2** (Q3). Stages 3-6 are kept here as the standing plan, not as
 committed work.
 
-### Stage 0 — make upstream syncable again (small, unblocks everything)
+### Stage 0 — tooling — **DONE 2026-08-28**
 
-`dev` is `pyrogram`-namespaced; `upstream/dev` is `hydrogram`-namespaced. `git merge upstream/dev`
-now conflicts on essentially every file. Upstream is slow (8 commits in the last 180 days) but not
-dead — `edb10c60` (session race condition) is a real fix we took, and there will be more.
+`dev` is `pyrogram`-namespaced; `upstream/dev` is `hydrogram`-namespaced, so `git merge
+upstream/dev` conflicts on essentially every file. Upstream is slow (8 commits in the last 180
+days) but not dead — `edb10c60` was a real session fix we took.
 
-Build `dev_tools/sync_upstream.py`:
+**What shipped:**
 
-1. `git fetch upstream`
-2. Read the last synced upstream SHA from `dev_tools/.upstream-sync` (seed it with `edb10c60`).
-3. For each new upstream commit, `git format-patch` it, rewrite the patch text through the same
-   rename map used by `868507da` (`hydrogram` → `pyrogram`, `Hydrogram` → `Pyrogram`,
-   `hydrogram.org` → `pyrogram.org`, `HydrogramNews` → `PyrogramNews`, and the file paths
-   `hydrogram/...` → `pyrogram/...`), then `git am` it.
-4. On conflict, stop and report the commit — never auto-resolve.
-5. Record the new SHA.
+1. **`dev_tools/sync_upstream.py`** — replays upstream commits as rewritten patches.
+   `git format-patch` → case-preserving `hydrogram`→`pyrogram` substitution → `git am --3way`,
+   recording the last synced SHA in `dev_tools/.upstream-sync` and folding that update into the
+   replayed commit. `--check` (exit 1 on drift), `--dry-run`, `--limit`, `--no-fetch` and
+   `--upstream-ref` for testing. Conflicts stop the run and leave the rewritten patch on disk.
 
-Two details that must be encoded in the script, not remembered:
+   Two guards are encoded rather than remembered: `pyrogram/emoji.py` cannot be deleted, and a
+   `__version__` bump cannot drag us under the `py-tgcalls` floor.
 
-- **Do not let a sync revert the version pin.** `__version__` is `2.0.106` on purpose
-  (`py-tgcalls>=2.3` requires `pyrogram>=1.2.20` and reads `__version__`). If an upstream commit
-  touches `pyrogram/__init__.py`'s version line, drop that hunk and log it.
-- **Do not let a sync delete `pyrogram/emoji.py`.** It has no upstream counterpart.
+   **The version guard took two attempts, and the reason is worth keeping.** Rewriting the
+   version change into a *context* line keeps the hunk line counts valid but makes the patch fail
+   anyway — upstream's context reads `0.2.1.dev` and our file reads `2.0.106`, so the context
+   assertion fails. Applying first and restoring afterwards fails too: with `--3way` the version
+   line is a genuine three-way conflict (base `0.2.1.dev`, ours `2.0.106`, theirs the new value)
+   and `git am` stops before anything can be restored. What works is dropping the **whole file
+   chunk** for `pyrogram/__init__.py` when its only change is the version line — no line-count
+   arithmetic, no context to mismatch. A chunk that changes anything else is kept, and the
+   conflict is left for a human.
 
-Also add `make sync-upstream` and a CI job that runs the script in dry-run mode weekly and opens an
-issue when upstream has unsynced commits.
+   Verified end to end against a synthetic upstream commit that touched both `hydrogram/utils.py`
+   and `__version__`: the rename applied, the probe function landed as `pyrogram`, the pin held at
+   `2.0.106`, and the state file advanced.
 
-**Also in stage 0 — make the local checks automatic.** `.pre-commit-config.yaml` already wires
-`ruff-check --fix`, `ruff-format`, `detect-private-key`, `end-of-file-fixer`, `check-toml`,
-`check-yaml` and the NEWS-fragment name check. It had simply never been installed as a git hook, so
-none of it ran. `pre-commit install` was run on 2026-08-28 and immediately reformatted 5 files that
-had been sitting unformatted on `dev` (`pyrogram/emoji.py` plus four rename-commit leftovers) —
-i.e. `dev` was failing its own `code-style.yml` gate. With the hook installed, `ruff format` and
-`ruff check` no longer need to be run by hand; they run on every commit.
+2. **Hooks in the setup path.** `make dev-setup` installs dependencies and both git hooks.
+   `pre-commit` runs style on commit; a new `pre-push` stage runs `pytest -m "not integration"`,
+   so commits stay fast but nothing broken reaches the remote. `CONTRIBUTING.md` now says not to
+   run Ruff by hand.
 
-Remaining stage-0 work on top of that:
+3. **CI.** `code-style.yml` now runs `pre-commit run --all-files`, so CI and the local hook cannot
+   disagree about what "clean" means. `python.yml` gains a `windows-latest` leg (trimmed to the
+   ends of the Python range) and a coverage job, and calls the compiler directly rather than
+   through `make`, which Windows runners do not have. A new `drift.yml` asks weekly whether
+   Telegram has published a newer TL layer or upstream has unsynced commits; both checks report
+   and exit 1 without writing anything.
 
-- Add `pre-commit install` to the setup path (`make dev-setup`, and a line in `CONTRIBUTING.md`)
-  so a fresh clone is never in the state `dev` was just in.
-- Add a `pre-push` stage running `pytest -m "not integration"`, so a broken commit cannot reach
-  `origin`. Keep it off the commit stage — commits should stay fast.
-- Add the stage-1 `raw`-reference check as a local pre-commit hook once it exists; it is fast and
-  catches the highest-value class of breakage.
-- Pin `rev:` bumps through `pre-commit autoupdate`, not by hand.
+4. **Supporting fixes.** `dev_tools/check_api_schema_updates.py` gained `--check` — it previously
+   had no read-only mode and rewrote the schema as a side effect of "checking". `requests` was
+   used by `dev_tools/` but only present transitively; it is now declared. `[tool.uv]
+   dev-dependencies` moved to `[dependency-groups]`, silencing a deprecation warning on every uv
+   invocation. `.coveragerc` added.
 
-**Exit:** `make sync-upstream` replays every unsynced upstream commit onto `dev` with the rename
-applied, `pytest` green afterwards, and the version pin plus `emoji.py` intact.
+**Exit criteria met:** `make sync-upstream-check` reports cleanly against the real remote, the
+replay path is verified against a synthetic commit, both hooks are installed, and the style
+pipeline is green.
 
 ### Stage 1 — the regression net (the "future-proof" stage)
 

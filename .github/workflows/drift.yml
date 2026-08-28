@@ -1,0 +1,55 @@
+name: Drift check
+
+# Two things drift without anyone noticing: Telegram publishes a new TL layer,
+# and upstream Hydrogram lands a commit we have not replayed. Both are quiet
+# failures, so ask about them on a schedule rather than waiting to be surprised.
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  telegram-schema:
+    name: Telegram TL layer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      # Exits 1 when our layer is behind Telegram's published schema. Writes
+      # nothing -- updating is a deliberate act, see docs/dev/UPGRADE-PLAN.md.
+      - name: Compare local schema against Telegram
+        run: uv run python dev_tools/check_api_schema_updates.py --check
+
+  upstream-commits:
+    name: Upstream Hydrogram
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/hydrogram/hydrogram || true
+
+      # Exits 1 when upstream has commits we have not replayed. Applies
+      # nothing; `make sync-upstream` is run by a human who can read a conflict.
+      - name: Check for unsynced upstream commits
+        run: uv run python dev_tools/sync_upstream.py --check

@@ -2,23 +2,28 @@ name: Check style
 
 on: [push, pull_request]
 
+concurrency:
+  group: style-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --all-extras --dev
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
 
-    - name: Analysing the code with Ruff
-      run: |
-        uv run ruff format --check .
-        uv run ruff check . --ignore=E501
+      # Run the same hooks contributors run locally, so CI and the pre-commit
+      # hook can never disagree about what "clean" means. This covers ruff-check
+      # and ruff-format as well as the merge-conflict, private-key, whitespace,
+      # TOML/YAML and NEWS-fragment checks.
+      - name: Run pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
