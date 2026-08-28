@@ -41,8 +41,8 @@ class ReopenGeneralTopic:
                 await app.reopen_general_topic(chat_id, topic_id)
         """
         await self.invoke(
-            raw.functions.channels.EditForumTopic(
-                channel=await self.resolve_peer(chat_id), topic_id=1, closed=False
+            raw.functions.messages.EditForumTopic(
+                peer=await self.resolve_peer(chat_id), topic_id=1, closed=False
             )
         )
         return True

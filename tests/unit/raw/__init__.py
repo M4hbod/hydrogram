@@ -1,4 +1,5 @@
 #  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2017-2023 Dan <https://github.com/delivrance>
 #  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
 #  This file is part of Pyrogram.
@@ -15,34 +16,3 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
-
-from __future__ import annotations
-
-import pyrogram
-from pyrogram import raw
-
-
-class CloseGeneralTopic:
-    async def close_general_topic(self: pyrogram.Client, chat_id: int | str) -> bool:
-        """Close a forum topic.
-
-        .. include:: /_includes/usable-by/users-bots.rst
-
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
-
-        Returns:
-            `bool`: On success, a True is returned.
-
-        Example:
-            .. code-block:: python
-
-                await app.close_general_topic(chat_id)
-        """
-        await self.invoke(
-            raw.functions.messages.EditForumTopic(
-                peer=await self.resolve_peer(chat_id), topic_id=1, closed=True
-            )
-        )
-        return True

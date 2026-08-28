@@ -18,7 +18,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from pyrogram import filters
-from tests.filters import Client, Message
+from tests.unit.filters import Client, Message
 
 c = Client()
 

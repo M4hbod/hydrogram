@@ -41,8 +41,8 @@ class HideGeneralTopic:
                 await app.hide_general_topic(chat_id)
         """
         await self.invoke(
-            raw.functions.channels.EditForumTopic(
-                channel=await self.resolve_peer(chat_id), topic_id=1, hidden=True
+            raw.functions.messages.EditForumTopic(
+                peer=await self.resolve_peer(chat_id), topic_id=1, hidden=True
             )
         )
         return True

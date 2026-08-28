@@ -1,4 +1,5 @@
 #  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2017-2023 Dan <https://github.com/delivrance>
 #  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
 #  This file is part of Pyrogram.
@@ -18,31 +19,27 @@
 
 from __future__ import annotations
 
-import pyrogram
-from pyrogram import raw
+from datetime import datetime, timezone
+
+import pytest
+
+from pyrogram import utils
 
 
-class UnhideGeneralTopic:
-    async def unhide_general_topic(self: pyrogram.Client, chat_id: int | str) -> bool:
-        """unhide a general forum topic.
+def test_zero_datetime_is_the_epoch_in_utc():
+    assert utils.zero_datetime() == datetime.fromtimestamp(0, timezone.utc)
 
-        .. include:: /_includes/usable-by/users-bots.rst
 
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
+@pytest.mark.parametrize("timestamp", [1, 1000000, 2**31 - 1])
+def test_timestamp_round_trip(timestamp):
+    assert utils.datetime_to_timestamp(utils.timestamp_to_datetime(timestamp)) == timestamp
 
-        Returns:
-            `bool`: On success, a True is returned.
 
-        Example:
-            .. code-block:: python
+@pytest.mark.parametrize("falsy", [None, 0])
+def test_falsy_timestamps_become_none(falsy):
+    """Telegram uses 0 for "never", which must not become 1970-01-01."""
+    assert utils.timestamp_to_datetime(falsy) is None
 
-                await app.unhide_general_topic(chat_id)
-        """
-        await self.invoke(
-            raw.functions.messages.EditForumTopic(
-                peer=await self.resolve_peer(chat_id), topic_id=1, hidden=False
-            )
-        )
-        return True
+
+def test_none_datetime_becomes_none():
+    assert utils.datetime_to_timestamp(None) is None

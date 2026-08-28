@@ -91,7 +91,7 @@ class ChatBackground(Object):
     @staticmethod
     def _parse(
         client,
-        wallpaper: raw.types.Wallpaper,
+        wallpaper: raw.types.WallPaper,
     ) -> ChatBackground | None:
         # A chat can set a document-less background (WallPaperNoFile: a solid
         # colour / gradient with only settings, no file). There's nothing to build

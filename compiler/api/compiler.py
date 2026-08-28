@@ -457,7 +457,13 @@ def start(format: bool = False):
                     sub_type = arg_type.split("<")[1][:-1]
 
                     write_types += "\n        "
-                    write_types += f"if self.{arg_name} is not None:\n            "
+                    # Truthiness, not `is not None`, and it has to match the flag calculation
+                    # above (`flags |= (1 << n) if self.x else 0`). read() gives an absent
+                    # optional vector `[]` rather than None, so guarding on `is not None` here
+                    # writes an empty Vector into the body while leaving its flag bit clear --
+                    # eight stray bytes that desynchronise every field after it as soon as a
+                    # deserialised object is serialised again.
+                    write_types += f"if self.{arg_name}:\n            "
                     write_types += f"b.write(Vector(self.{arg_name}{f', {sub_type.title()}' if sub_type in CORE_TYPES else ''}))\n        "
 
                     read_types += "\n        "

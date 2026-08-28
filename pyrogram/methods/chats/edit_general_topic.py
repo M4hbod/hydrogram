@@ -44,8 +44,8 @@ class EditGeneralTopic:
                 await app.edit_general_topic(chat_id, "New Topic Title")
         """
         await self.invoke(
-            raw.functions.channels.EditForumTopic(
-                channel=await self.resolve_peer(chat_id), topic_id=1, title=title
+            raw.functions.messages.EditForumTopic(
+                peer=await self.resolve_peer(chat_id), topic_id=1, title=title
             )
         )
         return True

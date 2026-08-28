@@ -1,4 +1,5 @@
 #  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2017-2023 Dan <https://github.com/delivrance>
 #  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
 #  This file is part of Pyrogram.
@@ -18,31 +19,27 @@
 
 from __future__ import annotations
 
-import pyrogram
-from pyrogram import raw
+import hashlib
+
+import pytest
+
+from pyrogram import utils
 
 
-class UnhideGeneralTopic:
-    async def unhide_general_topic(self: pyrogram.Client, chat_id: int | str) -> bool:
-        """unhide a general forum topic.
+@pytest.mark.parametrize("value", [0, 1, 255, 256, 2**64, 2**256 - 1])
+def test_itob_btoi_round_trip(value):
+    assert utils.btoi(utils.itob(value)) == value
 
-        .. include:: /_includes/usable-by/users-bots.rst
 
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
+def test_xor_is_its_own_inverse():
+    a, b = b"\x00\x0f\xf0\xff", b"\xaa\xbb\xcc\xdd"
+    assert utils.xor(utils.xor(a, b), b) == a
 
-        Returns:
-            `bool`: On success, a True is returned.
 
-        Example:
-            .. code-block:: python
+def test_xor_of_a_value_with_itself_is_zero():
+    a = bytes(range(32))
+    assert utils.xor(a, a) == bytes(32)
 
-                await app.unhide_general_topic(chat_id)
-        """
-        await self.invoke(
-            raw.functions.messages.EditForumTopic(
-                peer=await self.resolve_peer(chat_id), topic_id=1, hidden=False
-            )
-        )
-        return True
+
+def test_sha256_is_the_standard_digest():
+    assert utils.sha256(b"pyrogram") == hashlib.sha256(b"pyrogram").digest()

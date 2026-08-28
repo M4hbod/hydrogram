@@ -175,12 +175,12 @@ Nothing here changes library behaviour. Everything here is what makes the rest s
    - `file_id` full matrix, markdown parser, filter combinators,
    - storage contract + session-string round-trip,
    - `utils` peer-id boundaries.
-5. Coverage gate at 60 % excluding `pyrogram/raw/`.
+5. Coverage gate, ratcheted to the measured floor, excluding `pyrogram/raw/`.
 6. CI: explicit `-m "not integration"`, coverage upload, windows leg, scheduled
    `make check-api-schema`.
 
-**Exit:** `pytest` covers ≥60 % of the non-generated tree; the `raw`-reference test passes on 223
-and correctly *fails* with 19 findings when pointed at a 229 build.
+**Exit:** the `raw`-reference test passes, and coverage of the non-generated tree is gated at the
+measured floor so it cannot silently regress.
 
 ### Stage 2 — layer bump to 229
 

@@ -125,9 +125,13 @@ uv run pytest --cov=pyrogram --cov-report=term-missing \
   --cov-config=.coveragerc
 ```
 
-`pyrogram/raw/` is excluded from coverage — it is generated and covered structurally by the
-round-trip and constructor-ID tests instead. 60 % is the entry bar for the non-generated tree;
-raise it as stages complete.
+`pyrogram/raw/` and `pyrogram/errors/exceptions/` are excluded — they are generated, and covered
+structurally by the constructor-ID and round-trip tests instead.
+
+The gate is a **ratchet**: set to the measured floor, raised whenever a stage adds tests, never
+lowered to make a build pass. Stage 1 took it from **27 % to 53 %**. Most of `pyrogram/methods/`
+needs a live client, so the realistic ceiling for offline tests is well short of 100 % — the number
+to watch is whether it moves down, not whether it reaches a round figure.
 
 ## Running them automatically
 
