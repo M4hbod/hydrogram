@@ -17,46 +17,22 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .account import Account
-from .advanced import Advanced
-from .auth import Auth
-from .bots import Bots
-from .business import Business
-from .chats import Chats
-from .contacts import Contacts
-from .decorators import Decorators
-from .folders import Folders
-from .invite_links import InviteLinks
-from .messages import Messages
-from .password import Password
-from .payments import Payments
-from .phone import Phone
-from .premium import Premium
-from .pyromod import Pyromod
-from .stories import Stories
-from .users import Users
-from .utilities import Utilities
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw
 
 
-class Methods(
-    Advanced,
-    Auth,
-    Bots,
-    Contacts,
-    Password,
-    Chats,
-    Users,
-    Messages,
-    Pyromod,
-    Decorators,
-    Utilities,
-    InviteLinks,
-    Phone,
-    Stories,
-    Payments,
-    Business,
-    Account,
-    Premium,
-    Folders,
-):
-    pass
+class ResetSessions:
+    async def reset_sessions(
+        self: pyrogram.Client,
+    ) -> bool:
+        """Terminates all user's authorized sessions except for the current one.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Returns:
+            ``bool``: On success, in case the sessions is destroyed, True is returned. Otherwise, False is returned.
+
+        """
+        return await self.invoke(raw.functions.auth.ResetAuthorizations())

@@ -17,46 +17,34 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .account import Account
-from .advanced import Advanced
-from .auth import Auth
-from .bots import Bots
-from .business import Business
-from .chats import Chats
-from .contacts import Contacts
-from .decorators import Decorators
-from .folders import Folders
-from .invite_links import InviteLinks
-from .messages import Messages
-from .password import Password
-from .payments import Payments
-from .phone import Phone
-from .premium import Premium
-from .pyromod import Pyromod
-from .stories import Stories
-from .users import Users
-from .utilities import Utilities
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw
 
 
-class Methods(
-    Advanced,
-    Auth,
-    Bots,
-    Contacts,
-    Password,
-    Chats,
-    Users,
-    Messages,
-    Pyromod,
-    Decorators,
-    Utilities,
-    InviteLinks,
-    Phone,
-    Stories,
-    Payments,
-    Business,
-    Account,
-    Premium,
-    Folders,
-):
-    pass
+class EditStarSubscription:
+    async def edit_star_subscription(
+        self: pyrogram.Client, subscription_id: str, is_canceled: bool
+    ) -> bool:
+        """Cancels or re-enables Telegram Star subscription.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Parameters:
+            subscription_id (``str``):
+                Identifier of the subscription to change.
+
+            is_canceled (``bool``):
+                New value of is_canceled.
+
+        Returns:
+            ``bool``: On success, True is returned.
+        """
+        return await self.invoke(
+            raw.functions.payments.ChangeStarsSubscription(
+                peer=raw.types.InputPeerSelf(),
+                subscription_id=subscription_id,
+                canceled=is_canceled,
+            )
+        )

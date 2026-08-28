@@ -17,46 +17,34 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .account import Account
-from .advanced import Advanced
-from .auth import Auth
-from .bots import Bots
-from .business import Business
-from .chats import Chats
-from .contacts import Contacts
-from .decorators import Decorators
-from .folders import Folders
-from .invite_links import InviteLinks
-from .messages import Messages
-from .password import Password
-from .payments import Payments
-from .phone import Phone
-from .premium import Premium
-from .pyromod import Pyromod
-from .stories import Stories
-from .users import Users
-from .utilities import Utilities
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw
 
 
-class Methods(
-    Advanced,
-    Auth,
-    Bots,
-    Contacts,
-    Password,
-    Chats,
-    Users,
-    Messages,
-    Pyromod,
-    Decorators,
-    Utilities,
-    InviteLinks,
-    Phone,
-    Stories,
-    Payments,
-    Business,
-    Account,
-    Premium,
-    Folders,
-):
-    pass
+class GetTonBalance:
+    async def get_ton_balance(self: pyrogram.Client) -> float:
+        """Get the current TON balance of the current account.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Returns:
+            ``float``: On success, the current stars balance is returned.
+
+        Example:
+            .. code-block:: python
+
+                # Get stars balance of current account
+                await app.get_stars_balance()
+
+                # Get stars balance of a bot
+                await app.get_stars_balance(chat_id="pyrogrambot")
+        """
+        r = await self.invoke(
+            raw.functions.payments.GetStarsTransactions(
+                peer=raw.types.InputPeerSelf(), offset="", limit=0, ton=True
+            )
+        )
+
+        return r.balance.amount

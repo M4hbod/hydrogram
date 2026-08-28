@@ -17,46 +17,34 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .account import Account
-from .advanced import Advanced
-from .auth import Auth
-from .bots import Bots
-from .business import Business
-from .chats import Chats
-from .contacts import Contacts
-from .decorators import Decorators
-from .folders import Folders
-from .invite_links import InviteLinks
-from .messages import Messages
-from .password import Password
-from .payments import Payments
-from .phone import Phone
-from .premium import Premium
-from .pyromod import Pyromod
-from .stories import Stories
-from .users import Users
-from .utilities import Utilities
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw, types
 
 
-class Methods(
-    Advanced,
-    Auth,
-    Bots,
-    Contacts,
-    Password,
-    Chats,
-    Users,
-    Messages,
-    Pyromod,
-    Decorators,
-    Utilities,
-    InviteLinks,
-    Phone,
-    Stories,
-    Payments,
-    Business,
-    Account,
-    Premium,
-    Folders,
-):
-    pass
+class GetAvailableGifts:
+    async def get_available_gifts(
+        self: pyrogram.Client,
+    ) -> list[types.Gift]:
+        """Get all available star gifts that can be sent to other users.
+
+        .. include:: /_includes/usable-by/users-bots.rst
+
+        Returns:
+            List of :obj:`~pyrogram.types.Gift`: On success, a list of star gifts is returned.
+
+        Example:
+            .. code-block:: python
+
+                await app.get_available_gifts()
+        """
+        r = await self.invoke(raw.functions.payments.GetStarGifts(hash=0))
+
+        users = {i.id: i for i in r.users}
+        chats = {i.id: i for i in r.chats}
+
+        return types.List([
+            await types.Gift._parse_regular(self, gift, users=users, chats=chats)
+            for gift in r.gifts
+        ])

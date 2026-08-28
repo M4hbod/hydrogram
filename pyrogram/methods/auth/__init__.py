@@ -18,16 +18,22 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from .accept_terms_of_service import AcceptTermsOfService
+from .change_phone_number import ChangePhoneNumber
 from .check_password import CheckPassword
 from .connect import Connect
 from .disconnect import Disconnect
+from .get_active_sessions import GetActiveSessions
 from .get_password_hint import GetPasswordHint
 from .get_sessions import GetSessions
 from .initialize import Initialize
 from .log_out import LogOut
 from .recover_password import RecoverPassword
 from .resend_code import ResendCode
+from .resend_phone_number_code import ResendPhoneNumberCode
+from .reset_session import ResetSession
+from .reset_sessions import ResetSessions
 from .send_code import SendCode
+from .send_phone_number_code import SendPhoneNumberCode
 from .send_recovery_code import SendRecoveryCode
 from .sign_in import SignIn
 from .sign_in_bot import SignInBot
@@ -37,20 +43,26 @@ from .terminate import Terminate
 
 class Auth(
     AcceptTermsOfService,
+    ChangePhoneNumber,
     CheckPassword,
     Connect,
     Disconnect,
+    GetActiveSessions,
     GetPasswordHint,
+    GetSessions,
     Initialize,
     LogOut,
     RecoverPassword,
     ResendCode,
+    ResendPhoneNumberCode,
+    ResetSession,
+    ResetSessions,
     SendCode,
+    SendPhoneNumberCode,
     SendRecoveryCode,
     SignIn,
     SignInBot,
     SignUp,
     Terminate,
-    GetSessions,
 ):
     pass

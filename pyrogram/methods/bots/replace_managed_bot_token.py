@@ -17,46 +17,30 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .account import Account
-from .advanced import Advanced
-from .auth import Auth
-from .bots import Bots
-from .business import Business
-from .chats import Chats
-from .contacts import Contacts
-from .decorators import Decorators
-from .folders import Folders
-from .invite_links import InviteLinks
-from .messages import Messages
-from .password import Password
-from .payments import Payments
-from .phone import Phone
-from .premium import Premium
-from .pyromod import Pyromod
-from .stories import Stories
-from .users import Users
-from .utilities import Utilities
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw
 
 
-class Methods(
-    Advanced,
-    Auth,
-    Bots,
-    Contacts,
-    Password,
-    Chats,
-    Users,
-    Messages,
-    Pyromod,
-    Decorators,
-    Utilities,
-    InviteLinks,
-    Phone,
-    Stories,
-    Payments,
-    Business,
-    Account,
-    Premium,
-    Folders,
-):
-    pass
+class ReplaceManagedBotToken:
+    async def replace_managed_bot_token(
+        self: pyrogram.Client,
+        user_id: int | str,
+    ) -> str:
+        """Use this method to revoke the current token of a managed bot and generate a new one.
+
+        .. include:: /_includes/usable-by/bots.rst
+
+        Parameters:
+            user_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the managed bot whose token will be replaced.
+
+        Returns:
+            ``str``: On success, new bot token is returned.
+        """
+        r = await self.invoke(
+            raw.functions.bots.ExportBotToken(bot=await self.resolve_peer(user_id), revoke=True)
+        )
+
+        return r.token

@@ -17,46 +17,26 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .account import Account
-from .advanced import Advanced
-from .auth import Auth
-from .bots import Bots
-from .business import Business
-from .chats import Chats
-from .contacts import Contacts
-from .decorators import Decorators
-from .folders import Folders
-from .invite_links import InviteLinks
-from .messages import Messages
-from .password import Password
-from .payments import Payments
-from .phone import Phone
-from .premium import Premium
-from .pyromod import Pyromod
-from .stories import Stories
-from .users import Users
-from .utilities import Utilities
+from __future__ import annotations
+
+import pyrogram
+from pyrogram import raw, types
 
 
-class Methods(
-    Advanced,
-    Auth,
-    Bots,
-    Contacts,
-    Password,
-    Chats,
-    Users,
-    Messages,
-    Pyromod,
-    Decorators,
-    Utilities,
-    InviteLinks,
-    Phone,
-    Stories,
-    Payments,
-    Business,
-    Account,
-    Premium,
-    Folders,
-):
-    pass
+class CheckBotUsername:
+    async def check_bot_username(
+        self: pyrogram.Client,
+        username: str,
+    ) -> types.User:
+        """Checks whether a username can be set for a new bot.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Parameters:
+            username (``str``):
+                Username to be checked.
+
+        Returns:
+            ``bool``: On success, True is returned.
+        """
+        return await self.invoke(raw.functions.bots.CheckUsername(username=username))
