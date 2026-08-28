@@ -24,7 +24,7 @@ import bisect
 import contextlib
 import logging
 import os
-from datetime import datetime, timedelta
+import time
 from hashlib import sha1
 from io import BytesIO
 from typing import TYPE_CHECKING, ClassVar
@@ -66,7 +66,9 @@ class Session:
     ACKS_THRESHOLD = 10
     PING_INTERVAL = 5
     STORED_MSG_IDS_MAX_SIZE = 1000 * 2
-    RECONNECT_THRESHOLD = timedelta(seconds=10)
+    # Seconds, compared against time.monotonic(): this is an interval, and a wall clock that
+    # steps backwards would make the throttle fire on every reconnect.
+    RECONNECT_THRESHOLD = 10.0
 
     TRANSPORT_ERRORS: ClassVar = {
         404: "auth key not found",
@@ -207,9 +209,9 @@ class Session:
 
     async def restart(self):
         async with self.restart_lock:
-            now = datetime.now()
+            now = time.monotonic()
             if (
-                self.last_reconnect_attempt
+                self.last_reconnect_attempt is not None
                 and now - self.last_reconnect_attempt < self.RECONNECT_THRESHOLD
             ):
                 log.info("Reconnecting too frequently, sleeping for a while")

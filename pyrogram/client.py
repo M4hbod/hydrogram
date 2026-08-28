@@ -31,8 +31,8 @@ import re
 import shutil
 import string
 import sys
+import time
 from concurrent.futures.thread import ThreadPoolExecutor
-from datetime import datetime, timedelta
 from hashlib import sha256
 from importlib import import_module
 from io import BytesIO, StringIO
@@ -339,7 +339,10 @@ class Client(Methods):
         # after some idle time has been detected.
         self.updates_watchdog_task = None
         self.updates_watchdog_event = asyncio.Event()
-        self.last_update_time = datetime.now()
+        # Monotonic, not wall-clock: this measures an interval, and datetime.now() jumps at
+        # DST boundaries and NTP steps. A backward jump would stall the watchdog for the
+        # length of the jump; a forward one would fire it early.
+        self.last_update_time = time.monotonic()
 
         self.listeners = {listener_type: [] for listener_type in ListenerTypes}
 
@@ -370,9 +373,7 @@ class Client(Methods):
             else:
                 break
 
-            if datetime.now() - self.last_update_time > timedelta(
-                seconds=self.UPDATES_WATCHDOG_INTERVAL
-            ):
+            if time.monotonic() - self.last_update_time > self.UPDATES_WATCHDOG_INTERVAL:
                 await self.invoke(raw.functions.updates.GetState())
 
     async def authorize(self) -> User:
@@ -588,7 +589,7 @@ class Client(Methods):
         return is_min
 
     async def handle_updates(self, updates):
-        self.last_update_time = datetime.now()
+        self.last_update_time = time.monotonic()
 
         if isinstance(updates, (raw.types.Updates, raw.types.UpdatesCombined)):
             is_min = any((
