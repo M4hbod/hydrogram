@@ -182,7 +182,7 @@ Nothing here changes library behaviour. Everything here is what makes the rest s
 **Exit:** the `raw`-reference test passes, and coverage of the non-generated tree is gated at the
 measured floor so it cannot silently regress.
 
-### Stage 2 — layer bump to 229
+### Stage 2 — layer bump to 229 — **DONE 2026-08-28**
 
 1. Replace `compiler/api/source/main_api.tl` with layer 229; refresh
    `compiler/errors/source/*.tsv`.
@@ -201,9 +201,23 @@ measured floor so it cannot silently regress.
    carries over unchanged — the risk is entirely in the dispatch.
 4. Keyboard round-trip tests (Tier 2) land in the same commit as the rewrite.
 
-**Exit:** layer 229 compiled, full suite green, keyboard round-trip tests cover every button
-variant including custom-emoji styles, and a real bot smoke-run sends and receives both keyboard
-kinds.
+**What happened.** `make check-api-schema` fetches the authoritative schema from tdesktop, and its
+layer 229 is constructor-for-constructor identical to Kurigram's copy (2465 both, zero diff) — so
+Kurigram's file was not needed at all. After `make api`, the `raw`-reference contract test reported
+exactly **12** breakages rather than the 19 predicted: the six forum-topic functions and the
+`WallPaper` typo had already been fixed in stage 1, leaving only the keyboards.
+
+The keyboard rewrite went as planned. `read()` now dispatches on `b.type`, `InlineKeyboardMarkup`
+emits `KeyboardInlineButtonRow`, and `LoginUrl.write()` returns an `InlineButtonType` rather than a
+whole button — which is also what makes the style-dropping bug structurally impossible to
+reintroduce. All twelve `InlineButtonType` variants are handled; previously `copy_text`, `pay` and
+`disabled` buttons had no `read()` branch and vanished from parsed markup, so those are now exposed
+as constructor parameters too, along with `requires_password`.
+
+**Exit criteria met:** layer 229 compiled, 1266 tests green, coverage 54 %, and the keyboard tests
+cover every button kind against write, read and style/custom-emoji preservation.
+
+**Not done:** a live smoke-run against Telegram. Nothing here has touched a real account.
 
 ---
 

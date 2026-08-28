@@ -134,8 +134,12 @@ def test_vector_round_trip(values):
 def test_vector_of_objects_round_trip():
     """Object vectors are read with t=None, dispatching on each element's own constructor ID."""
     buttons = [
-        raw.types.KeyboardButtonUrl(text="a", url="https://example.com"),
-        raw.types.KeyboardButtonUrl(text="b", url="https://example.org"),
+        raw.types.KeyboardInlineButton(
+            text="a", type=raw.types.InlineButtonTypeUrl(url="https://example.com")
+        ),
+        raw.types.KeyboardInlineButton(
+            text="b", type=raw.types.InlineButtonTypeUrl(url="https://example.org")
+        ),
     ]
     payload = Vector(buttons)
     restored = Vector.read(BytesIO(payload[VECTOR_HEADER:]))
@@ -172,27 +176,35 @@ def curated_objects() -> list[tuple[str, TLObject]]:
         ),
         # bytes payload plus a nested optional object
         (
-            "KeyboardButtonCallback",
-            raw.types.KeyboardButtonCallback(
+            "KeyboardInlineButton-callback",
+            raw.types.KeyboardInlineButton(
                 text="press",
-                data=b"cb:1",
+                type=raw.types.InlineButtonTypeCallback(data=b"cb:1"),
                 style=raw.types.KeyboardButtonStyle(bg_primary=True),
             ),
         ),
         # bytes that are not valid utf-8
         (
-            "KeyboardButtonCallback-binary",
-            raw.types.KeyboardButtonCallback(text="x", data=bytes(range(256))),
+            "KeyboardInlineButton-binary-payload",
+            raw.types.KeyboardInlineButton(
+                text="x", type=raw.types.InlineButtonTypeCallback(data=bytes(range(256)))
+            ),
         ),
         # vector of nested objects
         (
             "ReplyInlineMarkup",
             raw.types.ReplyInlineMarkup(
                 rows=[
-                    raw.types.KeyboardButtonRow(
+                    raw.types.KeyboardInlineButtonRow(
                         buttons=[
-                            raw.types.KeyboardButtonUrl(text="a", url="https://example.com"),
-                            raw.types.KeyboardButtonUrl(text="b", url="https://example.org"),
+                            raw.types.KeyboardInlineButton(
+                                text="a",
+                                type=raw.types.InlineButtonTypeUrl(url="https://example.com"),
+                            ),
+                            raw.types.KeyboardInlineButton(
+                                text="b",
+                                type=raw.types.InlineButtonTypeUrl(url="https://example.org"),
+                            ),
                         ]
                     )
                 ]
@@ -203,7 +215,10 @@ def curated_objects() -> list[tuple[str, TLObject]]:
         # unicode strings, including a long one crossing the length-prefix boundary
         (
             "MessageEntityUrl-unicode",
-            raw.types.KeyboardButtonUrl(text="سلام دنیا 🌍", url="https://" + "a" * 300),
+            raw.types.KeyboardInlineButton(
+                text="سلام دنیا 🌍",
+                type=raw.types.InlineButtonTypeUrl(url="https://" + "a" * 300),
+            ),
         ),
         # deeply nested optional chain
         (

@@ -79,28 +79,70 @@ class KeyboardButton(Object):
         )
 
     @staticmethod
-    def read(b):
-        if isinstance(b, raw.types.KeyboardButton):
+    def read(b: raw.types.KeyboardButton):
+        """Parse a layer-229 ``keyboardButton``.
+
+        Layer 229 replaced the flat per-kind constructors with a single ``keyboardButton``
+        carrying a ``type:ButtonType`` discriminator, so the dispatch is on ``b.type`` rather than
+        on the class of ``b``.
+        """
+        style, icon = KeyboardButton._read_style(b)
+        button_type = b.type
+
+        if isinstance(button_type, raw.types.ButtonTypeRequestPhone):
+            return KeyboardButton(
+                text=b.text, request_contact=True, style=style, icon_custom_emoji_id=icon
+            )
+
+        if isinstance(button_type, raw.types.ButtonTypeRequestGeoLocation):
+            return KeyboardButton(
+                text=b.text, request_location=True, style=style, icon_custom_emoji_id=icon
+            )
+
+        if isinstance(button_type, raw.types.ButtonTypeSimpleWebView):
+            return KeyboardButton(
+                text=b.text,
+                web_app=types.WebAppInfo(url=button_type.url),
+                style=style,
+                icon_custom_emoji_id=icon,
+            )
+
+        # buttonTypeDefault, and anything this version does not model yet: a plain text button.
+        # Returning the bare string keeps the historical behaviour, where a keyboard of plain
+        # buttons round-trips as a list of strings.
+        if style is enums.ButtonStyle.DEFAULT and icon is None:
             return b.text
 
-        if isinstance(b, raw.types.KeyboardButtonRequestPhone):
-            return KeyboardButton(text=b.text, request_contact=True)
+        return KeyboardButton(text=b.text, style=style, icon_custom_emoji_id=icon)
 
-        if isinstance(b, raw.types.KeyboardButtonRequestGeoLocation):
-            return KeyboardButton(text=b.text, request_location=True)
+    @staticmethod
+    def _read_style(b) -> tuple[enums.ButtonStyle, str | None]:
+        """Map a raw button's optional ``style`` to (ButtonStyle, icon_custom_emoji_id)."""
+        raw_style = getattr(b, "style", None)
+        style = enums.ButtonStyle.DEFAULT
+        icon = None
 
-        if isinstance(b, raw.types.KeyboardButtonSimpleWebView):
-            return KeyboardButton(text=b.text, web_app=types.WebAppInfo(url=b.url))
-        return None
+        if raw_style is not None:
+            if raw_style.bg_primary:
+                style = enums.ButtonStyle.PRIMARY
+            elif raw_style.bg_danger:
+                style = enums.ButtonStyle.DANGER
+            elif raw_style.bg_success:
+                style = enums.ButtonStyle.SUCCESS
+
+            if raw_style.icon is not None:
+                icon = str(raw_style.icon)
+
+        return style, icon
 
     def write(self):
-        style = self._raw_style()
         if self.request_contact:
-            return raw.types.KeyboardButtonRequestPhone(text=self.text, style=style)
-        if self.request_location:
-            return raw.types.KeyboardButtonRequestGeoLocation(text=self.text, style=style)
-        if self.web_app:
-            return raw.types.KeyboardButtonSimpleWebView(
-                text=self.text, url=self.web_app.url, style=style
-            )
-        return raw.types.KeyboardButton(text=self.text, style=style)
+            button_type = raw.types.ButtonTypeRequestPhone()
+        elif self.request_location:
+            button_type = raw.types.ButtonTypeRequestGeoLocation()
+        elif self.web_app:
+            button_type = raw.types.ButtonTypeSimpleWebView(url=self.web_app.url)
+        else:
+            button_type = raw.types.ButtonTypeDefault()
+
+        return raw.types.KeyboardButton(text=self.text, type=button_type, style=self._raw_style())
