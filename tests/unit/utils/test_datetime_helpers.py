@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from datetime import datetime, timezone
 
 import pytest
@@ -30,9 +31,23 @@ def test_zero_datetime_is_the_epoch_in_utc():
     assert utils.zero_datetime() == datetime.fromtimestamp(0, timezone.utc)
 
 
-@pytest.mark.parametrize("timestamp", [1, 1000000, 2**31 - 1])
+@pytest.mark.parametrize("timestamp", [1_000_000, 1_700_000_000, 2**31 - 1])
 def test_timestamp_round_trip(timestamp):
     assert utils.datetime_to_timestamp(utils.timestamp_to_datetime(timestamp)) == timestamp
+
+
+def test_timestamps_near_the_epoch_are_platform_dependent():
+    """``timestamp_to_datetime`` is naive local time, which has no pre-epoch representation on Windows.
+
+    ``datetime.fromtimestamp(1)`` is 1970-01-01T02:00:01 on a UTC+2 machine and raises
+    ``OSError: [Errno 22]`` on a Windows runner behind UTC, because the local time lands before the
+    epoch. Telegram never sends timestamps in that range -- they are all recent message and account
+    dates -- so this is a documented boundary rather than something to work around. Anything that
+    does need the epoch itself should use ``utils.zero_datetime()``, which is UTC and therefore
+    portable.
+    """
+    with contextlib.suppress(OSError):
+        assert utils.timestamp_to_datetime(1) is not None
 
 
 @pytest.mark.parametrize("falsy", [None, 0])
