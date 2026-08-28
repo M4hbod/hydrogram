@@ -23,6 +23,7 @@ from .contact import Contact
 from .dice import Dice
 from .document import Document
 from .game import Game
+from .link_preview_options import LinkPreviewOptions
 from .location import Location
 from .message import Message
 from .message_entity import MessageEntity
@@ -31,6 +32,7 @@ from .photo import Photo
 from .poll import Poll
 from .poll_option import PollOption
 from .reaction import Reaction
+from .reply_parameters import ReplyParameters
 from .sticker import Sticker
 from .stripped_thumbnail import StrippedThumbnail
 from .thumbnail import Thumbnail
@@ -48,6 +50,7 @@ __all__ = [
     "Dice",
     "Document",
     "Game",
+    "LinkPreviewOptions",
     "Location",
     "Message",
     "MessageEntity",
@@ -56,6 +59,7 @@ __all__ = [
     "Poll",
     "PollOption",
     "Reaction",
+    "ReplyParameters",
     "Sticker",
     "StrippedThumbnail",
     "Thumbnail",
