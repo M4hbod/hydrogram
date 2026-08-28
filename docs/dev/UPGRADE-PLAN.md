@@ -267,56 +267,153 @@ for all groups.
 item whose scope is already decided, and it touches 26 files plus `Message`'s 18 bound `reply_*`
 methods.
 
-### Stage 4 — API surface, by feature group
+### Stage 4 — API surface
 
-Ordered by value-to-risk. Each group is its own PR with its own tests and news fragment.
+Re-planned 2026-08-29 against measured dependency data, which contradicted the original grouping.
 
-| # | Group | Methods | Notes |
+**What the measurement changed.** The first version of this stage assumed each feature group could
+be ported independently. That is *mostly* true — of the 94 types the remaining 221 methods need,
+only 31 are wanted by more than one group — but it missed the real bottleneck. `Message` is the hub
+every group writes into, and it is the largest single piece of work in the project:
+
+| | ours | Kurigram | gap |
 | --- | --- | --- | --- |
-| 4.1 | Bot-API-7 parameter migration | — | `reply_parameters` / `link_preview_options` replace the flat params outright, no shims (Q1). Ships with the exhaustive removed-parameter list for the downstream sweep |
-| 4.2 | Message gaps | ~40 | `send_paid_media`, `send_checklist`, reactions read/view, scheduled messages, `search_posts`, translation |
-| 4.3 | Chats & folders | ~36 | folders, invite links, accent colors, direct-message topics, forum topic pin/unpin |
-| 4.4 | Stories | 21 | self-contained; needs `Story`, `StoryView`, `MediaArea` types |
-| 4.5 | Gifts / stars / payments | ~44 | largest group; `Gift`, `GiftCollection`, `StarAmount`, auctions, invoices |
-| 4.6 | Bots & business | ~32 | business connections, managed bots, pre-checkout/shipping, invoice links |
-| 4.7 | Account, privacy, auth sessions | ~21 | `PrivacyRule` family, active sessions, TTLs |
-| 4.8 | Handlers & decorators | 16 | `on_story`, `on_message_reaction`, `on_business_message`, boost/purchase handlers — needs dispatcher work |
+| `message.py` lines | 3,965 | 10,537 | 2.7× |
+| attributes | 79 | 168 | **99** |
+| bound methods | 35 | 75 | **42** |
+| `filters.py` filters | 53 | 74 | **21** |
+
+So groups are cheap and `Message` is expensive, and almost every group needs a slice of `Message`
+before its methods parse anything. Sequencing has to reflect that.
+
+#### Cost per group (measured)
+
+"New types" is the transitive closure of `types.X` references, stopping at types we already own.
+
+| Group | Methods | New types | Types/method | Notes |
+| --- | --- | --- | --- | --- |
+| decorators | 16 | 0 | 0.00 | needs 16 handler classes + dispatcher wiring, not types |
+| advanced | 1 | 0 | 0.00 | `recover_gaps` |
+| chats | 36 | 4 | 0.11 | folders, accent colours, direct-message topics |
+| users | 6 | 1 | 0.17 | `Birthday` |
+| messages | 41 | 10 | 0.24 | checklists, suggested posts, paid media, AI text |
+| bots | 27 | 9 | 0.33 | invoices, managed bots, pre-checkout/shipping |
+| contacts | 3 | 2 | 0.67 | |
+| premium | 3 | 2 | 0.67 | boosts |
+| phone | 1 | 1 | 1.00 | `GroupCallMember` |
+| payments | 44 | 45 | 1.02 | gifts, stars, auctions — the largest group |
+| stories | 21 | 26 | 1.24 | self-contained otherwise |
+| account | 10 | 16 | 1.60 | privacy rules, sessions, TTLs |
+| auth | 6 | 6 | 1.00 | active sessions, phone-number change |
+| folders | 1 | 4 | 4.00 | fold into `chats` |
+| business | 5 | 24 | 4.80 | mostly the shared gift cluster |
+| **total** | **221** | **94** | | deduped union |
+
+#### Stage 4.0 — shared foundation
+
+The 31 types wanted by more than one group. Doing these first stops three groups each porting the
+same gift cluster.
+
+- **`FormattedText`** — 6 groups. The single most-shared type; port first.
+- **Gift cluster (21 types)** — `Gift`, `GiftAttribute`, `GiftAuction`, `AuctionState{,Active,Finished}`,
+  `AuctionBid`, `AuctionRound`, `GiftResalePrice{,Star,Ton}`, `GiftResaleParameters`,
+  `GiftPurchaseLimit`, `UpgradedGiftAttributeRarity{,Epic,Legendary,PerMille,Rare,Uncommon}`,
+  `UpgradedGiftOriginalDetails`. Wanted by business + payments + stories.
+- **Suggested posts (4)** — `SuggestedPostParameters`, `SuggestedPostPrice{,Star,Ton}` (bots + messages).
+- **Invoicing (2)** — `Invoice`, `LabeledPrice` (bots + payments).
+- **Folders (2)** — `Folder`, `FolderInviteLink` (chats + folders).
+- **`Birthday`** (payments + users).
+
+**Exit:** all 31 exported with `_parse` unit tests; no group needs to port a type another group
+already ported.
+
+#### Stage 4.1 — Bot-API-7 parameter migration
+
+Scope already decided (Q1: adopt outright, no shims). Unblocked — `ReplyParameters` and
+`LinkPreviewOptions` landed in `0c544686`.
+
+`reply_to_message_id` → `reply_parameters` across 26 files, `disable_web_page_preview` →
+`link_preview_options` across 6, plus `Message`'s 18 bound `reply_*` methods. **Breaking, with no
+`DeprecationWarning` to guide the sweep.** Ship the exhaustive removed-parameter list with it so the
+downstream fix is a grep rather than a hunt.
+
+**Exit:** no `reply_to_message_id` or `disable_web_page_preview` outside a news fragment; contract
+test asserts both are gone from every public signature.
+
+#### Stage 4.2 — the `Message` spine
+
+The expensive one, and the gate on everything after it. 99 attributes and 42 bound methods.
+
+Do it as **one commit per attribute cluster**, not one commit for `Message`: service messages,
+forwards/origins, checklists, paid media, suggested posts, business, giveaways, stories. Each
+cluster lands with `_parse` tests built from hand-made raw objects.
+
+**Exit:** `Message` parses every `raw.types.Message` and `MessageService` variant the layer defines;
+`test_message_parsing` covers each cluster; no attribute is set but undocumented.
+
+#### Stage 4.3 — groups, cheapest first
+
+Order is by types/method, which is also roughly ascending risk. Each is its own PR with tests and a
+news fragment, and each is independently skippable.
+
+1. **advanced** (1 method) — trivial, do it with anything.
+2. **decorators + handlers** (16 methods, 16 handler classes, 0 new types) — `on_story`,
+   `on_message_reaction`, `on_business_message`, boost/purchase handlers. Needs dispatcher work and
+   21 new filters; no type porting at all.
+3. **chats + folders** (37 methods, 4 types) — best value in the project.
+4. **users** (6), **contacts** (3), **premium** (3), **phone** (1) — small and independent.
+5. **messages** (41 methods, 10 types) — large but cheap per method; depends on 4.2.
+6. **bots** (27 methods, 9 types).
+7. **auth** (6) and **account** (10, 16 types) — privacy rules and session management.
+8. **stories** (21 methods, 26 types) — self-contained once the gift cluster exists.
+9. **payments** (44 methods, 45 types) — largest and last; gifts, stars, auctions.
+10. **business** (5 methods, 24 types) — cheapest last, because 21 of its 24 types are the gift
+    cluster from 4.0, leaving only 3 of its own.
 
 **Exit per group:** methods wired into the mixin, `_parse` tests for every new type, docs build
-clean, news fragment present.
+clean, news fragment present, coverage ratchet raised.
 
-### Stage 5 — connection layer (optional, isolated)
+### Stage 5 — connection layer
 
-MTProxy + fake-TLS + web-proxy carrier, and the `pysocks` → `python-socks[asyncio]` swap. Kurigram
-landed this on 2026-08-27 with its own unit + live test split; port both the code and the tests.
-Independent of stages 2–4 — schedule it whenever, but not concurrently with them.
+Four files we lack: `connection/proxy.py`, `transport/tcp/faketls_records.py`,
+`transport/tcp/web_proxy_carrier.py`, `transport/tcp/tcp_intermediate_padded.py`. Plus the
+dependency swap `pysocks` → `python-socks[asyncio]`.
+
+Independent of stage 4 — schedule it whenever, but not concurrently, since it touches the transport
+every other test runs through. Kurigram landed this on 2026-08-27 with its own unit/live split;
+port both the code and the tests, and keep the live ones under `tests/integration/`.
+
+**Exit:** MTProxy and fake-TLS transports covered by unit tests; a live connection test that is
+skipped without credentials; the default (non-proxy) transport unchanged.
 
 ### Stage 6 — production hardening
 
-1. Version scheme: adopt a real one (`3.0.0`). **This does not conflict with the pin**, contrary
-   to what it looks like. `py-tgcalls` 2.3.3 declares `pyrogram>=1.2.20; extra == "pyrogram"` — a
-   floor, no ceiling. Hydrogram's own `0.2.0` failed that floor, which is why `f81a62a4` pinned
-   `2.0.106`; any version `>=1.2.20` works, so `3.0.0` is fine. Verify against the installed
-   `py-tgcalls` before bumping, then drop the "pin" framing from `CLAUDE.md`.
-   (Note for the record: `py-tgcalls` also declares `hydrogram>=0.1.4; extra == "hydrogram"`, so it
-   supports Hydrogram natively. The binding constraint for the rename was `pykeyboard`, which does
-   `from pyrogram.emoji import *`.)
-2. Docs: `make docs` clean; rewrite `docs/source/hydrogram-vs-pyrogram.rst`; changelog via towncrier.
-3. `py.typed` is already shipped — add a type-check gate (`ty` or `mypy`) to CI, even if only on a
-   subset initially.
-4. Publish: decide PyPI name. `pyrogram` on PyPI is taken by the archived original, so this fork
-   cannot be published under that name. Either publish under a name we own, or keep it a private
-   install (`git+https://…`), which is what it is today.
-5. Tag, release notes, and a dependency-audit pass.
+1. **Version.** Adopt `3.0.0`. This does not conflict with the `py-tgcalls` floor —
+   `pyrogram>=1.2.20` is a floor, not a ceiling; Hydrogram's own `0.2.0` is what failed it. Verify
+   against the installed `py-tgcalls`, then drop the "pin" framing from `CLAUDE.md`.
+2. **Docs.** `make docs` clean; rewrite `docs/source/hydrogram-vs-pyrogram.rst`; changelog via
+   towncrier. The generated API pages need regenerating after stage 4.
+3. **Type checking.** `py.typed` already ships. Add a `ty`/`mypy` gate to CI, initially on a subset
+   (`utils`, `storage`, `enums`, `types/bots_and_keyboards`) and widen it.
+4. **Publish.** `pyrogram` on PyPI belongs to the archived original, so this fork cannot use that
+   name. Either publish under a name we own or keep it a git install, which is what it is today.
+5. **Release.** Tag, notes, dependency audit.
 
 ## Sequencing notes
 
-- Stage 1 and stage 0 are independent — do them in parallel if convenient.
-- Stage 2 depends on stage 1's `raw`-reference test to be worth anything.
-- Stage 4 groups are independent of each other and can be parallelised across sessions, provided
-  stage 3 has landed the shared types they import.
-- Merge from `upstream/dev` before starting each stage; upstream hydrogram is slow (8 commits in
-  the last 180 days) but not dead, and conflicts are cheapest when taken early.
+- **Stage 4.0 before any group.** Three groups want the same 21-type gift cluster; porting it once
+  is the whole point of having a shared stage.
+- **Stage 4.2 (`Message`) gates 4.3 items 5 onward.** chats, users, contacts, premium, phone and
+  the decorators can land before it; messages, bots, stories, payments and business cannot parse
+  their results without it.
+- **Groups are independent of each other.** Only 31 of 94 types are shared, and stage 4.0 absorbs
+  all of them, so after that the remaining groups touch disjoint type sets. They can be done in any
+  order, dropped individually, or parallelised across sessions.
+- **Stage 5 is independent of stage 4 entirely** but should not run concurrently with it: it
+  changes the transport every other test runs through.
+- **Sync upstream at every stage boundary** — `make sync-upstream-check` is cheap and conflicts are
+  cheapest when taken early.
+- Raise the coverage ratchet at the end of each stage; never lower it to make a build pass.
 
 ## Risks
 
@@ -325,7 +422,9 @@ Independent of stages 2–4 — schedule it whenever, but not concurrently with 
 | Keyboard rewrite silently breaks existing bots | Round-trip tests land with the rewrite; public Python API frozen; smoke-run before merge |
 | Session strings become unreadable | `SESSION_STRING_FORMAT` treated as a versioned public format, with a decode test per historical version |
 | Ported code drifts back to Kurigram style | `docs/dev/PORTING.md` checklist + a ruff rule set that already rejects `Optional[`/quoted annotations |
-| Scope explodes across 221 methods | Stage 4 is per-group PRs; a group can be skipped without blocking the rest |
+| Scope explodes across 221 methods | Stage 4 is per-group PRs; measured type closure shows groups are disjoint after 4.0, so any group can be skipped without blocking the rest |
+| `Message` becomes an unreviewable mega-commit | 4.2 is split one commit per attribute cluster (service, forwards, checklists, paid media, suggested posts, business, giveaways, stories), each with `_parse` tests |
+| A ported type silently stops being reachable | `tests/contract/test_public_api.py` fails when a symbol is in `__all__` but unwired, and when a method class is not a `Client` base |
 | Upstream hydrogram diverges further, and the namespace split makes merging impossible | Stage 0 `sync_upstream.py` + weekly CI check; sync at every stage boundary |
 | `py-tgcalls` version pin silently reverted by an upstream sync | Sync script drops version-line hunks and logs them; a contract test asserts `__version__ == "2.0.106"` |
 | `pyrogram/emoji.py` deleted by an upstream sync (no upstream counterpart) | Sync script refuses deletions of it; import test in `tests/contract/` |
