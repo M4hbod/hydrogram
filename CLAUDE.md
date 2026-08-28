@@ -75,14 +75,13 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 ## Current state (2026-08-28)
 
-- Branch `dev` @ `fe2caeff`, package `pyrogram`, `__version__` `2.0.106`.
-- TL layer: **223**. Target: **229**.
-- High-level surface: 211 method files / 121 type files / 16 enums.
-  Kurigram at layer 229 has 407 / 308 / 44.
-- Test suite: 39 tests across 3 files. This is the first thing being fixed.
-- Pre-commit hook installed 2026-08-28; it reformatted 5 files that had been failing
-  `code-style.yml`. The `Pyrogram` test workflow has been green on every push throughout.
+- Branch `dev`, package `pyrogram`, `__version__` `2.0.106`.
+- TL layer **229** — the target of `docs/dev/UPGRADE-PLAN.md` stages 0-2, all of which are done.
+- High-level surface: 211 method files / 121 type files / 16 enums. Kurigram, for comparison, has
+  407 / 308 / 44 — closing that gap is stage 4, deferred by decision.
+- Test suite: **1266 tests** across `tests/{unit,contract,integration}/`; coverage of the
+  non-generated tree gated at 53 % by a ratchet in `.coveragerc`.
+- Hooks installed: `pre-commit` (style) and `pre-push` (`pytest -m "not integration"`).
+- `make sync-upstream` replays upstream Hydrogram commits through the namespace rename.
 - When checking CI, always pass `-R M4hbod/hydrogram` to `gh` — with two remotes it resolves to
   `hydrogram/hydrogram` and reports upstream's failures as if they were ours.
-- `make api` on Kurigram's layer-229 TL was verified to compile and import cleanly with this
-  repo's compiler; only 19 high-level `raw.*` references break. See `docs/dev/UPGRADE-PLAN.md`.
