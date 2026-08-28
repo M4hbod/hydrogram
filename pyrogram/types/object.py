@@ -26,6 +26,15 @@ if typing.TYPE_CHECKING:
     import pyrogram
 
 
+# Some high-level types keep the MTProto object they were parsed from in a `raw` attribute, as an
+# escape hatch for fields the wrapper does not model yet. It must not appear in `str()`: it is
+# enormous, it is an implementation detail, and it can carry fields the wrapper deliberately masks.
+ATTRIBUTES_TO_HIDE = frozenset({"raw"})
+
+# Masked rather than hidden, so the shape of the object is still visible in logs.
+ATTRIBUTES_TO_MASK = frozenset({"phone_number"})
+
+
 class Object:
     def __init__(self, client: "pyrogram.Client" = None):
         self._client = client
@@ -65,9 +74,9 @@ class Object:
         return {
             "_": obj.__class__.__name__,
             **{
-                attr: ("*" * 9 if attr == "phone_number" else getattr(obj, attr))
+                attr: ("*" * 9 if attr in ATTRIBUTES_TO_MASK else getattr(obj, attr))
                 for attr in filter(lambda x: not x.startswith("_"), obj.__dict__)
-                if getattr(obj, attr) is not None
+                if getattr(obj, attr) is not None and attr not in ATTRIBUTES_TO_HIDE
             },
         }
 

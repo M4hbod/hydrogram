@@ -414,7 +414,18 @@ class Chat(Object):
         return parsed_chat
 
     @staticmethod
-    def _parse_chat(client, chat: raw.types.Chat | raw.types.User | raw.types.Channel) -> Chat:
+    def _parse_chat(
+        client, chat: raw.types.Chat | raw.types.User | raw.types.Channel | None
+    ) -> Chat | None:
+        """Parse any peer constructor into a :obj:`Chat`.
+
+        Returns ``None`` for a missing peer, matching :meth:`User._parse`. Callers routinely look a
+        peer up in the ``users``/``chats`` maps that came with an update and pass the result
+        straight in; when the peer is not in the map the lookup yields ``None``, and every such
+        call site would otherwise need its own guard.
+        """
+        if chat is None:
+            return None
         if isinstance(chat, raw.types.Chat):
             return Chat._parse_chat_chat(client, chat)
         if isinstance(chat, raw.types.User):

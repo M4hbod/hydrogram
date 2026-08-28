@@ -347,6 +347,40 @@ async def parse_text_entities(
     return {"message": text, "entities": entities}
 
 
+async def parse_text_with_entities(
+    client: pyrogram.Client,
+    message: raw.types.TextWithEntities | None,
+    users: dict[int, raw.base.User],
+) -> dict[str, str | list[types.MessageEntity] | None]:
+    """Parse an incoming ``TextWithEntities`` into text plus high-level entities.
+
+    The inverse of :func:`parse_text_entities`, despite the similar name: that one turns outgoing
+    text into raw entities to send, this one turns a received raw object into something a caller
+    can read. ``users`` is needed because a mention entity resolves to a :obj:`~pyrogram.types.User`.
+
+    Entities that fail to parse are dropped rather than propagated as ``None``, so callers never
+    have to filter the list themselves.
+    """
+    entities = types.List(
+        filter(
+            None,
+            [
+                await types.MessageEntity._parse(client, entity, users)
+                for entity in getattr(message, "entities", [])
+            ],
+        )
+    )
+
+    # Deferred deliberately: Str lives in message.py, which imports utils at module scope, so
+    # a top-level import here closes the cycle and breaks `import pyrogram`.
+    from pyrogram.types.messages_and_media.message import Str  # noqa: PLC0415
+
+    return {
+        "text": Str(getattr(message, "text", "")).init(entities) or None,
+        "entities": entities or None,
+    }
+
+
 def zero_datetime() -> datetime:
     """The Unix epoch, timezone-aware in UTC.
 
