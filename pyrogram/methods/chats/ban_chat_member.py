@@ -67,13 +67,15 @@ class BanChatMember:
         Example:
             .. code-block:: python
 
-                from datetime import datetime, timedelta
+                from datetime import datetime, timedelta, timezone
 
                 # Ban chat member forever
                 await app.ban_chat_member(chat_id, user_id)
 
                 # Ban chat member and automatically unban after 24h
-                await app.ban_chat_member(chat_id, user_id, datetime.now() + timedelta(days=1))
+                await app.ban_chat_member(
+                    chat_id, user_id, datetime.now(timezone.utc) + timedelta(days=1)
+                )
         """
         chat_peer = await self.resolve_peer(chat_id)
         user_peer = await self.resolve_peer(user_id)

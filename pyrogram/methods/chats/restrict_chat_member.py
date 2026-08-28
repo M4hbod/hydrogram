@@ -65,7 +65,7 @@ class RestrictChatMember:
         Example:
             .. code-block:: python
 
-                from datetime import datetime, timedelta
+                from datetime import datetime, timedelta, timezone
                 from pyrogram.types import ChatPermissions
 
                 # Completely restrict chat member (mute) forever
@@ -73,7 +73,10 @@ class RestrictChatMember:
 
                 # Chat member muted for 24h
                 await app.restrict_chat_member(
-                    chat_id, user_id, ChatPermissions(), datetime.now() + timedelta(days=1)
+                    chat_id,
+                    user_id,
+                    ChatPermissions(),
+                    datetime.now(timezone.utc) + timedelta(days=1),
                 )
 
                 # Chat member can only send text messages

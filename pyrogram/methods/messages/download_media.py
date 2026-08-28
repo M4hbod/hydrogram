@@ -181,7 +181,14 @@ class DownloadMedia:
             else:
                 extension = ".unknown"
 
-            file_name = f"{FileType(file_id_obj.file_type).name.lower()}_{(date or datetime.now()).strftime('%Y-%m-%d_%H-%M-%S')}_{self.rnd_id()}{extension}"
+            # `date` is timezone-aware UTC; render it in local time so generated filenames keep
+            # reading as wall-clock time to whoever is looking at the directory, which is also
+            # what they did before dates became aware.
+            stamp = date.astimezone() if date else datetime.now()
+            file_name = (
+                f"{FileType(file_id_obj.file_type).name.lower()}"
+                f"_{stamp.strftime('%Y-%m-%d_%H-%M-%S')}_{self.rnd_id()}{extension}"
+            )
 
         downloader = self.handle_download((
             file_id_obj,

@@ -348,14 +348,38 @@ async def parse_text_entities(
 
 
 def zero_datetime() -> datetime:
+    """The Unix epoch, timezone-aware in UTC.
+
+    Used as the "unset" default for date parameters such as ``until_date``.
+    """
     return datetime.fromtimestamp(0, timezone.utc)
 
 
 def timestamp_to_datetime(ts: int | None) -> datetime | None:
-    return datetime.fromtimestamp(ts) if ts else None
+    """Convert a Telegram timestamp to a timezone-aware UTC datetime.
+
+    Telegram sends every date as a Unix timestamp, which is an instant, not a wall-clock reading.
+    Returning an aware datetime keeps it that way: the result can be compared with
+    :func:`zero_datetime`, subtracted from another aware datetime, and rendered in any timezone the
+    caller likes via :meth:`~datetime.datetime.astimezone`.
+
+    Passing ``tz`` also avoids the platform's ``localtime()``, which is not merely a tidiness point:
+    ``datetime.fromtimestamp(1)`` returns ``1969-12-31T19:00:01`` west of UTC and raises
+    ``OSError: [Errno 22]`` on Windows, because the local reading falls before the epoch.
+
+    ``0`` means "never" in the Telegram API and is returned as ``None`` rather than the epoch.
+    """
+    return datetime.fromtimestamp(ts, timezone.utc) if ts else None
 
 
 def datetime_to_timestamp(dt: datetime | None) -> int | None:
+    """Convert a datetime to a Telegram timestamp.
+
+    An aware datetime converts exactly. A **naive** one is interpreted as local time, which is what
+    :meth:`datetime.datetime.timestamp` does and what ``datetime.now()`` -- the naive datetime
+    users actually construct -- means. Interpreting naive input as UTC instead would silently shift
+    every such call by the caller's UTC offset, which is a worse failure than being explicit.
+    """
     return int(dt.timestamp()) if dt else None
 
 
