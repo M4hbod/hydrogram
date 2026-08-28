@@ -240,15 +240,32 @@ Not covered live: `login_url` (needs a configured domain), `pay` (needs an invoi
 
 *Everything below is deferred (Q3). Kept as the standing plan; not scheduled.*
 
-### Stage 3 — enums and shared types
+### Stage 3 — enums and shared types — **PARTIALLY DONE 2026-08-28**
 
-Port the 28 missing enums and the ~40 shared value types the later stages depend on
-(`ReplyParameters`, `LinkPreviewOptions`, `TextQuote`, `MessageOrigin*`, `ExternalReplyInfo`,
-`FormattedText`, `StarAmount`, `PaidMediaInfo`, `RestrictionReason`, …), each through
-`docs/dev/PORTING.md`, each with a `_parse` unit test.
+**Done:**
 
-**Exit:** `types.__all__` contains every shared type the stage-4 method groups reference; enum
-snapshot test in place.
+- **All 28 missing enums** (`3a4dd645`). Public set 15 → 43. Member names and values are frozen by
+  a snapshot test, because renaming either is a breaking change nothing else in the suite would
+  notice — no library code depends on the spelling, but user code and stored configs do.
+- **`ReplyParameters` and `LinkPreviewOptions`** (`0c544686`) — the two types stage 4.1 needs.
+
+**Deliberately not done.** The original plan listed ~40 shared types. Most of them are not
+*shared*: they are the leaves of a specific stage-4 group, and porting them now would mean
+importing that group's subtree with nothing to exercise it.
+
+`ExternalReplyInfo` is the clearest case — it references about twenty types this fork does not have
+(`Checklist`, `Giveaway`, `GiveawayWinners`, `Invoice`, `PaidMediaInfo`, `Story`, the
+`MessageMedia*` family), so it belongs to whichever group brings those in. `TextQuote` and the
+`MessageOrigin` family are portable today but have no consumer until the message-parsing work in
+stage 4.2.
+
+**Revised exit criterion:** stage 3 is complete for a given stage-4 group when that group's shared
+types are in place. The enums — which are self-contained and cost nothing while unused — are done
+for all groups.
+
+**Next:** stage 4.1 (the Bot-API-7 parameter migration) is now unblocked. It is the only stage-4
+item whose scope is already decided, and it touches 26 files plus `Message`'s 18 bound `reply_*`
+methods.
 
 ### Stage 4 — API surface, by feature group
 
