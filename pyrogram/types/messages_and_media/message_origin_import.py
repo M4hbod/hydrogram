@@ -17,20 +17,33 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .input_checklist import InputChecklist
-from .input_invoice_message import InputInvoiceMessage
-from .input_message_content import InputMessageContent
-from .input_poll_media import InputPollMedia
-from .input_poll_option import InputPollOption
-from .input_rich_message import InputRichMessage
-from .input_text_message_content import InputTextMessageContent
+from __future__ import annotations
 
-__all__ = [
-    "InputChecklist",
-    "InputInvoiceMessage",
-    "InputMessageContent",
-    "InputPollMedia",
-    "InputPollOption",
-    "InputRichMessage",
-    "InputTextMessageContent",
-]
+from typing import TYPE_CHECKING
+
+from pyrogram import enums
+
+from .message_origin import MessageOrigin
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+
+class MessageOriginImport(MessageOrigin):
+    """Contains information about a message imported from a foreign chat service.
+
+    Parameters:
+        type (:obj:`~pyrogram.enums.MessageOriginType`):
+            Type of the message origin.
+
+        date (:py:obj:`~datetime.datetime`):
+            Date the message was sent originally.
+
+        sender_user_name (``str``):
+            Name of the original sender.
+    """
+
+    def __init__(self, *, date: datetime | None = None, sender_user_name: str | None = None):
+        super().__init__(type=enums.MessageOriginType.IMPORT, date=date)
+
+        self.sender_user_name = sender_user_name

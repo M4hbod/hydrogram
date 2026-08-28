@@ -17,20 +17,33 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .input_checklist import InputChecklist
-from .input_invoice_message import InputInvoiceMessage
-from .input_message_content import InputMessageContent
-from .input_poll_media import InputPollMedia
-from .input_poll_option import InputPollOption
-from .input_rich_message import InputRichMessage
-from .input_text_message_content import InputTextMessageContent
+from __future__ import annotations
 
-__all__ = [
-    "InputChecklist",
-    "InputInvoiceMessage",
-    "InputMessageContent",
-    "InputPollMedia",
-    "InputPollOption",
-    "InputRichMessage",
-    "InputTextMessageContent",
-]
+from pyrogram import raw
+from pyrogram.types.object import Object
+
+
+class CommunityPermissions(Object):
+    """Describes actions that a user is allowed to take in a community.
+
+    Parameters:
+        can_edit_chat_list (``bool``, *optional*):
+            True, if the user can change the chats added to the community.
+    """
+
+    def __init__(
+        self,
+        *,
+        can_edit_chat_list: bool,
+    ):
+        super().__init__()
+
+        self.can_edit_chat_list = can_edit_chat_list
+
+    @staticmethod
+    def _parse(denied_permissions: raw.base.ChatBannedRights) -> CommunityPermissions:
+        if isinstance(denied_permissions, raw.types.ChatBannedRights):
+            return CommunityPermissions(
+                can_edit_chat_list=not denied_permissions.manage_linked_peers,
+            )
+        return None

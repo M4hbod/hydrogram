@@ -17,20 +17,33 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .input_checklist import InputChecklist
-from .input_invoice_message import InputInvoiceMessage
-from .input_message_content import InputMessageContent
-from .input_poll_media import InputPollMedia
-from .input_poll_option import InputPollOption
-from .input_rich_message import InputRichMessage
-from .input_text_message_content import InputTextMessageContent
+from __future__ import annotations
 
-__all__ = [
-    "InputChecklist",
-    "InputInvoiceMessage",
-    "InputMessageContent",
-    "InputPollMedia",
-    "InputPollOption",
-    "InputRichMessage",
-    "InputTextMessageContent",
-]
+from typing import TYPE_CHECKING
+
+from pyrogram.types.object import Object
+
+if TYPE_CHECKING:
+    from pyrogram import raw
+
+
+class PhoneCallStarted(Object):
+    """A service message about a phone_call started in the chat.
+
+    Parameters:
+        id (``int``):
+            Unique call identifier.
+
+        is_video (``bool``):
+            True, if call was a video call.
+    """
+
+    def __init__(self, *, id: int, is_video: bool):
+        super().__init__()
+
+        self.id = id
+        self.is_video = is_video
+
+    @staticmethod
+    def _parse(action: raw.types.MessageActionPhoneCall) -> PhoneCallStarted:
+        return PhoneCallStarted(id=action.call_id, is_video=action.video)

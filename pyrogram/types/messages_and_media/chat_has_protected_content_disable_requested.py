@@ -17,20 +17,32 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .input_checklist import InputChecklist
-from .input_invoice_message import InputInvoiceMessage
-from .input_message_content import InputMessageContent
-from .input_poll_media import InputPollMedia
-from .input_poll_option import InputPollOption
-from .input_rich_message import InputRichMessage
-from .input_text_message_content import InputTextMessageContent
+from __future__ import annotations
 
-__all__ = [
-    "InputChecklist",
-    "InputInvoiceMessage",
-    "InputMessageContent",
-    "InputPollMedia",
-    "InputPollOption",
-    "InputRichMessage",
-    "InputTextMessageContent",
-]
+from typing import TYPE_CHECKING
+
+from pyrogram.types.object import Object
+
+if TYPE_CHECKING:
+    from pyrogram import raw
+
+
+class ChatHasProtectedContentDisableRequested(Object):
+    """Chat ``has_protected_content`` setting was requested to be disabled.
+
+    Parameters:
+        is_expired (``bool``):
+            True, if the request has expired.
+    """
+
+    def __init__(self, *, is_expired: bool):
+
+        super().__init__()
+
+        self.is_expired = is_expired
+
+    @staticmethod
+    def _parse(
+        action: raw.types.MessageActionNoForwardsRequest,
+    ) -> ChatHasProtectedContentDisableRequested:
+        return ChatHasProtectedContentDisableRequested(is_expired=bool(action.expired))

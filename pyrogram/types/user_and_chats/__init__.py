@@ -33,6 +33,17 @@ from .chat_photo import ChatPhoto
 from .chat_preview import ChatPreview
 from .chat_privileges import ChatPrivileges
 from .chat_reactions import ChatReactions
+from .community import Community
+from .community_administrator_rights import CommunityAdministratorRights
+from .community_member_status import (
+    CommunityMemberStatus,
+    CommunityMemberStatusAdministrator,
+    CommunityMemberStatusBanned,
+    CommunityMemberStatusCreator,
+    CommunityMemberStatusLeft,
+    CommunityMemberStatusMember,
+)
+from .community_permissions import CommunityPermissions
 from .dialog import Dialog
 from .emoji_status import EmojiStatus
 from .folder import Folder
@@ -44,9 +55,12 @@ from .forum_topic_edited import ForumTopicEdited
 from .forum_topic_reopened import ForumTopicReopened
 from .general_forum_topic_hidden import GeneralTopicHidden
 from .general_forum_topic_unhidden import GeneralTopicUnhidden
+from .history_cleared import HistoryCleared
 from .invite_link_importer import InviteLinkImporter
 from .peer_channel import PeerChannel
 from .peer_user import PeerUser
+from .phone_call_ended import PhoneCallEnded
+from .phone_call_started import PhoneCallStarted
 from .restriction import Restriction
 from .user import User
 from .username import Username
@@ -72,6 +86,15 @@ __all__ = [
     "ChatPreview",
     "ChatPrivileges",
     "ChatReactions",
+    "Community",
+    "CommunityAdministratorRights",
+    "CommunityMemberStatus",
+    "CommunityMemberStatusAdministrator",
+    "CommunityMemberStatusBanned",
+    "CommunityMemberStatusCreator",
+    "CommunityMemberStatusLeft",
+    "CommunityMemberStatusMember",
+    "CommunityPermissions",
     "Dialog",
     "EmojiStatus",
     "Folder",
@@ -83,9 +106,12 @@ __all__ = [
     "ForumTopicReopened",
     "GeneralTopicHidden",
     "GeneralTopicUnhidden",
+    "HistoryCleared",
     "InviteLinkImporter",
     "PeerChannel",
     "PeerUser",
+    "PhoneCallEnded",
+    "PhoneCallStarted",
     "Restriction",
     "User",
     "Username",

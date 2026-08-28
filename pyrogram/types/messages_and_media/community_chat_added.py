@@ -17,20 +17,32 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .input_checklist import InputChecklist
-from .input_invoice_message import InputInvoiceMessage
-from .input_message_content import InputMessageContent
-from .input_poll_media import InputPollMedia
-from .input_poll_option import InputPollOption
-from .input_rich_message import InputRichMessage
-from .input_text_message_content import InputTextMessageContent
+from __future__ import annotations
 
-__all__ = [
-    "InputChecklist",
-    "InputInvoiceMessage",
-    "InputMessageContent",
-    "InputPollMedia",
-    "InputPollOption",
-    "InputRichMessage",
-    "InputTextMessageContent",
-]
+import pyrogram
+from pyrogram import raw, types
+from pyrogram.types.object import Object
+
+
+class CommunityChatAdded(Object):
+    """Describes a service message about a chat being added to a community.
+
+    Parameters:
+        community (:obj:`~pyrogram.types.Community`):
+            The new community to which the chat belongs.
+    """
+
+    def __init__(self, *, community: types.ChecklistTask):
+        super().__init__()
+
+        self.community = community
+
+    @staticmethod
+    async def _parse(
+        client: pyrogram.Client,
+        action: raw.types.MessageActionChangeCommunity,
+        chats: dict[int, raw.base.Chat],
+    ) -> CommunityChatAdded:
+        return CommunityChatAdded(
+            community=await types.Community._parse(client, chats.get(action.community_id)),
+        )
