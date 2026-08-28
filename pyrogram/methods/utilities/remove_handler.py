@@ -17,9 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from pyrogram.handlers import DisconnectHandler
+from pyrogram.handlers import ConnectHandler, DisconnectHandler, StartHandler, StopHandler
 
 if TYPE_CHECKING:
     import pyrogram
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
 
 
 class RemoveHandler:
-    def remove_handler(self: "pyrogram.Client", handler: "Handler", group: int = 0):
+    def remove_handler(self: pyrogram.Client, handler: Handler, group: int = 0):
         """Remove a previously-registered update handler.
 
         Make sure to provide the right group where the handler was added in. You can use the return value of the
@@ -60,7 +62,13 @@ class RemoveHandler:
 
                 app.run()
         """
-        if isinstance(handler, DisconnectHandler):
+        if isinstance(handler, StartHandler):
+            self.start_handler = None
+        elif isinstance(handler, StopHandler):
+            self.stop_handler = None
+        elif isinstance(handler, ConnectHandler):
+            self.connect_handler = None
+        elif isinstance(handler, DisconnectHandler):
             self.disconnect_handler = None
         else:
             self.dispatcher.remove_handler(handler, group)

@@ -356,6 +356,13 @@ class Client(Methods):
 
         self.me: User | None = None
 
+        # Lifecycle callbacks, set by add_handler() rather than routed by the dispatcher:
+        # start/stop fire from the dispatcher, connect/disconnect from the session.
+        self.start_handler = None
+        self.stop_handler = None
+        self.connect_handler = None
+        self.disconnect_handler = None
+
         self.message_cache = Cache(message_cache_size)
         self.topic_cache = Cache(topic_cache_size)
 

@@ -17,9 +17,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from pyrogram.handlers import DisconnectHandler
+from pyrogram.handlers import ConnectHandler, DisconnectHandler, StartHandler, StopHandler
 
 if TYPE_CHECKING:
     import pyrogram
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
 
 
 class AddHandler:
-    def add_handler(self: "pyrogram.Client", handler: "Handler", group: int = 0):
+    def add_handler(self: pyrogram.Client, handler: Handler, group: int = 0):
         """Register an update handler.
 
         You can register multiple handlers, but at most one handler within a group will be used for a single update.
@@ -62,7 +64,13 @@ class AddHandler:
 
                 app.run()
         """
-        if isinstance(handler, DisconnectHandler):
+        if isinstance(handler, StartHandler):
+            self.start_handler = handler.callback
+        elif isinstance(handler, StopHandler):
+            self.stop_handler = handler.callback
+        elif isinstance(handler, ConnectHandler):
+            self.connect_handler = handler.callback
+        elif isinstance(handler, DisconnectHandler):
             self.disconnect_handler = handler.callback
         else:
             self.dispatcher.add_handler(handler, group)
