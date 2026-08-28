@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import StopTransmission, raw, types, utils
@@ -28,6 +28,7 @@ from pyrogram.errors import FilePartMissing
 from pyrogram.file_id import FileType
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from datetime import datetime
 
 

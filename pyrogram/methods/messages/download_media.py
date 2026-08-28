@@ -22,11 +22,14 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import BinaryIO, Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import types
 from pyrogram.file_id import PHOTO_TYPES, FileId, FileType
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 DEFAULT_DOWNLOAD_DIR = "downloads/"
 

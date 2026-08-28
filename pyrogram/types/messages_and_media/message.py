@@ -22,7 +22,7 @@ from __future__ import annotations
 import contextlib
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, BinaryIO, Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import enums, filters, raw, types, utils
@@ -41,6 +41,7 @@ from pyrogram.types.pyromod import ListenerTypes
 from pyrogram.types.update import Update
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from datetime import datetime
     from re import Match
 

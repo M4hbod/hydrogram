@@ -39,7 +39,7 @@ from importlib import import_module
 from io import BytesIO, StringIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
@@ -69,7 +69,7 @@ from .session.internals import MsgId
 
 if TYPE_CHECKING:
     import builtins
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Callable
 
 log = logging.getLogger(__name__)
 
@@ -201,6 +201,10 @@ class Client(Methods):
         protocol_factory (:obj:`~pyrogram.connection.transport.TCP`, *optional*):
             Pass a custom protocol factory to the client.
 
+        skip_updates (``bool``, *optional*):
+            Pass False to receive updates that arrived while the client was offline.
+            Defaults to True.
+
         fetch_replies (``bool``, *optional*):
             Whether to fetch the message a reply points at when it is not already cached.
             Defaults to True.
@@ -273,6 +277,7 @@ class Client(Methods):
         protocol_factory: builtins.type[TCP] = TCPAbridged,
         message_cache_size: int = 1000,
         topic_cache_size: int = 1000,
+        skip_updates: bool = True,
         fetch_replies: bool = True,
         fetch_topics: bool = False,
         fetch_stories: bool = False,
@@ -308,6 +313,9 @@ class Client(Methods):
         self.protocol_factory = protocol_factory
         self.message_cache_size = message_cache_size
         self.topic_cache_size = topic_cache_size
+        # Drop updates that queued while the client was offline, rather than
+        # replaying them on connect.
+        self.skip_updates = skip_updates
         self.fetch_replies = fetch_replies
         # Off until the chats and stories method groups land: the parse paths they gate call
         # get_direct_messages_topics_by_id() and get_stories(), which do not exist yet.

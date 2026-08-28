@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram.types import Identifier, Listener, ListenerTypes, Message
@@ -28,6 +28,8 @@ from pyrogram.types import Identifier, Listener, ListenerTypes, Message
 from .handler import Handler
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pyrogram.filters import Filter
 
 

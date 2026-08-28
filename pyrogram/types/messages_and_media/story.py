@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, BinaryIO, Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -28,6 +28,7 @@ from pyrogram.types.object import Object
 from pyrogram.types.update import Update
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from datetime import datetime
 
 

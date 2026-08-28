@@ -748,7 +748,6 @@ class Chat(Object):
                 # Set chat photo using an existing Photo file_id
                 await chat.set_photo(photo=photo.file_id)
 
-
                 # Set chat video using a local file
                 await chat.set_photo(video="video.mp4")
 

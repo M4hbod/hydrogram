@@ -22,10 +22,10 @@ from __future__ import annotations
 import inspect
 import re
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Callable
 
 import pyrogram
 from pyrogram import enums
@@ -214,7 +214,6 @@ outgoing = create(outgoing_filter)
 are not recognized as outgoing.
 """
 
-
 text = create(_attribute_filter("text"), "text_filter")
 """Filter text messages."""
 
@@ -302,7 +301,6 @@ def channel_filter(_: Filter, __: pyrogram.Client, m: CallbackQuery | Message) -
 channel = create(channel_filter)
 """Filter messages sent in channels."""
 
-
 new_chat_members = create(_attribute_filter("new_chat_members"), "new_chat_members_filter")
 """Filter service messages for new chat members."""
 
@@ -361,7 +359,6 @@ def inline_keyboard_filter(_: Filter, __: pyrogram.Client, m: Message) -> bool:
 inline_keyboard = create(inline_keyboard_filter)
 """Filter messages containing inline keyboard markups"""
 
-
 mentioned = create(_attribute_filter("mentioned"), "mentioned_filter")
 """Filter messages containing mentions"""
 
@@ -405,7 +402,6 @@ media = create(media_filter)
 A media message contains any of the following fields set: *audio*, *document*, *photo*,
 *sticker*, *video*, *animation*, *voice*, *video_note*, *contact*, *location*, *venue*, *poll*.
 """
-
 
 scheduled = create(_attribute_filter("scheduled"), "scheduled_filter")
 """Filter messages that have been scheduled (not yet sent)."""

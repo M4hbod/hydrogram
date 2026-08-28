@@ -30,7 +30,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-
 # TODO: Rewrite using a flag for replied messages and have message_ids non-optional
 
 

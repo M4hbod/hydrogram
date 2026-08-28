@@ -19,11 +19,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from .handler import Handler
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import pyrogram
 
 
