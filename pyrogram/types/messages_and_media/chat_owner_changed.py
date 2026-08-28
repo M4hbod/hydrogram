@@ -45,6 +45,6 @@ class ChatOwnerChanged(Object):
     ) -> ChatOwnerChanged:
         if isinstance(action, raw.types.MessageActionChangeCreator):
             return ChatOwnerChanged(
-                new_owner=await types.User._parse(client, users.get(action.new_creator_id))
+                new_owner=types.User._parse(client, users.get(action.new_creator_id))
             )
         return None

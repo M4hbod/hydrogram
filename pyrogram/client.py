@@ -32,13 +32,14 @@ import shutil
 import string
 import sys
 import time
+from collections import OrderedDict
 from concurrent.futures.thread import ThreadPoolExecutor
 from hashlib import sha256
 from importlib import import_module
 from io import BytesIO, StringIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
@@ -200,6 +201,19 @@ class Client(Methods):
         protocol_factory (:obj:`~pyrogram.connection.transport.TCP`, *optional*):
             Pass a custom protocol factory to the client.
 
+        fetch_replies (``bool``, *optional*):
+            Whether to fetch the message a reply points at when it is not already cached.
+            Defaults to True.
+
+        fetch_topics (``bool``, *optional*):
+            Whether to resolve forum topics while parsing. Defaults to False.
+
+        fetch_stories (``bool``, *optional*):
+            Whether to fetch stories referenced by a message. Defaults to False.
+
+        topic_cache_size (``int``, *optional*):
+            Size of the forum-topic cache. Defaults to 1000.
+
         message_cache_size (``int``, *optional*):
             Size of the message cache used to store already processed messages.
             Defaults to 1000.
@@ -258,6 +272,10 @@ class Client(Methods):
         connection_factory: builtins.type[Connection] = Connection,
         protocol_factory: builtins.type[TCP] = TCPAbridged,
         message_cache_size: int = 1000,
+        topic_cache_size: int = 1000,
+        fetch_replies: bool = True,
+        fetch_topics: bool = False,
+        fetch_stories: bool = False,
     ):
         super().__init__()
 
@@ -289,6 +307,12 @@ class Client(Methods):
         self.connection_factory = connection_factory
         self.protocol_factory = protocol_factory
         self.message_cache_size = message_cache_size
+        self.topic_cache_size = topic_cache_size
+        self.fetch_replies = fetch_replies
+        # Off until the chats and stories method groups land: the parse paths they gate call
+        # get_direct_messages_topics_by_id() and get_stories(), which do not exist yet.
+        self.fetch_topics = fetch_topics
+        self.fetch_stories = fetch_stories
 
         self.executor = ThreadPoolExecutor(self.workers, thread_name_prefix="Handler")
 
@@ -333,6 +357,7 @@ class Client(Methods):
         self.me: User | None = None
 
         self.message_cache = Cache(message_cache_size)
+        self.topic_cache = Cache(topic_cache_size)
 
         # Sometimes, for some reason, the server will stop sending updates and will only respond to pings.
         # This watchdog will invoke updates.GetState in order to wake up the server and enable it sending updates again
@@ -1135,19 +1160,45 @@ class Client(Methods):
 
 
 class Cache:
+    """A bounded LRU cache guarded by a lock.
+
+    Message parsing writes to this concurrently from the update loop, so access is serialised.
+    The previous implementation was an unlocked dict that evicted *half* its contents once full,
+    which made a burst of traffic throw away entries that were still in use.
+    """
+
     def __init__(self, capacity: int):
+        if capacity <= 0:
+            raise ValueError("capacity must be greater than 0")
+
         self.capacity = capacity
-        self.store = {}
+        self._cache: OrderedDict[Any, Any] = OrderedDict()
+        self._lock = asyncio.Lock()
 
-    def __getitem__(self, key):
-        return self.store.get(key, None)
+    def __len__(self) -> int:
+        return len(self._cache)
 
-    def __setitem__(self, key, value):
-        if key in self.store:
-            del self.store[key]
+    def __contains__(self, key: Any) -> bool:
+        return key in self._cache
 
-        self.store[key] = value
+    def __bool__(self) -> bool:
+        return bool(self._cache)
 
-        if len(self.store) > self.capacity:
-            for _ in range(self.capacity // 2 + 1):
-                del self.store[next(iter(self.store))]
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(capacity={self.capacity}, size={len(self)})"
+
+    async def get(self, key: Any, default: Any = None) -> Any:
+        async with self._lock:
+            if key not in self._cache:
+                return default
+
+            self._cache.move_to_end(key)
+            return self._cache[key]
+
+    async def set(self, key: Any, value: Any) -> None:
+        async with self._lock:
+            self._cache[key] = value
+            self._cache.move_to_end(key)
+
+            if len(self._cache) > self.capacity:
+                self._cache.popitem(last=False)

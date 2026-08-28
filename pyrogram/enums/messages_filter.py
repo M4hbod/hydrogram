@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from pyrogram import raw
 
 from .auto_name import AutoName
@@ -52,7 +54,7 @@ class MessagesFilter(AutoName):
     VIDEO_NOTE = raw.types.InputMessagesFilterRoundVideo
     "Video note messages"
 
-    AUDIO_VIDEO_NOTE = raw.types.InputMessagesFilterRoundVideo
+    AUDIO_VIDEO_NOTE = raw.types.InputMessagesFilterRoundVoice
     "Audio and video note messages"
 
     AUDIO = raw.types.InputMessagesFilterMusic
@@ -75,3 +77,6 @@ class MessagesFilter(AutoName):
 
     PINNED = raw.types.InputMessagesFilterPinned
     "Pinned messages"
+
+    POLL = raw.types.InputMessagesFilterPoll
+    "Poll messages"

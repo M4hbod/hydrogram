@@ -80,7 +80,7 @@ class Checklist(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Checklist:
-        completions = {i.id: i for i in getattr(checklist, "completions", [])}
+        completions = {i.id: i for i in getattr(checklist, "completions", None) or []}
 
         checklist_tasks = [
             await types.ChecklistTask._parse(client, task, completions.get(task.id), users, chats)
@@ -88,7 +88,7 @@ class Checklist(Object):
         ]
 
         title, entities = (
-            await utils.parse_text_with_entities(client, checklist.todo.title, users)
+            utils.parse_text_with_entities(client, checklist.todo.title, users)
         ).values()
 
         return Checklist(

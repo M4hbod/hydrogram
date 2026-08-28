@@ -77,7 +77,7 @@ class ChecklistTask(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> ChecklistTask:
-        text, entities = (await utils.parse_text_with_entities(client, item.title, users)).values()
+        text, entities = (utils.parse_text_with_entities(client, item.title, users)).values()
 
         completed_by_peer_id = utils.get_raw_peer_id(getattr(completion, "completed_by", None))
 
@@ -85,7 +85,7 @@ class ChecklistTask(Object):
             id=item.id,
             text=text,
             entities=entities,
-            completed_by=await types.Chat._parse_chat(
+            completed_by=types.Chat._parse_chat(
                 client, users.get(completed_by_peer_id) or chats.get(completed_by_peer_id)
             ),
             completion_date=utils.timestamp_to_datetime(getattr(completion, "date", None)),

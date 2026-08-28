@@ -45,9 +45,13 @@ class RichMessage(Object):
     async def _parse(
         client: pyrogram.Client,
         rich_message: raw.types.RichMessage,
-        users: dict[int, raw.base.User] = {},
-        chats: dict[int, raw.base.Chat] = {},
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
     ) -> RichMessage:
+        # A mutable default argument is shared between calls; normalise here instead.
+        users = users or {}
+        chats = chats or {}
+
         if isinstance(rich_message, raw.types.RichMessage):
             photos = {photo.id: photo for photo in rich_message.photos}
             documents = {document.id: document for document in rich_message.documents}

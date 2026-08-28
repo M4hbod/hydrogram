@@ -184,13 +184,15 @@ class Dispatcher:
     ) -> tuple[types.InlineQuery, type[InlineQueryHandler]]:
         return pyrogram.types.InlineQuery._parse(self.client, update, users), InlineQueryHandler
 
-    def _poll_parser(
+    async def _poll_parser(
         self,
         update: UpdateMessagePoll,
         users: dict[int, raw.types.User],
         chats: dict[int, raw.types.Chat],
     ) -> tuple[types.Poll | None, type[PollHandler]]:
-        return pyrogram.types.Poll._parse_update(self.client, update), PollHandler
+        # Poll._parse_update is a coroutine: returning it unawaited would put the coroutine
+        # object itself into the tuple, and the dispatcher only awaits the tuple, not its members.
+        return await pyrogram.types.Poll._parse_update(self.client, update), PollHandler
 
     def _chosen_inline_result_parser(
         self,

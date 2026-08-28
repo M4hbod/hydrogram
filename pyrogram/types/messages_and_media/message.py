@@ -19,13 +19,21 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from functools import partial
 from typing import TYPE_CHECKING, BinaryIO, Callable
 
 import pyrogram
 from pyrogram import enums, filters, raw, types, utils
-from pyrogram.errors import MessageIdsEmpty, PeerIdInvalid
+from pyrogram.errors import (
+    ChannelForumMissing,
+    ChannelInvalid,
+    ChannelPrivate,
+    ChatAdminRequired,
+    MessageIdsEmpty,
+    PeerIdInvalid,
+)
 from pyrogram.parser import Parser
 from pyrogram.parser import utils as parser_utils
 from pyrogram.types.object import Object
@@ -69,11 +77,9 @@ class Message(Object, Update):
 
     Parameters:
         id (``int``):
-            Unique message identifier inside this chat.
-
-        message_thread_id (``int``, *optional*):
-            Unique identifier of a message thread to which the message belongs.
-            for supergroups only
+            Unique message identifier inside this chat, 0 for ephemeral messages.
+            In specific instances (e.g., a message containing a video sent to a big chat), the server might automatically schedule a message instead of sending it immediately.
+            In such cases, this message will be unusable until it is actually sent.
 
         from_user (:obj:`~pyrogram.types.User`, *optional*):
             Sender, empty for messages sent to channels.
@@ -84,45 +90,88 @@ class Message(Object, Update):
             The supergroup itself for messages from anonymous group administrators.
             The linked channel for messages automatically forwarded to the discussion group.
 
+        sender_boost_count (``int``, *optional*):
+            If the sender of the message boosted the chat, the number of boosts added by the user.
+
+        sender_business_bot (:obj:`~pyrogram.types.User`, *optional*):
+            The bot that actually sent the message on behalf of the business account. Available only for outgoing messages sent on behalf of the connected business account.
+
+        sender_tag (``str``, *optional*):
+            Tag or custom title of the sender of the message.
+            For supergroups only.
+
+        receiver_user (:obj:`~pyrogram.types.User`, *optional*):
+            For ephemeral messages, the user who received the message.
+
+        ephemeral_message_id (``int``, *optional*):
+            For ephemeral messages, identifier of the ephemeral message inside this chat.
+            The identifier may be reused for another ephemeral message after the message is deleted or expires.
+
         date (:py:obj:`~datetime.datetime`, *optional*):
             Date the message was sent.
+
+        guest_query_id (``str``, *optional*):
+            The unique identifier for the guest query.
+            Use this identifier with the method :meth:`~pyrogram.Client.answer_guest_query` to send a response message.
+            If non-empty, the message belongs to the chat where the guest bot was summoned, which may not coincide with other existing bot chats sharing the same identifier.
 
         chat (:obj:`~pyrogram.types.Chat`, *optional*):
             Conversation the message belongs to.
 
-        topics (:obj:`~pyrogram.types.ForumTopic`, *optional*):
+        topic_message (``bool``, *optional*):
+            True, if the message is a forum topic message.
+
+        automatic_forward (``bool``, *optional*):
+            True, if the message is a channel post that was automatically forwarded to the connected discussion group.
+
+        from_offline (``bool``, *optional*):
+            True, if the message was sent by an implicit action, for example, as an away or a greeting business message, or as a scheduled message.
+
+        topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
             Topic the message belongs to.
 
-        forward_from (:obj:`~pyrogram.types.User`, *optional*):
-            For forwarded messages, sender of the original message.
+        forward_origin (:obj:`~pyrogram.types.MessageOrigin`, *optional*):
+            Information about the original message for forwarded messages.
 
-        forward_sender_name (``str``, *optional*):
-            For messages forwarded from users who have hidden their accounts, name of the user.
+        message_thread_id (``int``, *optional*):
+            Unique identifier of a message thread to which the message belongs.
+            For forums only.
 
-        forward_from_chat (:obj:`~pyrogram.types.Chat`, *optional*):
-            For messages forwarded from channels, information about the original channel. For messages forwarded from anonymous group administrators, information about the original supergroup.
+        direct_messages_topic_id (``int``, *optional*):
+            Unique identifier of a topic in a channel direct messages chat administered by the current user.
+            For direct chats only.
 
-        forward_from_message_id (``int``, *optional*):
-            For messages forwarded from channels, identifier of the original message in the channel.
+        effect_id (``int``, *optional*):
+            Unique identifier of the message effect.
+            For private chats only.
 
-        forward_signature (``str``, *optional*):
-            For messages forwarded from channels, signature of the post author if present.
-
-        forward_date (:py:obj:`~datetime.datetime`, *optional*):
-            For forwarded messages, date the original message was sent.
-
-        is_topic_message (``bool``, *optional*):
-            True, if the message is sent to a forum topic
+        rich_message (:obj:`~pyrogram.types.Message`, *optional*):
+            Message is a rich formatted message.
 
         reply_to_message_id (``int``, *optional*):
             The id of the message which this message directly replied to.
 
+        reply_to_story_id (``int``, *optional*):
+            The id of the story which this message directly replied to.
+
+        reply_to_story_user_id (``int``, *optional*):
+            The id of the story sender which this message directly replied to.
+
         reply_to_top_message_id (``int``, *optional*):
             The id of the first message which started this message thread.
+
+        reply_to_poll_option_id (``str``, *optional*):
+            Persistent identifier of the specific poll option that is being replied to.
 
         reply_to_message (:obj:`~pyrogram.types.Message`, *optional*):
             For replies, the original message. Note that the Message object in this field will not contain
             further reply_to_message fields even if it itself is a reply.
+
+        reply_to_story (:obj:`~pyrogram.types.Story`, *optional*):
+            For replies, the original story.
+
+        reply_to_checklist_task_id (``int``, *optional*):
+            Identifier of the specific checklist task that is being replied to.
 
         mentioned (``bool``, *optional*):
             The message contains a mention.
@@ -141,15 +190,32 @@ class Message(Object, Update):
             This field will contain the enumeration type of the media message.
             You can use ``media = getattr(message, message.media.value)`` to access the media message.
 
+        paid_media (:obj:`~pyrogram.types.PaidMediaInfo`, *optional*):
+            The message is a paid media message.
+
+        checklist (:obj:`~pyrogram.types.Checklist`, *optional*):
+            The message is a checklist message.
+
+        show_caption_above_media (``bool``, *optional*):
+            If True, caption must be shown above the message media.
+
         edit_date (:py:obj:`~datetime.datetime`, *optional*):
             Date the message was last edited.
 
-        media_group_id (``str``, *optional*):
+        edit_hidden (``bool``, *optional*):
+            The message shown as not modified.
+            A message can be not modified in case it has received a reaction.
+
+        media_group_id (``int``, *optional*):
             The unique identifier of a media message group this message belongs to.
 
         author_signature (``str``, *optional*):
             Signature of the post author for messages in channels, or the custom title of an anonymous group
             administrator.
+
+        is_paid_post (``bool``, *optional*):
+            True, if the message is a paid post.
+            Note that such posts must not be deleted for 24 hours to receive the payment and can't be edited.
 
         has_protected_content (``bool``, *optional*):
             True, if the message can't be forwarded.
@@ -170,9 +236,6 @@ class Message(Object, Update):
             For messages with a caption, special entities like usernames, URLs, bot commands, etc. that appear
             in the caption.
 
-        show_caption_above_media (``bool``, *optional*):
-            Message's caption should be shown above the media.
-
         audio (:obj:`~pyrogram.types.Audio`, *optional*):
             Message is an audio file, information about the file.
 
@@ -181,6 +244,10 @@ class Message(Object, Update):
 
         photo (:obj:`~pyrogram.types.Photo`, *optional*):
             Message is a photo, information about the photo.
+
+        live_photo (:obj:`~pyrogram.types.LivePhoto`, *optional*):
+            Message is a live photo, information about the live photo.
+            For backward compatibility, when this field is set, the photo field will also be set.
 
         sticker (:obj:`~pyrogram.types.Sticker`, *optional*):
             Message is a sticker, information about the sticker.
@@ -191,8 +258,21 @@ class Message(Object, Update):
         game (:obj:`~pyrogram.types.Game`, *optional*):
             Message is a game, information about the game.
 
+        giveaway (:obj:`~pyrogram.types.Giveaway`, *optional*):
+            Message is a giveaway, information about the giveaway.
+
+        invoice (:obj:`~pyrogram.types.Invoice`, *optional*):
+            Message is a invoice, information about the invoice.
+            `More about payments » <https://core.telegram.org/bots/api#payments>`_
+
+        story (:obj:`~pyrogram.types.Story`, *optional*):
+            Message is a story, information about the story.
+
         video (:obj:`~pyrogram.types.Video`, *optional*):
             Message is a video, information about the video.
+
+        video_processing_pending (``bool``, *optional*):
+            True, if the video is still processing.
 
         voice (:obj:`~pyrogram.types.Voice`, *optional*):
             Message is a voice message, information about the file.
@@ -218,6 +298,9 @@ class Message(Object, Update):
         web_page (:obj:`~pyrogram.types.WebPage`, *optional*):
             Message was sent with a webpage preview.
 
+        link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+            Options used for link preview generation for the message.
+
         poll (:obj:`~pyrogram.types.Poll`, *optional*):
             Message is a native poll, information about the poll.
 
@@ -230,6 +313,15 @@ class Message(Object, Update):
 
         left_chat_member (:obj:`~pyrogram.types.User`, *optional*):
             A member was removed from the group, information about them (this member may be the bot itself).
+
+        chat_owner_left (:obj:`~pyrogram.types.ChatOwnerLeft`, *optional*):
+            Service message: chat owner has left.
+
+        chat_owner_changed (:obj:`~pyrogram.types.ChatOwnerChanged`, *optional*):
+            Service message: chat owner has changed.
+
+        chat_join_type (:obj:`~pyrogram.enums.ChatJoinType`, *optional*):
+            This field will contain the enumeration type of how the user had joined the chat.
 
         new_chat_title (``str``, *optional*):
             A chat title was changed to this value.
@@ -291,6 +383,12 @@ class Message(Object, Update):
             Messages sent from yourself to other chats are outgoing (*outgoing* is True).
             An exception is made for your own personal chat; messages sent there will be incoming.
 
+        external_reply (:obj:`~pyrogram.types.ExternalReplyInfo`, *optional*):
+            Information about the message that is being replied to, which may come from another chat or forum topic.
+
+        quote (:obj:`~pyrogram.types.TextQuote`, *optional*):
+            Chosen quote from the replied message.
+
         matches (List of regex Matches, *optional*):
             A list containing all `Match Objects <https://docs.python.org/3/library/re.html#match-objects>`_ that match
             the text of this message. Only applicable when using :obj:`Filters.regex <pyrogram.Filters.regex>`.
@@ -312,14 +410,17 @@ class Message(Object, Update):
         forum_topic_edited (:obj:`~pyrogram.types.ForumTopicEdited`, *optional*):
             Service message: forum topic edited
 
-        general_topic_hidden (:obj:`~pyrogram.types.GeneralTopicHidden`, *optional*):
-            Service message: forum general topic hidden
+        general_forum_topic_hidden (:obj:`~pyrogram.types.GeneralForumTopicHidden`, *optional*):
+            Service message: general forum topic hidden
 
-        general_topic_unhidden (:obj:`~pyrogram.types.GeneralTopicUnhidden`, *optional*):
-            Service message: forum general topic unhidden
+        general_forum_topic_unhidden (:obj:`~pyrogram.types.GeneralForumTopicUnhidden`, *optional*):
+            Service message: general forum topic unhidden
 
         video_chat_scheduled (:obj:`~pyrogram.types.VideoChatScheduled`, *optional*):
             Service message: voice chat scheduled.
+
+        history_cleared (:obj:`~pyrogram.types.HistoryCleared`, *optional*):
+            Service message: history cleared
 
         video_chat_started (:obj:`~pyrogram.types.VideoChatStarted`, *optional*):
             Service message: the voice chat started.
@@ -330,150 +431,462 @@ class Message(Object, Update):
         video_chat_members_invited (:obj:`~pyrogram.types.VoiceChatParticipantsInvited`, *optional*):
             Service message: new members were invited to the voice chat.
 
+        phone_call_started (:obj:`~pyrogram.types.PhoneCallStarted`, *optional*):
+            Service message: phone call started.
+
+        phone_call_ended (:obj:`~pyrogram.types.PhoneCallEnded`, *optional*):
+            Service message: phone call ended.
+
         web_app_data (:obj:`~pyrogram.types.WebAppData`, *optional*):
             Service message: web app data sent to the bot.
+
+        paid_messages_refunded (:obj:`~pyrogram.types.PaidMessagesRefunded`, *optional*):
+            Service message: paid messages refunded.
+
+        paid_messages_price_changed (:obj:`~pyrogram.types.PaidMessagesPriceChanged`, *optional*):
+            Service message: paid messages price.
+
+        direct_message_price_changed (:obj:`~pyrogram.types.DirectMessagePriceChanged`, *optional*):
+            Service message: direct messages price.
+
+        checklist_tasks_done (:obj:`~pyrogram.types.ChecklistTasksDone`, *optional*):
+            Service message: checklist tasks done.
+
+        checklist_tasks_added (:obj:`~pyrogram.types.ChecklistTasksAdded`, *optional*):
+            Service message: checklist tasks added.
+
+        community_chat_added (:obj:`~pyrogram.types.CommunityChatAdded`, *optional*):
+            Service message: chat added to a Community.
+
+        community_chat_removed (:obj:`~pyrogram.types.CommunityChatRemoved`, *optional*):
+            Service message: chat removed from a Community.
+
+        premium_gift_code (:obj:`~pyrogram.types.PremiumGiftCode`, *optional*):
+            Service message: premium gift code information.
+
+        gifted_premium (:obj:`~pyrogram.types.GiftedPremium`, *optional*):
+            Service message: gifted premium information.
+
+        gifted_stars (:obj:`~pyrogram.types.GiftedStars`, *optional*):
+            Service message: gifted stars information.
+
+        gifted_ton (:obj:`~pyrogram.types.GiftedTon`, *optional*):
+            Service message: gifted ton information.
+
+        gift (:obj:`~pyrogram.types.Gift`, *optional*):
+            Service message: star gift information.
+
+        is_prepaid_upgrade (``bool``, *optional*):
+            True, if the messages is about prepaid upgrade of the gift by another user.
+
+        is_from_auction (``bool``, *optional*):
+            True, if the message is a notification about a gift won on an auction.
+
+        suggest_profile_photo (:obj:`~pyrogram.types.Photo`, *optional*):
+            Service message: suggested profile photo.
+
+        suggest_birthday (:obj:`~pyrogram.types.Birthday`, *optional*):
+            Service message: suggested birthday.
+
+        users_shared (:obj:`~pyrogram.types.UsersShared`, *optional*):
+            Service message: users shared information.
+
+        chat_shared (:obj:`~pyrogram.types.ChatShared`, *optional*):
+            Service message: chat shared information.
+
+        successful_payment (:obj:`~pyrogram.types.SuccessfulPayment`, *optional*):
+            Service message: successful payment.
+
+        refunded_payment (:obj:`~pyrogram.types.RefundedPayment`, *optional*):
+            Service message: refunded payment.
+
+        suggested_post_approval_failed (:obj:`~pyrogram.types.SuggestedPostApprovalFailed`, *optional*):
+            Service message: suggested post approval failed.
+
+        suggested_post_approved (:obj:`~pyrogram.types.SuggestedPostApproved`, *optional*):
+            Service message: suggested post approved.
+
+        suggested_post_declined (:obj:`~pyrogram.types.SuggestedPostDeclined`, *optional*):
+            Service message: suggested post declined.
+
+        suggested_post_paid (:obj:`~pyrogram.types.SuggestedPostPaid`, *optional*):
+            Service message: suggested post paid.
+
+        suggested_post_refunded (:obj:`~pyrogram.types.SuggestedPostRefunded`, *optional*):
+            Service message: suggested post refunded.
+
+        giveaway_created (``bool``, *optional*):
+            Service message: giveaway launched.
+
+        giveaway_winners (:obj:`~pyrogram.types.GiveawayWinners`, *optional*):
+            A giveaway with public winners was completed.
+
+        giveaway_completed (:obj:`~pyrogram.types.GiveawayCompleted`, *optional*):
+            Service message: a giveaway without public winners was completed.
+
+        managed_bot_created (:obj:`~pyrogram.types.ManagedBotCreated`, *optional*):
+            Service message: user created a bot that will be managed by the current bot.
+
+        poll_option_added (:obj:`~pyrogram.types.PollOptionAdded`, *optional*):
+            Service message: answer option was added to a poll.
+
+        poll_option_deleted (:obj:`~pyrogram.types.PollOptionDeleted`, *optional*):
+            Service message: answer option was deleted from a poll.
+
+        chat_set_theme (:obj:`~pyrogram.types.ChatTheme`, *optional*):
+            Service message: The chat theme was changed.
+
+        chat_set_background (:obj:`~pyrogram.types.ChatBackground`, *optional*):
+            Service message: The chat background was changed.
+
+        set_message_auto_delete_time (``int``, *optional*):
+            Service message: The auto-delete or self-destruct timer for messages in the chat has been changed.
+
+        chat_boost (``int``, *optional*):
+            Service message: The chat was boosted by the sender of the message.
+            Number of times the chat was boosted.
+
+        write_access_allowed (:obj:`~pyrogram.types.WriteAccessAllowed`, *optional*):
+            Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method `requestWriteAccess <https://core.telegram.org/bots/webapps#initializing-mini-apps>`__
+
+        connected_website (``str``, *optional*):
+            The domain name of the website on which the user has logged in. `More about Telegram Login <https://core.telegram.org/widgets/login>`__
+
+        contact_registered (:obj:`~pyrogram.types.ContactRegistered`, *optional*):
+            Service message: Contact registered in Telegram.
+
+        proximity_alert_triggered (:obj:`~pyrogram.types.ProximityAlertTriggered`, *optional*):
+            Service message: A user in the chat came within proximity alert range.
+
+        giveaway_prize_stars (:obj:`~pyrogram.types.GiveawayPrizeStars`, *optional*):
+            Service message: Stars were received by the current user from a giveaway.
+
+        screenshot_taken (:obj:`~pyrogram.types.ScreenshotTaken`, *optional*):
+            Service message: screenshot of a message in the chat has been taken.
+
+        upgraded_gift_purchase_offer (:obj:`~pyrogram.types.UpgradedGiftPurchaseOffer`, *optional*):
+            Service message: An offer to purchase an upgraded gift was sent or received.
+
+        upgraded_gift_purchase_offer_rejected (:obj:`~pyrogram.types.UpgradedGiftPurchaseOfferRejected`, *optional*):
+            Service message: An offer to purchase a gift was rejected or expired.
+
+        chat_has_protected_content_toggled (:obj:`~pyrogram.types.ChatHasProtectedContentToggled`, *optional*):
+            Service message: An ``has_protected_content`` setting was changed or request to change it was rejected in a chat.
+
+        chat_has_protected_content_disable_requested (:obj:`~pyrogram.types.ChatProtectedContentDisableRequested`, *optional*):
+            Service message: An process requested to disable ``has_protected_content`` in a chat.
+
+        business_connection_id (``str``, *optional*):
+            Unique identifier of the business connection from which the message was received.
+            If non-empty, the message belongs to a chat of the corresponding business account that is independent from any potential bot chat which might share the same identifier.
+            This update may at times be triggered by unavailable changes to message fields that are either unavailable or not actively used by the current bot.
 
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
             Additional interface options. An object for an inline keyboard, custom reply keyboard,
             instructions to remove reply keyboard or to force a reply from the user.
 
-        reactions (List of :obj:`~pyrogram.types.Reaction`):
-            List of the reactions to this message.
+        reactions (:obj:`~pyrogram.types.MessageReactions`):
+            Reactions of this message.
+
+        send_paid_messages_stars (``int``, *optional*):
+            The number of Telegram Stars the sender paid to send the message.
+
+        unread_media (``bool``, *optional*):
+            True, if there are unread media attachments in this message.
+
+        silent (``bool``, *optional*):
+            True, if the message sent without notification.
+
+        legacy (``bool``, *optional*):
+            True, if the message is a legacy message.
+            This means that the message is based on the old layer and should be refetched with the new layer.
+
+        pinned (``bool``, *optional*):
+            True, if the message is pinned.
+
+        restriction_reason (List of :obj:`~pyrogram.types.RestrictionReason`, *optional*):
+            Contains a list of human-readable description of the reason why access to this message must be restricted.
+
+        fact_check (:obj:`~pyrogram.types.FactCheck`, *optional*):
+            Information about fact-check added to the message.
+
+        suggested_post_info (:obj:`~pyrogram.types.SuggestedPostInfo`, *optional*):
+            Information about the suggested post.
+
+        channel_post (``bool``, *optional*):
+            True, if the message is a channel post.
+
+        repeat_period (``int``, *optional*):
+            Period after which the message will be sent again in seconds.
+
+        summary_language_code (``str``, *optional*):
+            IETF language tag of the message language on which it can be summarized.
+            None if summary isn't available for the message.
+
+        guest_bot_caller_user (:obj:`~pyrogram.types.User`, *optional*):
+            For a message sent by a guest bot, this is the user whose original message triggered the bot's response.
+
+        guest_bot_caller_chat (:obj:`~pyrogram.types.Chat`, *optional*):
+            For a message sent by a guest bot, this is the chat whose original message triggered the bot's response.
+
+        raw (:obj:`~pyrogram.raw.types.Message`, *optional*):
+            The raw message object, as received from the Telegram API.
 
         link (``str``, *property*):
             Generate a link to this message, only for groups and channels.
+
+        content (``str``, *property*):
+            The text or caption content of the message.
     """
 
-    # TODO: Add game missing field. Also invoice, successful_payment, connected_website
-
+    # TODO: replace media params to MessageContent class
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         id: int,
-        message_thread_id: int | None = None,
-        from_user: types.User = None,
-        sender_chat: types.Chat = None,
+        from_user: types.User | None = None,
+        sender_chat: types.Chat | None = None,
+        sender_boost_count: int | None = None,
+        sender_business_bot: types.User | None = None,
+        sender_tag: str | None = None,
+        receiver_user: types.User | None = None,
+        ephemeral_message_id: int | None = None,
         date: datetime | None = None,
-        chat: types.Chat = None,
-        topics: types.ForumTopic = None,
-        forward_from: types.User = None,
-        forward_sender_name: str | None = None,
-        forward_from_chat: types.Chat = None,
-        forward_from_message_id: int | None = None,
-        forward_signature: str | None = None,
-        forward_date: datetime | None = None,
-        is_topic_message: bool | None = None,
+        guest_query_id: str | None = None,
+        chat: types.Chat | None = None,
+        topic_message: bool | None = None,
+        automatic_forward: bool | None = None,
+        from_offline: bool | None = None,
+        show_caption_above_media: bool | None = None,
+        external_reply: types.ExternalReplyInfo | None = None,
+        quote: types.TextQuote | None = None,
+        topic: types.ForumTopic | None = None,
+        forward_origin: types.MessageOrigin | None = None,
+        message_thread_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        effect_id: int | None = None,
+        rich_message: types.RichMessage | None = None,
         reply_to_message_id: int | None = None,
+        reply_to_story_id: int | None = None,
+        reply_to_story_user_id: int | None = None,
         reply_to_top_message_id: int | None = None,
-        reply_to_message: Message = None,
+        reply_to_poll_option_id: str | None = None,
+        reply_to_message: Message | None = None,
+        reply_to_story: types.Story | None = None,
+        reply_to_checklist_task_id: int | None = None,
         mentioned: bool | None = None,
         empty: bool | None = None,
-        service: enums.MessageServiceType = None,
+        service: enums.MessageServiceType | None = None,
         scheduled: bool | None = None,
         from_scheduled: bool | None = None,
-        media: enums.MessageMediaType = None,
+        media: enums.MessageMediaType | None = None,
+        paid_media: types.PaidMediaInfo | None = None,
+        checklist: types.Checklist | None = None,
         edit_date: datetime | None = None,
-        media_group_id: str | None = None,
+        edit_hidden: bool | None = None,
+        media_group_id: int | None = None,
         author_signature: str | None = None,
+        is_paid_post: bool | None = None,
         has_protected_content: bool | None = None,
         has_media_spoiler: bool | None = None,
-        text: Str = None,
+        text: Str | None = None,
         entities: list[types.MessageEntity] | None = None,
         caption_entities: list[types.MessageEntity] | None = None,
-        show_caption_above_media: bool | None = None,
-        audio: types.Audio = None,
-        document: types.Document = None,
-        photo: types.Photo = None,
-        sticker: types.Sticker = None,
-        animation: types.Animation = None,
-        game: types.Game = None,
-        video: types.Video = None,
-        voice: types.Voice = None,
-        video_note: types.VideoNote = None,
-        caption: Str = None,
-        contact: types.Contact = None,
-        location: types.Location = None,
-        venue: types.Venue = None,
-        web_page: types.WebPage = None,
-        poll: types.Poll = None,
-        dice: types.Dice = None,
+        audio: types.Audio | None = None,
+        document: types.Document | None = None,
+        photo: types.Photo | None = None,
+        live_photo: types.LivePhoto | None = None,
+        sticker: types.Sticker | None = None,
+        animation: types.Animation | None = None,
+        game: types.Game | None = None,
+        giveaway: types.Giveaway | None = None,
+        giveaway_winners: types.GiveawayWinners | None = None,
+        giveaway_completed: types.GiveawayCompleted | None = None,
+        managed_bot_created: types.ManagedBotCreated | None = None,
+        poll_option_added: types.PollOptionAdded | None = None,
+        poll_option_deleted: types.PollOptionDeleted | None = None,
+        invoice: types.Invoice | None = None,
+        story: types.Story | None = None,
+        video: types.Video | None = None,
+        video_processing_pending: bool | None = None,
+        voice: types.Voice | None = None,
+        video_note: types.VideoNote | None = None,
+        caption: Str | None = None,
+        contact: types.Contact | None = None,
+        location: types.Location | None = None,
+        venue: types.Venue | None = None,
+        web_page: types.WebPage | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
+        poll: types.Poll | None = None,
+        dice: types.Dice | None = None,
         new_chat_members: list[types.User] | None = None,
-        left_chat_member: types.User = None,
+        left_chat_member: types.User | None = None,
+        chat_owner_left: types.ChatOwnerLeft | None = None,
+        chat_owner_changed: types.ChatOwnerChanged | None = None,
+        chat_join_type: enums.ChatJoinType | None = None,
         new_chat_title: str | None = None,
-        new_chat_photo: types.Photo = None,
+        new_chat_photo: types.Photo | None = None,
         delete_chat_photo: bool | None = None,
         group_chat_created: bool | None = None,
         supergroup_chat_created: bool | None = None,
         channel_chat_created: bool | None = None,
         migrate_to_chat_id: int | None = None,
         migrate_from_chat_id: int | None = None,
-        pinned_message: Message = None,
-        game_high_score: int | None = None,
+        pinned_message: Message | None = None,
+        game_high_score: types.GameHighScore | None = None,
         views: int | None = None,
         forwards: int | None = None,
-        via_bot: types.User = None,
+        via_bot: types.User | None = None,
         outgoing: bool | None = None,
         matches: list[Match] | None = None,
         command: list[str] | None = None,
-        forum_topic_created: types.ForumTopicCreated = None,
-        forum_topic_closed: types.ForumTopicClosed = None,
-        forum_topic_reopened: types.ForumTopicReopened = None,
-        forum_topic_edited: types.ForumTopicEdited = None,
-        general_topic_hidden: types.GeneralTopicHidden = None,
-        general_topic_unhidden: types.GeneralTopicUnhidden = None,
-        video_chat_scheduled: types.VideoChatScheduled = None,
-        video_chat_started: types.VideoChatStarted = None,
-        video_chat_ended: types.VideoChatEnded = None,
-        video_chat_members_invited: types.VideoChatMembersInvited = None,
-        web_app_data: types.WebAppData = None,
+        forum_topic_created: types.ForumTopicCreated | None = None,
+        forum_topic_closed: types.ForumTopicClosed | None = None,
+        forum_topic_reopened: types.ForumTopicReopened | None = None,
+        forum_topic_edited: types.ForumTopicEdited | None = None,
+        general_forum_topic_hidden: types.GeneralForumTopicHidden | None = None,
+        general_forum_topic_unhidden: types.GeneralForumTopicUnhidden | None = None,
+        video_chat_scheduled: types.VideoChatScheduled | None = None,
+        history_cleared: types.HistoryCleared | None = None,
+        video_chat_started: types.VideoChatStarted | None = None,
+        video_chat_ended: types.VideoChatEnded | None = None,
+        video_chat_members_invited: types.VideoChatMembersInvited | None = None,
+        phone_call_started: types.PhoneCallStarted | None = None,
+        phone_call_ended: types.PhoneCallEnded | None = None,
+        web_app_data: types.WebAppData | None = None,
+        paid_messages_refunded: types.PaidMessagesRefunded | None = None,
+        paid_messages_price_changed: types.PaidMessagesPriceChanged | None = None,
+        direct_message_price_changed: types.DirectMessagePriceChanged | None = None,
+        checklist_tasks_done: list[types.ChecklistTasksDone] | None = None,
+        checklist_tasks_added: list[types.ChecklistTasksAdded] | None = None,
+        community_chat_added: list[types.CommunityChatAdded] | None = None,
+        community_chat_removed: list[types.CommunityChatRemoved] | None = None,
+        premium_gift_code: types.PremiumGiftCode | None = None,
+        gifted_premium: types.GiftedPremium | None = None,
+        gifted_stars: types.GiftedStars | None = None,
+        gifted_ton: types.GiftedTon | None = None,
+        gift: types.Gift | None = None,
+        is_prepaid_upgrade: bool | None = None,
+        is_from_auction: bool | None = None,
+        suggest_profile_photo: types.Photo | None = None,
+        suggest_birthday: types.Birthday | None = None,
+        users_shared: types.UsersShared | None = None,
+        chat_shared: types.ChatShared | None = None,
+        successful_payment: types.SuccessfulPayment | None = None,
+        refunded_payment: types.RefundedPayment | None = None,
+        suggested_post_approval_failed: types.SuggestedPostApprovalFailed | None = None,
+        suggested_post_approved: types.SuggestedPostApproved | None = None,
+        suggested_post_declined: types.SuggestedPostDeclined | None = None,
+        suggested_post_paid: types.SuggestedPostPaid | None = None,
+        suggested_post_refunded: types.SuggestedPostRefunded | None = None,
+        giveaway_created: bool | None = None,
+        chat_set_theme: types.ChatTheme | None = None,
+        chat_set_background: types.ChatBackground | None = None,
+        set_message_auto_delete_time: int | None = None,
+        chat_boost: int | None = None,
+        write_access_allowed: types.WriteAccessAllowed | None = None,
+        connected_website: str | None = None,
+        contact_registered: types.ContactRegistered | None = None,
+        proximity_alert_triggered: types.ProximityAlertTriggered | None = None,
+        giveaway_prize_stars: types.GiveawayPrizeStars | None = None,
+        screenshot_taken: types.ScreenshotTaken | None = None,
+        upgraded_gift_purchase_offer: types.UpgradedGiftPurchaseOffer | None = None,
+        upgraded_gift_purchase_offer_rejected: types.UpgradedGiftPurchaseOfferRejected
+        | None = None,
+        chat_has_protected_content_toggled: types.ChatHasProtectedContentToggled | None = None,
+        chat_has_protected_content_disable_requested: types.ChatHasProtectedContentDisableRequested
+        | None = None,
+        business_connection_id: str | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
-        | types.ForceReply = None,
-        reactions: list[types.Reaction] | None = None,
+        | types.ForceReply
+        | None = None,
+        reactions: types.MessageReactions | None = None,
+        send_paid_messages_stars: int | None = None,
+        unread_media: bool | None = None,
+        silent: bool | None = None,
+        legacy: bool | None = None,
+        pinned: bool | None = None,
+        restriction_reason: list[types.RestrictionReason] | None = None,
+        fact_check: types.FactCheck | None = None,
+        suggested_post_info: types.SuggestedPostInfo | None = None,
+        channel_post: bool | None = None,
+        repeat_period: int | None = None,
+        summary_language_code: str | None = None,
+        guest_bot_caller_user: types.User | None = None,
+        guest_bot_caller_chat: types.Chat | None = None,
+        raw: raw.types.Message | None = None,
     ):
         super().__init__(client)
 
         self.id = id
-        self.message_thread_id = message_thread_id
         self.from_user = from_user
         self.sender_chat = sender_chat
+        self.sender_boost_count = sender_boost_count
+        self.sender_business_bot = sender_business_bot
+        self.sender_tag = sender_tag
+        self.receiver_user = receiver_user
+        self.ephemeral_message_id = ephemeral_message_id
         self.date = date
+        self.guest_query_id = guest_query_id
         self.chat = chat
-        self.topics = topics
-        self.forward_from = forward_from
-        self.forward_sender_name = forward_sender_name
-        self.forward_from_chat = forward_from_chat
-        self.forward_from_message_id = forward_from_message_id
-        self.forward_signature = forward_signature
-        self.forward_date = forward_date
-        self.is_topic_message = is_topic_message
+        self.topic_message = topic_message
+        self.automatic_forward = automatic_forward
+        self.from_offline = from_offline
+        self.show_caption_above_media = show_caption_above_media
+        self.external_reply = external_reply
+        self.quote = quote
+        self.topic = topic
+        self.forward_origin = forward_origin
+        self.message_thread_id = message_thread_id
+        self.direct_messages_topic_id = direct_messages_topic_id
+        self.effect_id = effect_id
+        self.rich_message = rich_message
         self.reply_to_message_id = reply_to_message_id
+        self.reply_to_story_id = reply_to_story_id
+        self.reply_to_story_user_id = reply_to_story_user_id
         self.reply_to_top_message_id = reply_to_top_message_id
+        self.reply_to_poll_option_id = reply_to_poll_option_id
         self.reply_to_message = reply_to_message
+        self.reply_to_story = reply_to_story
+        self.reply_to_checklist_task_id = reply_to_checklist_task_id
         self.mentioned = mentioned
         self.empty = empty
         self.service = service
         self.scheduled = scheduled
         self.from_scheduled = from_scheduled
         self.media = media
+        self.paid_media = paid_media
+        self.checklist = checklist
         self.edit_date = edit_date
+        self.edit_hidden = edit_hidden
         self.media_group_id = media_group_id
         self.author_signature = author_signature
+        self.is_paid_post = is_paid_post
         self.has_protected_content = has_protected_content
         self.has_media_spoiler = has_media_spoiler
         self.text = text
         self.entities = entities
         self.caption_entities = caption_entities
-        self.show_caption_above_media = show_caption_above_media
         self.audio = audio
         self.document = document
         self.photo = photo
+        self.live_photo = live_photo
         self.sticker = sticker
         self.animation = animation
         self.game = game
+        self.giveaway = giveaway
+        self.giveaway_winners = giveaway_winners
+        self.giveaway_completed = giveaway_completed
+        self.managed_bot_created = managed_bot_created
+        self.poll_option_added = poll_option_added
+        self.poll_option_deleted = poll_option_deleted
+        self.invoice = invoice
+        self.story = story
         self.video = video
+        self.video_processing_pending = video_processing_pending
         self.voice = voice
         self.video_note = video_note
         self.caption = caption
@@ -481,10 +894,14 @@ class Message(Object, Update):
         self.location = location
         self.venue = venue
         self.web_page = web_page
+        self.link_preview_options = link_preview_options
         self.poll = poll
         self.dice = dice
         self.new_chat_members = new_chat_members
         self.left_chat_member = left_chat_member
+        self.chat_owner_left = chat_owner_left
+        self.chat_owner_changed = chat_owner_changed
+        self.chat_join_type = chat_join_type
         self.new_chat_title = new_chat_title
         self.new_chat_photo = new_chat_photo
         self.delete_chat_photo = delete_chat_photo
@@ -501,76 +918,92 @@ class Message(Object, Update):
         self.outgoing = outgoing
         self.matches = matches
         self.command = command
+        self.giveaway_prize_stars = giveaway_prize_stars
+        self.screenshot_taken = screenshot_taken
+        self.upgraded_gift_purchase_offer = upgraded_gift_purchase_offer
+        self.upgraded_gift_purchase_offer_rejected = upgraded_gift_purchase_offer_rejected
+        self.chat_has_protected_content_toggled = chat_has_protected_content_toggled
+        self.chat_has_protected_content_disable_requested = (
+            chat_has_protected_content_disable_requested
+        )
+        self.business_connection_id = business_connection_id
         self.reply_markup = reply_markup
         self.forum_topic_created = forum_topic_created
         self.forum_topic_closed = forum_topic_closed
         self.forum_topic_reopened = forum_topic_reopened
         self.forum_topic_edited = forum_topic_edited
-        self.general_topic_hidden = general_topic_hidden
-        self.general_topic_unhidden = general_topic_unhidden
+        self.general_forum_topic_hidden = general_forum_topic_hidden
+        self.general_forum_topic_unhidden = general_forum_topic_unhidden
         self.video_chat_scheduled = video_chat_scheduled
+        self.history_cleared = history_cleared
         self.video_chat_started = video_chat_started
         self.video_chat_ended = video_chat_ended
         self.video_chat_members_invited = video_chat_members_invited
+        self.phone_call_started = phone_call_started
+        self.phone_call_ended = phone_call_ended
         self.web_app_data = web_app_data
+        self.paid_messages_refunded = paid_messages_refunded
+        self.paid_messages_price_changed = paid_messages_price_changed
+        self.direct_message_price_changed = direct_message_price_changed
+        self.checklist_tasks_done = checklist_tasks_done
+        self.checklist_tasks_added = checklist_tasks_added
+        self.community_chat_added = community_chat_added
+        self.community_chat_removed = community_chat_removed
+        self.premium_gift_code = premium_gift_code
+        self.gifted_premium = gifted_premium
+        self.gifted_stars = gifted_stars
+        self.gifted_ton = gifted_ton
+        self.gift = gift
+        self.is_prepaid_upgrade = is_prepaid_upgrade
+        self.is_from_auction = is_from_auction
+        self.suggest_profile_photo = suggest_profile_photo
+        self.suggest_birthday = suggest_birthday
+        self.users_shared = users_shared
+        self.chat_shared = chat_shared
+        self.successful_payment = successful_payment
+        self.refunded_payment = refunded_payment
+        self.suggested_post_approval_failed = suggested_post_approval_failed
+        self.suggested_post_approved = suggested_post_approved
+        self.suggested_post_declined = suggested_post_declined
+        self.suggested_post_paid = suggested_post_paid
+        self.suggested_post_refunded = suggested_post_refunded
+        self.giveaway_created = giveaway_created
+        self.chat_set_theme = chat_set_theme
+        self.chat_set_background = chat_set_background
+        self.set_message_auto_delete_time = set_message_auto_delete_time
+        self.chat_boost = chat_boost
+        self.write_access_allowed = write_access_allowed
+        self.connected_website = connected_website
+        self.contact_registered = contact_registered
+        self.proximity_alert_triggered = proximity_alert_triggered
         self.reactions = reactions
-
-    async def wait_for_click(
-        self,
-        from_user_id: int | str | list[int | str] | None = None,
-        timeout: int | None = None,
-        filters=None,
-        alert: str | bool = True,
-    ) -> types.CallbackQuery:
-        """
-        Waits for a callback query to be clicked on the message.
-
-        Parameters:
-            from_user_id (``Optional[Union[int, str], List[Union[int, str]]]``):
-                The user ID(s) to wait for. If None, waits for any user.
-
-            timeout (``Optional[int]``):
-                The timeout in seconds. If None, waits forever.
-
-            filters (``Optional[Filter]``):
-                A filter to check if the callback query should be accepted.
-
-            alert (``Union[str, bool]``):
-                The alert to show when the button is clicked by users that are not allowed in from_user_id.
-                If True, shows the default alert. If False, shows no alert.
-
-        Returns:
-            :obj:`~pyrogram.types.CallbackQuery`: The callback query that was clicked.
-        """
-        message_id = getattr(self, "id", getattr(self, "message_id", None))
-
-        return await self._client.listen(
-            listener_type=types.ListenerTypes.CALLBACK_QUERY,
-            timeout=timeout,
-            filters=filters,
-            unallowed_click_alert=alert,
-            chat_id=self.chat.id,
-            user_id=from_user_id,
-            message_id=message_id,
-        )
+        self.send_paid_messages_stars = send_paid_messages_stars
+        self.unread_media = unread_media
+        self.silent = silent
+        self.legacy = legacy
+        self.pinned = pinned
+        self.restriction_reason = restriction_reason
+        self.fact_check = fact_check
+        self.suggested_post_info = suggested_post_info
+        self.channel_post = channel_post
+        self.repeat_period = repeat_period
+        self.summary_language_code = summary_language_code
+        self.guest_bot_caller_user = guest_bot_caller_user
+        self.guest_bot_caller_chat = guest_bot_caller_chat
+        self.raw = raw
 
     @staticmethod
-    async def _parse(
-        *,
+    async def _parse_service(
         client: pyrogram.Client,
-        message: raw.base.Message,
-        users: dict,
-        chats: dict,
-        topics: dict | None = None,
-        is_scheduled: bool = False,
+        message: raw.types.MessageService,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
         replies: int = 1,
-    ):
-        if isinstance(message, raw.types.MessageEmpty):
-            return Message(id=message.id, empty=True, client=client)
-
+        business_connection_id: str | None = None,
+        raw_reply_to_message: raw.base.Message | None = None,
+    ) -> Message:
         from_id = utils.get_raw_peer_id(message.from_id)
         peer_id = utils.get_raw_peer_id(message.peer_id)
-        user_id = from_id or peer_id
 
         if (
             isinstance(message.from_id, raw.types.PeerUser)
@@ -591,454 +1024,1393 @@ class Message(Object, Update):
             else:
                 users.update({i.id: i for i in r})
 
-        if isinstance(message, raw.types.MessageService):
-            message_thread_id = None
-            action = message.action
+        from_user = types.User._parse(client, users.get(from_id or peer_id))
+        sender_chat = (
+            types.Chat._parse(client, message, users, chats, is_chat=False)
+            if not from_user
+            else None
+        )
+        chat = types.Chat._parse(client, message, users, chats, is_chat=True)
 
-            new_chat_members = None
-            left_chat_member = None
-            new_chat_title = None
-            delete_chat_photo = None
-            migrate_to_chat_id = None
-            migrate_from_chat_id = None
-            group_chat_created = None
-            channel_chat_created = None
-            new_chat_photo = None
-            is_topic_message = None
-            forum_topic_created = None
-            forum_topic_closed = None
-            forum_topic_reopened = None
-            forum_topic_edited = None
-            general_topic_hidden = None
-            general_topic_unhidden = None
-            video_chat_scheduled = None
-            video_chat_started = None
-            video_chat_ended = None
-            video_chat_members_invited = None
-            web_app_data = None
+        action = message.action
 
-            service_type = None
+        connected_website = None
+        write_access_allowed = None
+        chat_boost = None
+        supergroup_chat_created = None
+        channel_chat_created = None
+        migrate_from_chat_id = None
+        new_chat_members = None
+        chat_join_type = None
+        group_chat_created = None
+        delete_chat_photo = None
+        left_chat_member = None
+        chat_owner_left = None
+        chat_owner_changed = None
+        new_chat_photo = None
+        new_chat_title = None
+        migrate_to_chat_id = None
+        contact_registered = None
+        text = None
+        proximity_alert_triggered = None
+        premium_gift_code = None
+        gifted_premium = None
+        gifted_stars = None
+        gifted_ton = None
+        giveaway_created = None
+        giveaway_completed = None
+        managed_bot_created = None
+        video_chat_ended = None
+        video_chat_started = None
+        video_chat_scheduled = None
+        history_cleared = None
+        video_chat_members_invited = None
+        successful_payment = None
+        refunded_payment = None
+        suggested_post_approval_failed = None
+        suggested_post_declined = None
+        suggested_post_approved = None
+        suggested_post_paid = None
+        suggested_post_refunded = None
+        phone_call_ended = None
+        phone_call_started = None
+        giveaway_prize_stars = None
+        users_shared = None
+        chat_shared = None
+        screenshot_taken = None
+        upgraded_gift_purchase_offer = None
+        upgraded_gift_purchase_offer_rejected = None
+        chat_has_protected_content_toggled = None
+        chat_has_protected_content_disable_requested = None
+        # passport_data_send = None
+        # passport_data_received = None
+        chat_set_theme = None
+        chat_set_background = None
+        set_message_auto_delete_time = None
+        gift = None
+        is_prepaid_upgrade = None
+        is_from_auction = None
+        suggest_profile_photo = None
+        suggest_birthday = None
+        forum_topic_created = None
+        forum_topic_edited = None
+        general_forum_topic_hidden = None
+        forum_topic_closed = None
+        general_forum_topic_unhidden = None
+        forum_topic_reopened = None
+        web_app_data = None
+        paid_messages_refunded = None
+        paid_messages_price_changed = None
+        direct_message_price_changed = None
+        checklist_tasks_done = None
+        checklist_tasks_added = None
+        community_chat_added = None
+        community_chat_removed = None
 
-            if isinstance(action, raw.types.MessageActionChatAddUser):
-                new_chat_members = [types.User._parse(client, users[i]) for i in action.users]
-                service_type = enums.MessageServiceType.NEW_CHAT_MEMBERS
-            elif isinstance(action, raw.types.MessageActionChatJoinedByLink):
-                new_chat_members = [
-                    types.User._parse(client, users[utils.get_raw_peer_id(message.from_id)])
-                ]
-                service_type = enums.MessageServiceType.NEW_CHAT_MEMBERS
-            elif isinstance(action, raw.types.MessageActionChatDeleteUser):
-                left_chat_member = types.User._parse(client, users[action.user_id])
-                service_type = enums.MessageServiceType.LEFT_CHAT_MEMBERS
-            elif isinstance(action, raw.types.MessageActionChatEditTitle):
-                new_chat_title = action.title
-                service_type = enums.MessageServiceType.NEW_CHAT_TITLE
-            elif isinstance(action, raw.types.MessageActionChatDeletePhoto):
-                delete_chat_photo = True
-                service_type = enums.MessageServiceType.DELETE_CHAT_PHOTO
-            elif isinstance(action, raw.types.MessageActionChatMigrateTo):
-                migrate_to_chat_id = action.channel_id
-                service_type = enums.MessageServiceType.MIGRATE_TO_CHAT_ID
-            elif isinstance(action, raw.types.MessageActionChannelMigrateFrom):
-                migrate_from_chat_id = action.chat_id
-                service_type = enums.MessageServiceType.MIGRATE_FROM_CHAT_ID
-            elif isinstance(action, raw.types.MessageActionChatCreate):
-                group_chat_created = True
-                service_type = enums.MessageServiceType.GROUP_CHAT_CREATED
-            elif isinstance(action, raw.types.MessageActionChannelCreate):
+        service_type = enums.MessageServiceType.UNSUPPORTED
+
+        if isinstance(action, raw.types.MessageActionBotAllowed):
+            if getattr(action, "domain", None):
+                service_type = enums.MessageServiceType.CONNECTED_WEBSITE
+                connected_website = action.domain
+            else:
+                service_type = enums.MessageServiceType.WRITE_ACCESS_ALLOWED
+                write_access_allowed = types.WriteAccessAllowed._parse(action)
+        elif isinstance(action, raw.types.MessageActionBoostApply):
+            service_type = enums.MessageServiceType.CHAT_BOOST
+            chat_boost = action.boosts
+        elif isinstance(action, raw.types.MessageActionChannelCreate):
+            service_type = enums.MessageServiceType.CHANNEL_CHAT_CREATED
+
+            if chat.type == enums.ChatType.SUPERGROUP:
+                supergroup_chat_created = True
+                service_type = enums.MessageServiceType.SUPERGROUP_CHAT_CREATED
+            else:
                 channel_chat_created = True
                 service_type = enums.MessageServiceType.CHANNEL_CHAT_CREATED
-            elif isinstance(action, raw.types.MessageActionChatEditPhoto):
-                new_chat_photo = types.Photo._parse(client, action.photo)
-                service_type = enums.MessageServiceType.NEW_CHAT_PHOTO
-            elif isinstance(action, raw.types.MessageActionTopicCreate):
-                forum_topic_created = types.ForumTopicCreated._parse(action)
-                service_type = enums.MessageServiceType.FORUM_TOPIC_CREATED
-            elif isinstance(action, raw.types.MessageActionTopicEdit):
-                if action.title:
-                    forum_topic_edited = types.ForumTopicEdited._parse(action)
-                    service_type = enums.MessageServiceType.FORUM_TOPIC_EDITED
-                elif action.hidden:
-                    general_topic_hidden = types.GeneralTopicHidden()
-                    service_type = enums.MessageServiceType.GENERAL_TOPIC_HIDDEN
-                elif action.closed:
-                    forum_topic_closed = types.ForumTopicClosed()
-                    service_type = enums.MessageServiceType.FORUM_TOPIC_CLOSED
-                elif hasattr(action, "hidden"):
-                    general_topic_unhidden = types.GeneralTopicUnhidden()
-                    service_type = enums.MessageServiceType.GENERAL_TOPIC_UNHIDDEN
-                else:
-                    forum_topic_reopened = types.ForumTopicReopened()
-                    service_type = enums.MessageServiceType.FORUM_TOPIC_REOPENED
-            elif isinstance(action, raw.types.MessageActionGroupCallScheduled):
-                video_chat_scheduled = types.VideoChatScheduled._parse(action)
-                service_type = enums.MessageServiceType.VIDEO_CHAT_SCHEDULED
-            elif isinstance(action, raw.types.MessageActionGroupCall):
-                if action.duration:
-                    video_chat_ended = types.VideoChatEnded._parse(action)
-                    service_type = enums.MessageServiceType.VIDEO_CHAT_ENDED
-                else:
-                    video_chat_started = types.VideoChatStarted()
-                    service_type = enums.MessageServiceType.VIDEO_CHAT_STARTED
-            elif isinstance(action, raw.types.MessageActionInviteToGroupCall):
-                video_chat_members_invited = types.VideoChatMembersInvited._parse(
-                    client, action, users
-                )
-                service_type = enums.MessageServiceType.VIDEO_CHAT_MEMBERS_INVITED
-            elif isinstance(action, raw.types.MessageActionWebViewDataSentMe):
-                web_app_data = types.WebAppData._parse(action)
-                service_type = enums.MessageServiceType.WEB_APP_DATA
-
-            from_user = types.User._parse(client, users.get(user_id))
-            sender_chat = (
-                None
-                if from_user
-                else types.Chat._parse(client, message, users, chats, is_chat=False)
-            )
-
-            parsed_message = Message(
-                id=message.id,
-                message_thread_id=message_thread_id,
-                date=utils.timestamp_to_datetime(message.date),
-                chat=types.Chat._parse(client, message, users, chats, is_chat=True),
-                topics=None,
-                from_user=from_user,
-                sender_chat=sender_chat,
-                service=service_type,
-                new_chat_members=new_chat_members,
-                left_chat_member=left_chat_member,
-                new_chat_title=new_chat_title,
-                new_chat_photo=new_chat_photo,
-                delete_chat_photo=delete_chat_photo,
-                migrate_to_chat_id=utils.get_channel_id(migrate_to_chat_id)
-                if migrate_to_chat_id
-                else None,
-                migrate_from_chat_id=-migrate_from_chat_id if migrate_from_chat_id else None,
-                group_chat_created=group_chat_created,
-                channel_chat_created=channel_chat_created,
-                is_topic_message=is_topic_message,
-                forum_topic_created=forum_topic_created,
-                forum_topic_closed=forum_topic_closed,
-                forum_topic_reopened=forum_topic_reopened,
-                forum_topic_edited=forum_topic_edited,
-                general_topic_hidden=general_topic_hidden,
-                general_topic_unhidden=general_topic_unhidden,
-                video_chat_scheduled=video_chat_scheduled,
-                video_chat_started=video_chat_started,
-                video_chat_ended=video_chat_ended,
-                video_chat_members_invited=video_chat_members_invited,
-                web_app_data=web_app_data,
-                client=client,
-                # TODO: supergroup_chat_created
-            )
-
-            if isinstance(action, raw.types.MessageActionPinMessage):
-                try:
-                    parsed_message.pinned_message = await client.get_messages(
-                        parsed_message.chat.id,
-                        reply_to_message_ids=message.id,
-                        replies=0,
-                    )
-
-                    parsed_message.service = enums.MessageServiceType.PINNED_MESSAGE
-                except MessageIdsEmpty:
-                    pass
-
-            if isinstance(action, raw.types.MessageActionGameScore):
-                parsed_message.game_high_score = types.GameHighScore._parse_action(
-                    client, message, users
-                )
-
-                if message.reply_to and replies:
-                    try:
-                        parsed_message.reply_to_message = await client.get_messages(
-                            parsed_message.chat.id,
-                            reply_to_message_ids=message.id,
-                            replies=0,
-                        )
-
-                        parsed_message.service = enums.MessageServiceType.GAME_HIGH_SCORE
-                    except MessageIdsEmpty:
-                        pass
-
-            client.message_cache[parsed_message.chat.id, parsed_message.id] = parsed_message
-
-            if message.reply_to and message.reply_to.forum_topic:
-                if message.reply_to.reply_to_top_id:
-                    parsed_message.message_thread_id = message.reply_to.reply_to_top_id
-                else:
-                    parsed_message.message_thread_id = message.reply_to.reply_to_msg_id
-                parsed_message.is_topic_message = True
-
-            return parsed_message
-
-        if isinstance(message, raw.types.Message):
-            message_thread_id = None
-            entities = [
-                types.MessageEntity._parse(client, entity, users) for entity in message.entities
+        elif isinstance(action, raw.types.MessageActionChannelMigrateFrom):
+            service_type = enums.MessageServiceType.MIGRATE_FROM_CHAT_ID
+            migrate_from_chat_id = -action.chat_id
+        elif isinstance(action, raw.types.MessageActionChatAddUser):
+            service_type = enums.MessageServiceType.NEW_CHAT_MEMBERS
+            new_chat_members = [types.User._parse(client, users[i]) for i in action.users]
+            chat_join_type = enums.ChatJoinType.BY_ADD
+        elif isinstance(action, raw.types.MessageActionChatCreate):
+            service_type = enums.MessageServiceType.GROUP_CHAT_CREATED
+            group_chat_created = True
+        elif isinstance(action, raw.types.MessageActionChatDeletePhoto):
+            service_type = enums.MessageServiceType.DELETE_CHAT_PHOTO
+            delete_chat_photo = True
+        elif isinstance(action, raw.types.MessageActionChatDeleteUser):
+            service_type = enums.MessageServiceType.LEFT_CHAT_MEMBER
+            left_chat_member = types.User._parse(client, users[action.user_id])
+        elif isinstance(action, raw.types.MessageActionNewCreatorPending):
+            service_type = enums.MessageServiceType.CHAT_OWNER_LEFT
+            chat_owner_left = await types.ChatOwnerLeft._parse(client, action, users)
+        elif isinstance(action, raw.types.MessageActionChangeCreator):
+            service_type = enums.MessageServiceType.CHAT_OWNER_CHANGED
+            chat_owner_changed = await types.ChatOwnerChanged._parse(client, action, users)
+        elif isinstance(action, raw.types.MessageActionChatEditPhoto):
+            service_type = enums.MessageServiceType.NEW_CHAT_PHOTO
+            new_chat_photo = types.Photo._parse(client, action.photo)
+        elif isinstance(action, raw.types.MessageActionChatEditTitle):
+            service_type = enums.MessageServiceType.NEW_CHAT_TITLE
+            new_chat_title = action.title
+        elif isinstance(action, raw.types.MessageActionChatJoinedByLink):
+            service_type = enums.MessageServiceType.NEW_CHAT_MEMBERS
+            new_chat_members = [
+                types.User._parse(client, users[utils.get_raw_peer_id(message.from_id)])
             ]
-            entities = types.List(filter(lambda x: x is not None, entities))
+            chat_join_type = enums.ChatJoinType.BY_LINK
+        elif isinstance(action, raw.types.MessageActionChatJoinedByRequest):
+            service_type = enums.MessageServiceType.NEW_CHAT_MEMBERS
+            new_chat_members = [
+                types.User._parse(client, users[utils.get_raw_peer_id(message.from_id)])
+            ]
+            chat_join_type = enums.ChatJoinType.BY_REQUEST
+        elif isinstance(action, raw.types.MessageActionChatMigrateTo):
+            service_type = enums.MessageServiceType.MIGRATE_TO_CHAT_ID
+            migrate_to_chat_id = utils.get_channel_id(action.channel_id)
+        elif isinstance(action, raw.types.MessageActionContactSignUp):
+            service_type = enums.MessageServiceType.CONTACT_REGISTERED
+            contact_registered = types.ContactRegistered()
+        elif isinstance(action, raw.types.MessageActionCustomAction):
+            service_type = enums.MessageServiceType.CUSTOM_ACTION
+            text = action.message
+        # TODO: elif isinstance(action, raw.types.MessageActionEmpty):
+        elif isinstance(action, raw.types.MessageActionGeoProximityReached):
+            service_type = enums.MessageServiceType.PROXIMITY_ALERT_TRIGGERED
+            proximity_alert_triggered = await types.ProximityAlertTriggered._parse(
+                client, action, users, chats
+            )
+        elif isinstance(action, raw.types.MessageActionGiftCode):
+            service_type = enums.MessageServiceType.PREMIUM_GIFT_CODE
+            premium_gift_code = await types.PremiumGiftCode._parse(client, action, users, chats)
+        elif isinstance(action, raw.types.MessageActionGiftPremium):
+            service_type = enums.MessageServiceType.GIFTED_PREMIUM
+            gifted_premium = await types.GiftedPremium._parse(
+                client,
+                action,
+                gifter=users.get(from_id),
+                receiver=users.get(peer_id or from_id),
+                users=users,
+            )
+        elif isinstance(action, raw.types.MessageActionGiftStars):
+            service_type = enums.MessageServiceType.GIFTED_STARS
+            gifted_stars = await types.GiftedStars._parse(
+                client, action, gifter=users.get(from_id), receiver=users.get(peer_id or from_id)
+            )
+        elif isinstance(action, raw.types.MessageActionGiftTon):
+            service_type = enums.MessageServiceType.GIFTED_TON
+            gifted_ton = await types.GiftedTon._parse(
+                client, action, gifter=users.get(from_id), receiver=users.get(peer_id or from_id)
+            )
+        elif isinstance(action, raw.types.MessageActionGiveawayLaunch):
+            service_type = enums.MessageServiceType.GIVEAWAY_CREATED
+            giveaway_created = types.GiveawayCreated._parse(client, action)
+        elif isinstance(action, raw.types.MessageActionGiveawayResults):
+            service_type = enums.MessageServiceType.GIVEAWAY_COMPLETED
+            giveaway_completed = await types.GiveawayCompleted._parse(
+                client,
+                action,
+                types.Chat._parse(client, message, users, chats, is_chat=True),
+                getattr(getattr(message, "reply_to", None), "reply_to_msg_id", None),
+            )
+        elif isinstance(action, raw.types.MessageActionManagedBotCreated):
+            service_type = enums.MessageServiceType.MANAGED_BOT_CREATED
+            managed_bot_created = await types.ManagedBotCreated._parse(client, action, users)
+        elif isinstance(action, raw.types.MessageActionGroupCall):
+            if action.duration:
+                service_type = enums.MessageServiceType.VIDEO_CHAT_ENDED
+                video_chat_ended = types.VideoChatEnded._parse(action)
+            else:
+                service_type = enums.MessageServiceType.VIDEO_CHAT_STARTED
+                video_chat_started = types.VideoChatStarted()
+        elif isinstance(action, raw.types.MessageActionGroupCallScheduled):
+            service_type = enums.MessageServiceType.VIDEO_CHAT_SCHEDULED
+            video_chat_scheduled = types.VideoChatScheduled._parse(action)
+        if isinstance(action, raw.types.MessageActionHistoryClear):
+            service_type = enums.MessageServiceType.HISTORY_CLEARED
+            history_cleared = types.HistoryCleared()
+        elif isinstance(action, raw.types.MessageActionInviteToGroupCall):
+            service_type = enums.MessageServiceType.VIDEO_CHAT_MEMBERS_INVITED
+            video_chat_members_invited = types.VideoChatMembersInvited._parse(
+                client, action, users
+            )
+        elif isinstance(
+            action, (raw.types.MessageActionPaymentSent, raw.types.MessageActionPaymentSentMe)
+        ):
+            service_type = enums.MessageServiceType.SUCCESSFUL_PAYMENT
+            successful_payment = types.SuccessfulPayment._parse(action)
+        elif isinstance(action, raw.types.MessageActionPaymentRefunded):
+            service_type = enums.MessageServiceType.REFUNDED_PAYMENT
+            refunded_payment = types.RefundedPayment._parse(action)
+        elif isinstance(action, raw.types.MessageActionSuggestedPostApproval):
+            if action.balance_too_low:
+                service_type = enums.MessageServiceType.SUGGESTED_POST_APPROVAL_FAILED
+                suggested_post_approval_failed = await types.SuggestedPostApprovalFailed._parse(
+                    client, message
+                )
+            elif action.rejected:
+                service_type = enums.MessageServiceType.SUGGESTED_POST_DECLINED
+                suggested_post_declined = await types.SuggestedPostDeclined._parse(client, message)
+            else:
+                service_type = enums.MessageServiceType.SUGGESTED_POST_APPROVED
+                suggested_post_approved = await types.SuggestedPostApproved._parse(client, message)
+        elif isinstance(action, raw.types.MessageActionSuggestedPostSuccess):
+            service_type = enums.MessageServiceType.SUGGESTED_POST_PAID
+            suggested_post_paid = await types.SuggestedPostPaid._parse(client, message)
+        elif isinstance(action, raw.types.MessageActionSuggestedPostRefund):
+            service_type = enums.MessageServiceType.SUGGESTED_POST_REFUNDED
+            suggested_post_refunded = await types.SuggestedPostRefunded._parse(client, message)
+        elif isinstance(action, raw.types.MessageActionPhoneCall):
+            if action.reason:
+                service_type = enums.MessageServiceType.PHONE_CALL_ENDED
+                phone_call_ended = types.PhoneCallEnded._parse(action)
+            else:
+                service_type = enums.MessageServiceType.PHONE_CALL_STARTED
+                phone_call_started = types.PhoneCallStarted._parse(action)
+        elif isinstance(action, raw.types.MessageActionPrizeStars):
+            service_type = enums.MessageServiceType.GIVEAWAY_PRIZE_STARS
+            giveaway_prize_stars = await types.GiveawayPrizeStars._parse(client, action, chats)
+        elif isinstance(
+            action,
+            (raw.types.MessageActionRequestedPeer, raw.types.MessageActionRequestedPeerSentMe),
+        ):
+            requested_chat = await types.ChatShared._parse(client, action, chats)
 
-            forward_from = None
-            forward_sender_name = None
-            forward_from_chat = None
-            forward_from_message_id = None
-            forward_signature = None
-            forward_date = None
-            is_topic_message = None
+            if requested_chat is None:
+                service_type = enums.MessageServiceType.USERS_SHARED
+                users_shared = await types.UsersShared._parse(client, action, users)
+            else:
+                service_type = enums.MessageServiceType.CHAT_SHARED
+                chat_shared = requested_chat
+        elif isinstance(action, raw.types.MessageActionScreenshotTaken):
+            service_type = enums.MessageServiceType.SCREENSHOT_TAKEN
+            screenshot_taken = types.ScreenshotTaken()
+        elif isinstance(action, raw.types.MessageActionStarGiftPurchaseOffer):
+            service_type = enums.MessageServiceType.UPGRADED_GIFT_PURCHASE_OFFER
+            upgraded_gift_purchase_offer = await types.UpgradedGiftPurchaseOffer._parse(
+                client, action, users, chats
+            )
+        elif isinstance(action, raw.types.MessageActionStarGiftPurchaseOfferDeclined):
+            service_type = enums.MessageServiceType.UPGRADED_GIFT_PURCHASE_OFFER_REJECTED
+            upgraded_gift_purchase_offer_rejected = (
+                await types.UpgradedGiftPurchaseOfferRejected._parse(
+                    client,
+                    action,
+                    getattr(message.reply_to, "reply_to_msg_id", None),
+                    users,
+                    chats,
+                )
+            )
+        elif isinstance(action, raw.types.MessageActionNoForwardsToggle):
+            service_type = enums.MessageServiceType.CHAT_HAS_PROTECTED_CONTENT_TOGGLED
+            chat_has_protected_content_toggled = types.ChatHasProtectedContentToggled._parse(
+                getattr(message.reply_to, "reply_to_msg_id", None), action
+            )
+        elif isinstance(action, raw.types.MessageActionNoForwardsRequest):
+            service_type = enums.MessageServiceType.CHAT_HAS_PROTECTED_CONTENT_DISABLE_REQUESTED
+            chat_has_protected_content_disable_requested = (
+                types.ChatHasProtectedContentDisableRequested._parse(action)
+            )
+        # TODO: elif isinstance(action, raw.types.MessageActionSecureValuesSent):
+        # service_type = enums.MessageServiceType.PASSPORT_DATA_SEND
+        # passport_data_send = ...
+        # TODO: elif isinstance(action, raw.types.MessageActionSecureValuesSentMe):
+        # service_type = enums.MessageServiceType.PASSPORT_DATA_RECEIVED
+        # passport_data_received = ...
+        elif isinstance(action, raw.types.MessageActionSetChatTheme):
+            service_type = enums.MessageServiceType.CHAT_SET_THEME
+            chat_set_theme = await types.ChatTheme._parse(client, action.theme)
+        elif isinstance(action, raw.types.MessageActionSetChatWallPaper):
+            service_type = enums.MessageServiceType.CHAT_SET_BACKGROUND
+            chat_set_background = types.ChatBackground._parse(
+                client, action.wallpaper, action.same, action.for_both
+            )
+        elif isinstance(action, raw.types.MessageActionSetMessagesTTL):
+            service_type = enums.MessageServiceType.SET_MESSAGE_AUTO_DELETE_TIME
+            set_message_auto_delete_time = action.period
+        elif isinstance(
+            action, (raw.types.MessageActionStarGift, raw.types.MessageActionStarGiftUnique)
+        ):
+            service_type = enums.MessageServiceType.GIFT
+            is_prepaid_upgrade = action.prepaid_upgrade
+            is_from_auction = getattr(action, "auction_acquired", None)
+            gift = await types.Gift._parse(client, action, users=users, chats=chats)
+        elif isinstance(action, raw.types.MessageActionSuggestProfilePhoto):
+            service_type = enums.MessageServiceType.SUGGEST_PROFILE_PHOTO
+            suggest_profile_photo = types.Photo._parse(client, action.photo)
+        elif isinstance(action, raw.types.MessageActionSuggestBirthday):
+            service_type = enums.MessageServiceType.SUGGEST_BIRTHDAY
+            suggest_birthday = types.Birthday._parse(action.birthday)
+        elif isinstance(action, raw.types.MessageActionTopicCreate):
+            service_type = enums.MessageServiceType.FORUM_TOPIC_CREATED
+            forum_topic_created = types.ForumTopicCreated._parse(message)
+        elif isinstance(action, raw.types.MessageActionTopicEdit):
+            if action.hidden is True:
+                service_type = enums.MessageServiceType.GENERAL_FORUM_TOPIC_HIDDEN
+                general_forum_topic_hidden = types.GeneralForumTopicHidden()
+            elif action.hidden is False:
+                service_type = enums.MessageServiceType.GENERAL_FORUM_TOPIC_UNHIDDEN
+                general_forum_topic_unhidden = types.GeneralForumTopicUnhidden()
+            elif action.closed is True:
+                service_type = enums.MessageServiceType.FORUM_TOPIC_CLOSED
+                forum_topic_closed = types.ForumTopicClosed()
+            elif action.closed is False:
+                service_type = enums.MessageServiceType.FORUM_TOPIC_REOPENED
+                forum_topic_reopened = types.ForumTopicReopened()
+            else:
+                service_type = enums.MessageServiceType.FORUM_TOPIC_EDITED
+                forum_topic_edited = types.ForumTopicEdited._parse(action)
+        elif isinstance(
+            action,
+            (raw.types.MessageActionWebViewDataSent, raw.types.MessageActionWebViewDataSentMe),
+        ):
+            service_type = enums.MessageServiceType.WEB_APP_DATA
+            web_app_data = types.WebAppData._parse(action)
+        elif isinstance(action, raw.types.MessageActionPaidMessagesRefunded):
+            service_type = enums.MessageServiceType.PAID_MESSAGES_REFUNDED
+            paid_messages_refunded = types.PaidMessagesRefunded._parse(action)
+        elif isinstance(action, raw.types.MessageActionPaidMessagesPrice):
+            if chat.type == enums.ChatType.DIRECT:
+                service_type = enums.MessageServiceType.DIRECT_MESSAGE_PRICE_CHANGED
+                direct_message_price_changed = types.DirectMessagePriceChanged._parse(action)
+            else:
+                service_type = enums.MessageServiceType.PAID_MESSAGES_PRICE_CHANGED
+                paid_messages_price_changed = types.PaidMessagesPriceChanged._parse(action)
+        elif isinstance(action, raw.types.MessageActionTodoCompletions):
+            service_type = enums.MessageServiceType.CHECKLIST_TASKS_DONE
+            checklist_tasks_done = types.ChecklistTasksDone._parse(message)
+        elif isinstance(action, raw.types.MessageActionTodoAppendTasks):
+            service_type = enums.MessageServiceType.CHECKLIST_TASKS_ADDED
+            checklist_tasks_added = await types.ChecklistTasksAdded._parse(
+                client, message, users, chats
+            )
+        elif isinstance(action, raw.types.MessageActionChangeCommunity):
+            if action.community_id:
+                service_type = enums.MessageServiceType.COMMUNITY_CHAT_ADDED
+                community_chat_added = await types.CommunityChatAdded._parse(client, action, chats)
+            else:
+                service_type = enums.MessageServiceType.COMMUNITY_CHAT_REMOVED
+                community_chat_removed = types.CommunityChatRemoved()
 
-            if forward_header := message.fwd_from:
-                forward_date = utils.timestamp_to_datetime(forward_header.date)
+        parsed_message = Message(
+            id=message.id,
+            date=utils.timestamp_to_datetime(message.date),
+            chat=chat,
+            from_user=from_user,
+            sender_chat=sender_chat,
+            service=service_type,
+            connected_website=connected_website,
+            write_access_allowed=write_access_allowed,
+            chat_boost=chat_boost,
+            supergroup_chat_created=supergroup_chat_created,
+            channel_chat_created=channel_chat_created,
+            migrate_from_chat_id=migrate_from_chat_id,
+            new_chat_members=new_chat_members,
+            chat_join_type=chat_join_type,
+            group_chat_created=group_chat_created,
+            delete_chat_photo=delete_chat_photo,
+            left_chat_member=left_chat_member,
+            chat_owner_left=chat_owner_left,
+            chat_owner_changed=chat_owner_changed,
+            new_chat_photo=new_chat_photo,
+            new_chat_title=new_chat_title,
+            migrate_to_chat_id=migrate_to_chat_id,
+            contact_registered=contact_registered,
+            text=text,
+            proximity_alert_triggered=proximity_alert_triggered,
+            premium_gift_code=premium_gift_code,
+            gifted_premium=gifted_premium,
+            gifted_stars=gifted_stars,
+            gifted_ton=gifted_ton,
+            giveaway_created=giveaway_created,
+            giveaway_completed=giveaway_completed,
+            managed_bot_created=managed_bot_created,
+            video_chat_ended=video_chat_ended,
+            video_chat_started=video_chat_started,
+            video_chat_scheduled=video_chat_scheduled,
+            history_cleared=history_cleared,
+            video_chat_members_invited=video_chat_members_invited,
+            successful_payment=successful_payment,
+            refunded_payment=refunded_payment,
+            suggested_post_approval_failed=suggested_post_approval_failed,
+            suggested_post_declined=suggested_post_declined,
+            suggested_post_approved=suggested_post_approved,
+            suggested_post_paid=suggested_post_paid,
+            suggested_post_refunded=suggested_post_refunded,
+            suggest_birthday=suggest_birthday,
+            phone_call_ended=phone_call_ended,
+            phone_call_started=phone_call_started,
+            giveaway_prize_stars=giveaway_prize_stars,
+            users_shared=users_shared,
+            chat_shared=chat_shared,
+            screenshot_taken=screenshot_taken,
+            upgraded_gift_purchase_offer=upgraded_gift_purchase_offer,
+            upgraded_gift_purchase_offer_rejected=upgraded_gift_purchase_offer_rejected,
+            chat_has_protected_content_toggled=chat_has_protected_content_toggled,
+            chat_has_protected_content_disable_requested=chat_has_protected_content_disable_requested,
+            chat_set_theme=chat_set_theme,
+            chat_set_background=chat_set_background,
+            set_message_auto_delete_time=set_message_auto_delete_time,
+            gift=gift,
+            is_prepaid_upgrade=is_prepaid_upgrade,
+            is_from_auction=is_from_auction,
+            suggest_profile_photo=suggest_profile_photo,
+            forum_topic_created=forum_topic_created,
+            forum_topic_edited=forum_topic_edited,
+            general_forum_topic_hidden=general_forum_topic_hidden,
+            forum_topic_closed=forum_topic_closed,
+            general_forum_topic_unhidden=general_forum_topic_unhidden,
+            forum_topic_reopened=forum_topic_reopened,
+            web_app_data=web_app_data,
+            paid_messages_refunded=paid_messages_refunded,
+            paid_messages_price_changed=paid_messages_price_changed,
+            direct_message_price_changed=direct_message_price_changed,
+            checklist_tasks_done=checklist_tasks_done,
+            checklist_tasks_added=checklist_tasks_added,
+            community_chat_added=community_chat_added,
+            community_chat_removed=community_chat_removed,
+            reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
+            business_connection_id=business_connection_id,
+            raw=message,
+            client=client,
+        )
 
-                if forward_header.from_id:
-                    raw_peer_id = utils.get_raw_peer_id(forward_header.from_id)
-                    peer_id = utils.get_peer_id(forward_header.from_id)
+        if message.reply_to:
+            parsed_message = await types.Message.__parse_reply(
+                client=client,
+                parsed_message=parsed_message,
+                message=message,
+                users=users,
+                chats=chats,
+                replies=replies,
+                business_connection_id=business_connection_id,
+                raw_reply_to_message=raw_reply_to_message,
+            )
 
-                    if peer_id > 0:
-                        forward_from = types.User._parse(client, users[raw_peer_id])
-                    else:
-                        forward_from_chat = types.Chat._parse_channel_chat(
-                            client, chats[raw_peer_id]
-                        )
-                        forward_from_message_id = forward_header.channel_post
-                        forward_signature = forward_header.post_author
-                elif forward_header.from_name:
-                    forward_sender_name = forward_header.from_name
+        if isinstance(action, raw.types.MessageActionGameScore):
+            parsed_message.service = enums.MessageServiceType.GAME_HIGH_SCORE
+            parsed_message.game_high_score = types.GameHighScore._parse_action(
+                client, message, users
+            )
+        elif isinstance(action, raw.types.MessageActionPinMessage):
+            parsed_message.service = enums.MessageServiceType.PINNED_MESSAGE
+            parsed_message.pinned_message = parsed_message.reply_to_message  # Why...
+        elif isinstance(action, raw.types.MessageActionPollAppendAnswer):
+            parsed_message.service = enums.MessageServiceType.POLL_OPTION_ADDED
+            parsed_message.poll_option_added = await types.PollOptionAdded._parse(
+                client, parsed_message.reply_to_message, action
+            )
+        elif isinstance(action, raw.types.MessageActionPollDeleteAnswer):
+            parsed_message.service = enums.MessageServiceType.POLL_OPTION_DELETED
+            parsed_message.poll_option_deleted = await types.PollOptionDeleted._parse(
+                client, parsed_message.reply_to_message, action
+            )
 
-            photo = None
-            location = None
-            contact = None
-            venue = None
-            game = None
-            audio = None
-            voice = None
-            animation = None
-            video = None
-            video_note = None
-            sticker = None
-            document = None
-            web_page = None
-            poll = None
-            dice = None
+        await client.message_cache.set((parsed_message.chat.id, parsed_message.id), parsed_message)
 
-            media = message.media
-            media_type = None
-            has_media_spoiler = None
+        return parsed_message
 
-            if media:
-                if isinstance(media, raw.types.MessageMediaPhoto):
-                    photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
-                    media_type = enums.MessageMediaType.PHOTO
-                    has_media_spoiler = media.spoiler
-                elif isinstance(media, raw.types.MessageMediaGeo):
-                    location = types.Location._parse(client, media.geo)
-                    media_type = enums.MessageMediaType.LOCATION
-                elif isinstance(media, raw.types.MessageMediaContact):
-                    contact = types.Contact._parse(client, media)
-                    media_type = enums.MessageMediaType.CONTACT
-                elif isinstance(media, raw.types.MessageMediaVenue):
-                    venue = types.Venue._parse(client, media)
-                    media_type = enums.MessageMediaType.VENUE
-                elif isinstance(media, raw.types.MessageMediaGame):
-                    game = types.Game._parse(client, message)
-                    media_type = enums.MessageMediaType.GAME
-                elif isinstance(media, raw.types.MessageMediaDocument):
-                    doc = media.document
+    @staticmethod
+    async def _parse_message(
+        client: pyrogram.Client,
+        message: raw.types.Message,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        topics: dict[int, raw.base.ForumTopic] | None = None,
+        is_scheduled: bool = False,
+        replies: int = 1,
+        business_connection_id: str | None = None,
+        guest_query_id: str | None = None,
+        raw_reply_to_message: raw.base.Message | None = None,
+    ) -> Message:
+        from_id = utils.get_raw_peer_id(message.from_id)
+        peer_id = utils.get_raw_peer_id(message.peer_id)
+
+        if (
+            isinstance(message.from_id, raw.types.PeerUser)
+            and isinstance(message.peer_id, raw.types.PeerUser)
+            and (from_id not in users or peer_id not in users)
+        ):
+            try:
+                r = await client.invoke(
+                    raw.functions.users.GetUsers(
+                        id=[
+                            await client.resolve_peer(from_id),
+                            await client.resolve_peer(peer_id),
+                        ]
+                    )
+                )
+            except PeerIdInvalid:
+                pass
+            else:
+                users.update({i.id: i for i in r})
+
+        from_user = types.User._parse(client, users.get(from_id or peer_id))
+        sender_chat = (
+            types.Chat._parse(client, message, users, chats, is_chat=False)
+            if not from_user
+            else None
+        )
+        chat = types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        entities = types.List(
+            filter(
+                lambda x: x is not None,
+                [
+                    types.MessageEntity._parse(client, entity, users)
+                    for entity in (message.entities or [])
+                ],
+            )
+        )
+
+        forward_header = message.fwd_from
+        forward_origin = None
+
+        if forward_header:
+            forward_origin = await types.MessageOrigin._parse(
+                client,
+                forward_header,
+                users,
+                chats,
+            )
+
+        photo = None
+        live_photo = None
+        location = None
+        contact = None
+        venue = None
+        game = None
+        giveaway = None
+        giveaway_winners = None
+        invoice = None
+        story = None
+        audio = None
+        voice = None
+        animation = None
+        video = None
+        video_note = None
+        sticker = None
+        document = None
+        web_page = None
+        link_preview_options = None
+        poll = None
+        dice = None
+        paid_media = None
+        checklist = None
+
+        media = message.media
+        media_type = None
+        has_media_spoiler = None
+
+        if media:
+            if isinstance(media, raw.types.MessageMediaPhoto):
+                if media.live_photo:
+                    doc = media.video
 
                     if isinstance(doc, raw.types.Document):
                         attributes = {type(i): i for i in doc.attributes}
 
-                        file_name = getattr(
-                            attributes.get(raw.types.DocumentAttributeFilename),
-                            "file_name",
-                            None,
-                        )
+                        if raw.types.DocumentAttributeVideo in attributes:
+                            video_attributes = attributes[raw.types.DocumentAttributeVideo]
 
-                        if raw.types.DocumentAttributeAnimated in attributes:
-                            video_attributes = attributes.get(raw.types.DocumentAttributeVideo)
+                            live_photo = types.LivePhoto._parse(client, doc, video_attributes)
+
+                    media_type = enums.MessageMediaType.LIVE_PHOTO
+                else:
+                    media_type = enums.MessageMediaType.PHOTO
+
+                photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
+                has_media_spoiler = media.spoiler
+            elif isinstance(media, raw.types.MessageMediaGeo):
+                location = types.Location._parse(media.geo)
+                media_type = enums.MessageMediaType.LOCATION
+            elif isinstance(media, raw.types.MessageMediaGeoLive):
+                location = types.Location._parse_media(media)
+                media_type = enums.MessageMediaType.LOCATION
+            elif isinstance(media, raw.types.MessageMediaContact):
+                contact = types.Contact._parse(client, media)
+                media_type = enums.MessageMediaType.CONTACT
+            elif isinstance(media, raw.types.MessageMediaVenue):
+                venue = types.Venue._parse(client, media)
+                media_type = enums.MessageMediaType.VENUE
+            elif isinstance(media, raw.types.MessageMediaGame):
+                game = types.Game._parse(client, media)
+                media_type = enums.MessageMediaType.GAME
+            elif isinstance(media, raw.types.MessageMediaGiveaway):
+                giveaway = await types.Giveaway._parse(client, media, chats)
+                media_type = enums.MessageMediaType.GIVEAWAY
+            elif isinstance(media, raw.types.MessageMediaGiveawayResults):
+                giveaway_winners = await types.GiveawayWinners._parse(client, media, users, chats)
+                media_type = enums.MessageMediaType.GIVEAWAY_WINNERS
+            elif isinstance(media, raw.types.MessageMediaInvoice):
+                invoice = types.Invoice._parse(client, media)
+                media_type = enums.MessageMediaType.INVOICE
+            elif isinstance(media, raw.types.MessageMediaStory):
+                story = await types.Story._parse(client, media, media.peer, users, chats)
+                media_type = enums.MessageMediaType.STORY
+            elif isinstance(media, raw.types.MessageMediaDocument):
+                doc = media.document
+                has_media_spoiler = media.spoiler
+
+                if isinstance(doc, raw.types.Document):
+                    attributes = {type(i): i for i in doc.attributes}
+
+                    file_name = getattr(
+                        attributes.get(raw.types.DocumentAttributeFilename), "file_name", None
+                    )
+
+                    if raw.types.DocumentAttributeAnimated in attributes:
+                        video_attributes = attributes.get(raw.types.DocumentAttributeVideo)
+
+                        if video_attributes and video_attributes.round_message:
+                            video_note = types.VideoNote._parse(
+                                client, doc, video_attributes, media.ttl_seconds
+                            )
+                            media_type = enums.MessageMediaType.VIDEO_NOTE
+                        else:
                             animation = types.Animation._parse(
                                 client, doc, video_attributes, file_name
                             )
                             media_type = enums.MessageMediaType.ANIMATION
-                            has_media_spoiler = media.spoiler
-                        elif raw.types.DocumentAttributeSticker in attributes:
-                            sticker = await types.Sticker._parse(client, doc, attributes)
-                            media_type = enums.MessageMediaType.STICKER
-                        elif raw.types.DocumentAttributeVideo in attributes:
-                            video_attributes = attributes[raw.types.DocumentAttributeVideo]
+                    elif raw.types.DocumentAttributeSticker in attributes:
+                        sticker = await types.Sticker._parse(client, doc, attributes)
+                        media_type = enums.MessageMediaType.STICKER
+                    elif raw.types.DocumentAttributeVideo in attributes:
+                        video_attributes = attributes[raw.types.DocumentAttributeVideo]
 
-                            if video_attributes.round_message:
-                                video_note = types.VideoNote._parse(client, doc, video_attributes)
-                                media_type = enums.MessageMediaType.VIDEO_NOTE
-                            else:
-                                video = types.Video._parse(
-                                    client,
-                                    doc,
-                                    video_attributes,
-                                    file_name,
-                                    media.ttl_seconds,
-                                )
-                                media_type = enums.MessageMediaType.VIDEO
-                                has_media_spoiler = media.spoiler
-                        elif raw.types.DocumentAttributeAudio in attributes:
-                            audio_attributes = attributes[raw.types.DocumentAttributeAudio]
-
-                            if audio_attributes.voice:
-                                voice = types.Voice._parse(client, doc, audio_attributes)
-                                media_type = enums.MessageMediaType.VOICE
-                            else:
-                                audio = types.Audio._parse(
-                                    client, doc, audio_attributes, file_name
-                                )
-                                media_type = enums.MessageMediaType.AUDIO
+                        if video_attributes.round_message:
+                            video_note = types.VideoNote._parse(
+                                client, doc, video_attributes, media.ttl_seconds
+                            )
+                            media_type = enums.MessageMediaType.VIDEO_NOTE
                         else:
-                            document = types.Document._parse(client, doc, file_name)
-                            media_type = enums.MessageMediaType.DOCUMENT
-                elif isinstance(media, raw.types.MessageMediaWebPage):
-                    if isinstance(media.webpage, raw.types.WebPage):
-                        web_page = types.WebPage._parse(client, media.webpage)
-                        media_type = enums.MessageMediaType.WEB_PAGE
+                            video = types.Video._parse(
+                                client,
+                                doc,
+                                video_attributes,
+                                file_name,
+                                media.ttl_seconds,
+                                media.video_cover,
+                                media.video_timestamp,
+                                media.alt_documents,
+                            )
+                            media_type = enums.MessageMediaType.VIDEO
+                    elif raw.types.DocumentAttributeAudio in attributes:
+                        audio_attributes = attributes[raw.types.DocumentAttributeAudio]
+
+                        if audio_attributes.voice:
+                            voice = types.Voice._parse(
+                                client, doc, audio_attributes, media.ttl_seconds
+                            )
+                            media_type = enums.MessageMediaType.VOICE
+                        else:
+                            audio = types.Audio._parse(client, doc, audio_attributes, file_name)
+                            media_type = enums.MessageMediaType.AUDIO
                     else:
-                        media = None
-                elif isinstance(media, raw.types.MessageMediaPoll):
-                    poll = types.Poll._parse(client, media)
-                    media_type = enums.MessageMediaType.POLL
-                elif isinstance(media, raw.types.MessageMediaDice):
-                    dice = types.Dice._parse(client, media)
-                    media_type = enums.MessageMediaType.DICE
-                else:
-                    media = None
+                        document = types.Document._parse(client, doc, file_name)
+                        media_type = enums.MessageMediaType.DOCUMENT
+            elif isinstance(media, raw.types.MessageMediaWebPage):
+                media_type = enums.MessageMediaType.WEB_PAGE
+                web_page = types.WebPage._parse(client, media)
+            elif isinstance(media, raw.types.MessageMediaPoll):
+                poll = await types.Poll._parse(
+                    client,
+                    media,
+                    description=await types.FormattedText._parse(
+                        client,
+                        raw.types.TextWithEntities(
+                            text=message.message, entities=message.entities
+                        ),
+                    )
+                    if message.message
+                    else None,
+                    users=users,
+                    chats=chats,
+                )
+                media_type = enums.MessageMediaType.POLL
+            elif isinstance(media, raw.types.MessageMediaDice):
+                dice = types.Dice._parse(client, media)
+                media_type = enums.MessageMediaType.DICE
+            elif isinstance(media, raw.types.MessageMediaPaidMedia):
+                paid_media = types.PaidMediaInfo._parse(client, media)
+                media_type = enums.MessageMediaType.PAID_MEDIA
+            elif isinstance(media, raw.types.MessageMediaToDo):
+                media_type = enums.MessageMediaType.CHECKLIST
+                checklist = await types.Checklist._parse(client, media, users, chats)
+            else:
+                media_type = enums.MessageMediaType.UNSUPPORTED
+                media = None
 
-            reply_markup = message.reply_markup
+        link_preview_options = types.LinkPreviewOptions._parse(
+            media,
+            getattr(getattr(media, "webpage", None), "url", utils.get_first_url(message.message)),
+            message.invert_media,
+        )
 
-            if reply_markup:
-                if isinstance(reply_markup, raw.types.ReplyKeyboardForceReply):
-                    reply_markup = types.ForceReply.read(reply_markup)
-                elif isinstance(reply_markup, raw.types.ReplyKeyboardMarkup):
-                    reply_markup = types.ReplyKeyboardMarkup.read(reply_markup)
-                elif isinstance(reply_markup, raw.types.ReplyInlineMarkup):
-                    reply_markup = types.InlineKeyboardMarkup.read(reply_markup)
-                elif isinstance(reply_markup, raw.types.ReplyKeyboardHide):
-                    reply_markup = types.ReplyKeyboardRemove.read(reply_markup)
-                else:
-                    reply_markup = None
+        reply_markup = message.reply_markup
 
-            from_user = types.User._parse(client, users.get(user_id))
-            sender_chat = (
-                None
-                if from_user
-                else types.Chat._parse(client, message, users, chats, is_chat=False)
+        if reply_markup:
+            if isinstance(reply_markup, raw.types.ReplyKeyboardForceReply):
+                reply_markup = types.ForceReply.read(reply_markup)
+            elif isinstance(reply_markup, raw.types.ReplyKeyboardMarkup):
+                reply_markup = types.ReplyKeyboardMarkup.read(reply_markup)
+            elif isinstance(reply_markup, raw.types.ReplyInlineMarkup):
+                reply_markup = types.InlineKeyboardMarkup.read(reply_markup)
+            elif isinstance(reply_markup, raw.types.ReplyKeyboardHide):
+                reply_markup = types.ReplyKeyboardRemove.read(reply_markup)
+            else:
+                reply_markup = None
+
+        reactions = await types.MessageReactions._parse(client, message.reactions, users, chats)
+
+        parsed_message = Message(
+            id=message.id,
+            effect_id=getattr(message, "effect", None),
+            rich_message=await types.RichMessage._parse(
+                client, message.rich_message, users, chats
+            ),
+            date=utils.timestamp_to_datetime(message.date),
+            guest_query_id=str(guest_query_id) if guest_query_id else None,
+            chat=chat,
+            from_user=from_user,
+            sender_chat=sender_chat,
+            sender_business_bot=types.User._parse(
+                client, users.get(getattr(message, "via_business_bot_id", None))
+            ),
+            sender_tag=message.from_rank,
+            text=(
+                Str(message.message).init(entities) or None
+                if media is None or web_page is not None
+                else None
+            ),
+            caption=(
+                Str(message.message).init(entities) or None
+                if media is not None and web_page is None
+                else None
+            ),
+            entities=(entities or None if media is None or web_page is not None else None),
+            caption_entities=(
+                entities or None if media is not None and web_page is None else None
+            ),
+            author_signature=message.post_author,
+            is_paid_post=bool(getattr(message.suggested_post, "price", None)),
+            has_protected_content=message.noforwards,
+            has_media_spoiler=has_media_spoiler,
+            forward_origin=forward_origin,
+            mentioned=message.mentioned,
+            scheduled=is_scheduled,
+            from_scheduled=message.from_scheduled,
+            media=media_type,
+            paid_media=paid_media,
+            checklist=checklist,
+            show_caption_above_media=message.invert_media,
+            edit_date=utils.timestamp_to_datetime(message.edit_date),
+            edit_hidden=message.edit_hide,
+            media_group_id=message.grouped_id,
+            photo=photo,
+            live_photo=live_photo,
+            location=location,
+            contact=contact,
+            venue=venue,
+            audio=audio,
+            voice=voice,
+            animation=animation,
+            game=game,
+            giveaway=giveaway,
+            giveaway_winners=giveaway_winners,
+            invoice=invoice,
+            story=story,
+            video=video,
+            video_processing_pending=message.video_processing_pending,
+            video_note=video_note,
+            sticker=sticker,
+            document=document,
+            web_page=web_page,
+            link_preview_options=link_preview_options,
+            poll=poll,
+            dice=dice,
+            views=message.views,
+            forwards=message.forwards,
+            sender_boost_count=message.from_boosts_applied,
+            via_bot=types.User._parse(client, users.get(message.via_bot_id)),
+            outgoing=message.out,
+            business_connection_id=business_connection_id,
+            reply_markup=reply_markup,
+            reactions=reactions,
+            from_offline=message.offline,
+            send_paid_messages_stars=message.paid_message_stars,
+            unread_media=message.media_unread,
+            silent=message.silent,
+            pinned=message.pinned,
+            restriction_reason=types.List(
+                types.RestrictionReason._parse(reason)
+                for reason in getattr(message, "restriction_reason", None) or []
+            )
+            or None,
+            fact_check=await types.FactCheck._parse(client, message.factcheck, users),
+            suggested_post_info=types.SuggestedPostInfo._parse(message.suggested_post),
+            channel_post=message.post,
+            repeat_period=message.schedule_repeat_period,
+            summary_language_code=message.summary_from_language,
+            guest_bot_caller_user=types.User._parse(
+                client, users.get(utils.get_raw_peer_id(message.guestchat_via_from))
+            ),
+            guest_bot_caller_chat=types.Chat._parse_chat(
+                client, chats.get(utils.get_raw_peer_id(message.guestchat_via_from))
+            ),
+            raw=message,
+            client=client,
+        )
+
+        if forward_header and forward_header.saved_from_peer and forward_header.saved_from_msg_id:
+            saved_from_peer_id = utils.get_raw_peer_id(forward_header.saved_from_peer)
+            saved_from_peer_chat = chats.get(saved_from_peer_id)
+            if (
+                isinstance(saved_from_peer_chat, raw.types.Channel)
+                and not saved_from_peer_chat.megagroup
+            ):
+                parsed_message.automatic_forward = True
+
+        if message.reply_to:
+            parsed_message = await types.Message.__parse_reply(
+                client=client,
+                parsed_message=parsed_message,
+                message=message,
+                users=users,
+                chats=chats,
+                replies=replies,
+                business_connection_id=business_connection_id,
+                raw_reply_to_message=raw_reply_to_message,
             )
 
-            reactions = types.MessageReactions._parse(client, message.reactions)
+        if topics:
+            parsed_message.topic = await types.ForumTopic._parse(
+                client, topics.get(parsed_message.message_thread_id), users=users, chats=chats
+            )
 
-            parsed_message = Message(
+            if parsed_message.topic:
+                await client.topic_cache.set(
+                    (parsed_message.chat.id, parsed_message.topic.id), parsed_message.topic
+                )
+
+        if not parsed_message.topic and parsed_message.chat.is_forum:
+            parsed_topic = await client.topic_cache.get((
+                parsed_message.chat.id,
+                parsed_message.message_thread_id,
+            ))
+
+            if parsed_topic:
+                parsed_message.topic = parsed_topic
+            elif client.fetch_topics and client.me and not client.me.is_bot:
+                try:
+                    parsed_message.topic = await client.get_forum_topics_by_id(
+                        chat_id=parsed_message.chat.id,
+                        topic_ids=parsed_message.message_thread_id or 1,
+                    )
+
+                    if parsed_message.topic:
+                        await client.topic_cache.set(
+                            (parsed_message.chat.id, parsed_message.topic.id), parsed_message.topic
+                        )
+                except (ChannelPrivate, ChannelForumMissing):
+                    pass
+
+        if chat.type == enums.ChatType.DIRECT and message.saved_peer_id:
+            parsed_message.direct_messages_topic_id = message.saved_peer_id.user_id
+
+            parsed_topic = await client.topic_cache.get((
+                parsed_message.chat.id,
+                parsed_message.direct_messages_topic_id,
+            ))
+
+            if parsed_topic:
+                parsed_message.topic = parsed_topic
+            elif client.fetch_topics and client.me and not client.me.is_bot:
+                try:
+                    parsed_message.topic = await client.get_direct_messages_topics_by_id(
+                        chat_id=parsed_message.chat.id,
+                        topic_ids=parsed_message.direct_messages_topic_id,
+                    )
+
+                    if parsed_message.topic:
+                        await client.topic_cache.set(
+                            (parsed_message.chat.id, parsed_message.topic.id), parsed_message.topic
+                        )
+                except (ChannelPrivate, ChatAdminRequired):
+                    pass
+
+        if not parsed_message.poll:  # Do not cache poll messages
+            await client.message_cache.set(
+                (parsed_message.chat.id, parsed_message.id), parsed_message
+            )
+
+        return parsed_message
+
+    @staticmethod
+    async def _parse_ephemeral_message(
+        client: pyrogram.Client,
+        message: raw.types.EphemeralMessage,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        replies: int = 1,
+    ) -> Message:
+        from_id = utils.get_raw_peer_id(message.from_id)
+        peer_id = utils.get_raw_peer_id(message.peer_id)
+
+        if (
+            isinstance(message.from_id, raw.types.PeerUser)
+            and isinstance(message.peer_id, raw.types.PeerUser)
+            and (from_id not in users or peer_id not in users)
+        ):
+            try:
+                r = await client.invoke(
+                    raw.functions.users.GetUsers(
+                        id=[
+                            await client.resolve_peer(from_id),
+                            await client.resolve_peer(peer_id),
+                        ]
+                    )
+                )
+            except PeerIdInvalid:
+                pass
+            else:
+                users.update({i.id: i for i in r})
+
+        from_user = types.User._parse(client, users.get(from_id or peer_id))
+        sender_chat = (
+            types.Chat._parse(client, message, users, chats, is_chat=False)
+            if not from_user
+            else None
+        )
+        chat = types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        entities = types.List(
+            filter(
+                lambda x: x is not None,
+                [
+                    types.MessageEntity._parse(client, entity, users)
+                    for entity in (message.entities or [])
+                ],
+            )
+        )
+
+        photo = None
+        live_photo = None
+        location = None
+        contact = None
+        venue = None
+        game = None
+        giveaway = None
+        giveaway_winners = None
+        invoice = None
+        story = None
+        audio = None
+        voice = None
+        animation = None
+        video = None
+        video_note = None
+        sticker = None
+        document = None
+        web_page = None
+        link_preview_options = None
+        poll = None
+        dice = None
+        paid_media = None
+        checklist = None
+
+        media = message.media
+        media_type = None
+        has_media_spoiler = None
+
+        if media:
+            if isinstance(media, raw.types.MessageMediaPhoto):
+                if media.live_photo:
+                    doc = media.video
+
+                    if isinstance(doc, raw.types.Document):
+                        attributes = {type(i): i for i in doc.attributes}
+
+                        if raw.types.DocumentAttributeVideo in attributes:
+                            video_attributes = attributes[raw.types.DocumentAttributeVideo]
+
+                            live_photo = types.LivePhoto._parse(client, doc, video_attributes)
+
+                    media_type = enums.MessageMediaType.LIVE_PHOTO
+                else:
+                    media_type = enums.MessageMediaType.PHOTO
+
+                photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
+                has_media_spoiler = media.spoiler
+            elif isinstance(media, raw.types.MessageMediaGeo):
+                location = types.Location._parse(media.geo)
+                media_type = enums.MessageMediaType.LOCATION
+            elif isinstance(media, raw.types.MessageMediaGeoLive):
+                location = types.Location._parse_media(media)
+                media_type = enums.MessageMediaType.LOCATION
+            elif isinstance(media, raw.types.MessageMediaContact):
+                contact = types.Contact._parse(client, media)
+                media_type = enums.MessageMediaType.CONTACT
+            elif isinstance(media, raw.types.MessageMediaVenue):
+                venue = types.Venue._parse(client, media)
+                media_type = enums.MessageMediaType.VENUE
+            elif isinstance(media, raw.types.MessageMediaGame):
+                game = types.Game._parse(client, media)
+                media_type = enums.MessageMediaType.GAME
+            elif isinstance(media, raw.types.MessageMediaGiveaway):
+                giveaway = await types.Giveaway._parse(client, media, chats)
+                media_type = enums.MessageMediaType.GIVEAWAY
+            elif isinstance(media, raw.types.MessageMediaGiveawayResults):
+                giveaway_winners = await types.GiveawayWinners._parse(client, media, users, chats)
+                media_type = enums.MessageMediaType.GIVEAWAY_WINNERS
+            elif isinstance(media, raw.types.MessageMediaInvoice):
+                invoice = types.Invoice._parse(client, media)
+                media_type = enums.MessageMediaType.INVOICE
+            elif isinstance(media, raw.types.MessageMediaStory):
+                story = await types.Story._parse(client, media, media.peer, users, chats)
+                media_type = enums.MessageMediaType.STORY
+            elif isinstance(media, raw.types.MessageMediaDocument):
+                doc = media.document
+                has_media_spoiler = media.spoiler
+
+                if isinstance(doc, raw.types.Document):
+                    attributes = {type(i): i for i in doc.attributes}
+
+                    file_name = getattr(
+                        attributes.get(raw.types.DocumentAttributeFilename), "file_name", None
+                    )
+
+                    if raw.types.DocumentAttributeAnimated in attributes:
+                        video_attributes = attributes.get(raw.types.DocumentAttributeVideo)
+
+                        if video_attributes and video_attributes.round_message:
+                            video_note = types.VideoNote._parse(
+                                client, doc, video_attributes, media.ttl_seconds
+                            )
+                            media_type = enums.MessageMediaType.VIDEO_NOTE
+                        else:
+                            animation = types.Animation._parse(
+                                client, doc, video_attributes, file_name
+                            )
+                            media_type = enums.MessageMediaType.ANIMATION
+                    elif raw.types.DocumentAttributeSticker in attributes:
+                        sticker = await types.Sticker._parse(client, doc, attributes)
+                        media_type = enums.MessageMediaType.STICKER
+                    elif raw.types.DocumentAttributeVideo in attributes:
+                        video_attributes = attributes[raw.types.DocumentAttributeVideo]
+
+                        if video_attributes.round_message:
+                            video_note = types.VideoNote._parse(
+                                client, doc, video_attributes, media.ttl_seconds
+                            )
+                            media_type = enums.MessageMediaType.VIDEO_NOTE
+                        else:
+                            video = types.Video._parse(
+                                client,
+                                doc,
+                                video_attributes,
+                                file_name,
+                                media.ttl_seconds,
+                                media.video_cover,
+                                media.video_timestamp,
+                                media.alt_documents,
+                            )
+                            media_type = enums.MessageMediaType.VIDEO
+                    elif raw.types.DocumentAttributeAudio in attributes:
+                        audio_attributes = attributes[raw.types.DocumentAttributeAudio]
+
+                        if audio_attributes.voice:
+                            voice = types.Voice._parse(
+                                client, doc, audio_attributes, media.ttl_seconds
+                            )
+                            media_type = enums.MessageMediaType.VOICE
+                        else:
+                            audio = types.Audio._parse(client, doc, audio_attributes, file_name)
+                            media_type = enums.MessageMediaType.AUDIO
+                    else:
+                        document = types.Document._parse(client, doc, file_name)
+                        media_type = enums.MessageMediaType.DOCUMENT
+            elif isinstance(media, raw.types.MessageMediaWebPage):
+                media_type = enums.MessageMediaType.WEB_PAGE
+                web_page = types.WebPage._parse(client, media)
+            elif isinstance(media, raw.types.MessageMediaPoll):
+                poll = await types.Poll._parse(
+                    client,
+                    media,
+                    description=await types.FormattedText._parse(
+                        client,
+                        raw.types.TextWithEntities(
+                            text=message.message, entities=message.entities
+                        ),
+                    )
+                    if message.message
+                    else None,
+                    users=users,
+                    chats=chats,
+                )
+                media_type = enums.MessageMediaType.POLL
+            elif isinstance(media, raw.types.MessageMediaDice):
+                dice = types.Dice._parse(client, media)
+                media_type = enums.MessageMediaType.DICE
+            elif isinstance(media, raw.types.MessageMediaPaidMedia):
+                paid_media = types.PaidMediaInfo._parse(client, media)
+                media_type = enums.MessageMediaType.PAID_MEDIA
+            elif isinstance(media, raw.types.MessageMediaToDo):
+                media_type = enums.MessageMediaType.CHECKLIST
+                checklist = await types.Checklist._parse(client, media, users, chats)
+            else:
+                media_type = enums.MessageMediaType.UNSUPPORTED
+                media = None
+
+        link_preview_options = types.LinkPreviewOptions._parse(
+            media,
+            getattr(getattr(media, "webpage", None), "url", utils.get_first_url(message.message)),
+        )
+
+        reply_markup = message.reply_markup
+
+        if reply_markup:
+            if isinstance(reply_markup, raw.types.ReplyKeyboardForceReply):
+                reply_markup = types.ForceReply.read(reply_markup)
+            elif isinstance(reply_markup, raw.types.ReplyKeyboardMarkup):
+                reply_markup = types.ReplyKeyboardMarkup.read(reply_markup)
+            elif isinstance(reply_markup, raw.types.ReplyInlineMarkup):
+                reply_markup = types.InlineKeyboardMarkup.read(reply_markup)
+            elif isinstance(reply_markup, raw.types.ReplyKeyboardHide):
+                reply_markup = types.ReplyKeyboardRemove.read(reply_markup)
+            else:
+                reply_markup = None
+
+        parsed_message = Message(
+            id=0,
+            ephemeral_message_id=message.id,
+            date=utils.timestamp_to_datetime(message.date),
+            chat=chat,
+            from_user=from_user,
+            sender_chat=sender_chat,
+            receiver_user=types.User._parse(client, users.get(message.receiver_id)),
+            text=(
+                Str(message.message).init(entities) or None
+                if media is None or web_page is not None
+                else None
+            ),
+            caption=(
+                Str(message.message).init(entities) or None
+                if media is not None and web_page is None
+                else None
+            ),
+            entities=(entities or None if media is None or web_page is not None else None),
+            caption_entities=(
+                entities or None if media is not None and web_page is None else None
+            ),
+            has_media_spoiler=has_media_spoiler,
+            media=media_type,
+            paid_media=paid_media,
+            checklist=checklist,
+            photo=photo,
+            live_photo=live_photo,
+            location=location,
+            contact=contact,
+            venue=venue,
+            audio=audio,
+            voice=voice,
+            animation=animation,
+            game=game,
+            giveaway=giveaway,
+            giveaway_winners=giveaway_winners,
+            invoice=invoice,
+            story=story,
+            video=video,
+            video_note=video_note,
+            sticker=sticker,
+            document=document,
+            web_page=web_page,
+            link_preview_options=link_preview_options,
+            poll=poll,
+            dice=dice,
+            outgoing=message.out,
+            reply_markup=reply_markup,
+            raw=message,
+            client=client,
+        )
+
+        if message.reply_to:
+            parsed_message = await types.Message.__parse_reply(
+                client=client,
+                parsed_message=parsed_message,
+                message=message,
+                users=users,
+                chats=chats,
+                replies=replies,
+            )
+
+        if not parsed_message.topic and parsed_message.chat.is_forum:
+            parsed_topic = await client.topic_cache.get((
+                parsed_message.chat.id,
+                parsed_message.message_thread_id,
+            ))
+
+            if parsed_topic:
+                parsed_message.topic = parsed_topic
+            elif client.fetch_topics and client.me and not client.me.is_bot:
+                try:
+                    parsed_message.topic = await client.get_forum_topics_by_id(
+                        chat_id=parsed_message.chat.id,
+                        topic_ids=parsed_message.message_thread_id or 1,
+                    )
+
+                    if parsed_message.topic:
+                        await client.topic_cache.set(
+                            (parsed_message.chat.id, parsed_message.topic.id), parsed_message.topic
+                        )
+                except (ChannelPrivate, ChannelForumMissing):
+                    pass
+
+        if not parsed_message.poll:  # Do not cache poll messages
+            await client.message_cache.set(
+                (parsed_message.chat.id, parsed_message.id), parsed_message
+            )
+
+        return parsed_message
+
+    @staticmethod
+    async def __parse_reply(
+        client: pyrogram.Client,
+        parsed_message: Message,
+        message: raw.base.Message,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        replies: int = 1,
+        business_connection_id: str | None = None,
+        raw_reply_to_message: raw.base.Message | None = None,
+    ):
+        if isinstance(message.reply_to, raw.types.MessageReplyHeader):
+            parsed_message.reply_to_message_id = message.reply_to.reply_to_msg_id
+            parsed_message.reply_to_top_message_id = message.reply_to.reply_to_top_id
+            parsed_message.reply_to_checklist_task_id = message.reply_to.todo_item_id
+            parsed_message.reply_to_poll_option_id = (
+                message.reply_to.poll_option.decode()
+                if message.reply_to.poll_option is not None
+                else None
+            )
+
+            if replies:
+                if message.reply_to.reply_to_peer_id:
+                    key = (
+                        utils.get_peer_id(message.reply_to.reply_to_peer_id),
+                        message.reply_to.reply_to_msg_id,
+                    )
+                    reply_to_params = {"chat_id": key[0], "message_ids": key[1]}
+                else:
+                    key = (parsed_message.chat.id, parsed_message.reply_to_message_id)
+                    # This tree spells "fetch what this message replies to" as
+                    # reply_to_message_ids, where Kurigram uses message_ids + reply=True.
+                    reply_to_params = {"chat_id": key[0], "reply_to_message_ids": message.id}
+
+                parsed_message.reply_to_message = await client.message_cache.get(key)
+
+                if raw_reply_to_message:  # For business bots only
+                    parsed_message.reply_to_message = await types.Message._parse(
+                        client,
+                        raw_reply_to_message,
+                        users,
+                        chats,
+                        business_connection_id=business_connection_id,
+                        replies=0,
+                    )
+                elif client.fetch_replies and not parsed_message.reply_to_message:
+                    with contextlib.suppress(ChannelPrivate, ChannelInvalid, MessageIdsEmpty):
+                        parsed_message.reply_to_message = await client.get_messages(
+                            replies=replies - 1, **reply_to_params
+                        )
+
+            if message.reply_to.forum_topic:
+                parsed_message.topic_message = True
+
+                if message.reply_to.reply_to_top_id:
+                    parsed_message.message_thread_id = message.reply_to.reply_to_top_id
+                elif message.reply_to.reply_to_msg_id:
+                    parsed_message.message_thread_id = message.reply_to.reply_to_msg_id
+                else:
+                    parsed_message.message_thread_id = 1
+
+            if message.reply_to.quote:
+                parsed_message.quote = await types.TextQuote._parse(
+                    client, users, message.reply_to
+                )
+
+            if message.reply_to.reply_from:
+                parsed_message.external_reply = await types.ExternalReplyInfo._parse(
+                    client, message.reply_to, users, chats
+                )
+        elif isinstance(message.reply_to, raw.types.MessageReplyStoryHeader):
+            parsed_message.reply_to_story_id = message.reply_to.story_id
+            parsed_message.reply_to_story_user_id = utils.get_peer_id(message.reply_to.peer)
+
+            if client.fetch_stories and client.me and not client.me.is_bot:
+                parsed_message.reply_to_story = await client.get_stories(
+                    utils.get_peer_id(message.reply_to.peer), message.reply_to.story_id
+                )
+
+        return parsed_message
+
+    @staticmethod
+    async def _parse(
+        client: pyrogram.Client,
+        message: raw.base.Message,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        topics: dict[int, raw.base.ForumTopic] | None = None,
+        is_scheduled: bool = False,
+        replies: int = 1,
+        business_connection_id: str | None = None,
+        guest_query_id: str | None = None,
+        raw_reply_to_message: raw.base.Message | None = None,
+    ) -> Message:
+        if isinstance(message, raw.types.MessageEmpty):
+            return Message(
                 id=message.id,
-                message_thread_id=message_thread_id,
-                date=utils.timestamp_to_datetime(message.date),
-                chat=types.Chat._parse(client, message, users, chats, is_chat=True),
-                topics=None,
-                from_user=from_user,
-                sender_chat=sender_chat,
-                text=(
-                    Str(message.message).init(entities) or None
-                    if media is None or web_page is not None
-                    else None
-                ),
-                caption=(
-                    Str(message.message).init(entities) or None
-                    if media is not None and web_page is None
-                    else None
-                ),
-                entities=(entities or None if media is None or web_page is not None else None),
-                caption_entities=(
-                    entities or None if media is not None and web_page is None else None
-                ),
-                author_signature=message.post_author,
-                has_protected_content=message.noforwards,
-                has_media_spoiler=has_media_spoiler,
-                forward_from=forward_from,
-                forward_sender_name=forward_sender_name,
-                forward_from_chat=forward_from_chat,
-                forward_from_message_id=forward_from_message_id,
-                forward_signature=forward_signature,
-                forward_date=forward_date,
-                is_topic_message=is_topic_message,
-                mentioned=message.mentioned,
-                scheduled=is_scheduled,
-                from_scheduled=message.from_scheduled,
-                media=media_type,
-                edit_date=utils.timestamp_to_datetime(message.edit_date),
-                media_group_id=message.grouped_id,
-                photo=photo,
-                location=location,
-                contact=contact,
-                venue=venue,
-                audio=audio,
-                voice=voice,
-                animation=animation,
-                game=game,
-                video=video,
-                video_note=video_note,
-                sticker=sticker,
-                document=document,
-                web_page=web_page,
-                poll=poll,
-                dice=dice,
-                views=message.views,
-                forwards=message.forwards,
-                via_bot=types.User._parse(client, users.get(message.via_bot_id)),
-                outgoing=message.out,
-                reply_markup=reply_markup,
-                reactions=reactions,
+                empty=True,
+                business_connection_id=business_connection_id,
+                raw=message,
                 client=client,
             )
 
-            if message.reply_to:
-                if isinstance(message.reply_to, raw.types.MessageReplyHeader):
-                    if message.reply_to.forum_topic:
-                        if message.reply_to.reply_to_top_id:
-                            thread_id = message.reply_to.reply_to_top_id
-                            parsed_message.reply_to_message_id = message.reply_to.reply_to_msg_id
-                        else:
-                            thread_id = message.reply_to.reply_to_msg_id
-                        parsed_message.message_thread_id = thread_id
-                        parsed_message.is_topic_message = True
-                        if topics:
-                            parsed_message.topics = types.ForumTopic._parse(topics[thread_id])
-                        else:
-                            try:
-                                msg = await client.get_messages(parsed_message.chat.id, message.id)
-                                if getattr(msg, "topics"):
-                                    parsed_message.topics = msg.topics
-                            except Exception:
-                                pass
-                    else:
-                        parsed_message.reply_to_message_id = message.reply_to.reply_to_msg_id
-                        parsed_message.reply_to_top_message_id = message.reply_to.reply_to_top_id
-                if isinstance(message.reply_to, raw.types.MessageReplyStoryHeader):
-                    parsed_message.reply_to_message_id = message.reply_to.story_id
+        if isinstance(message, raw.types.MessageService):
+            return await types.Message._parse_service(
+                client=client,
+                message=message,
+                users=users,
+                chats=chats,
+                replies=replies,
+                business_connection_id=business_connection_id,
+                raw_reply_to_message=raw_reply_to_message,
+            )
 
-                if replies:
-                    try:
-                        key = (
-                            parsed_message.chat.id,
-                            parsed_message.reply_to_message_id,
-                        )
-                        reply_to_message = client.message_cache[key] or await client.get_messages(
-                            parsed_message.chat.id,
-                            reply_to_message_ids=message.id,
-                            replies=replies - 1,
-                        )
-                        if reply_to_message and not reply_to_message.forum_topic_created:
-                            parsed_message.reply_to_message = reply_to_message
-                    except MessageIdsEmpty:
-                        pass
+        if isinstance(message, raw.types.Message):
+            return await types.Message._parse_message(
+                client=client,
+                message=message,
+                users=users,
+                chats=chats,
+                topics=topics,
+                is_scheduled=is_scheduled,
+                replies=replies,
+                business_connection_id=business_connection_id,
+                guest_query_id=guest_query_id,
+                raw_reply_to_message=raw_reply_to_message,
+            )
 
-            if not parsed_message.poll:  # Do not cache poll messages
-                client.message_cache[parsed_message.chat.id, parsed_message.id] = parsed_message
-
-            return parsed_message
+        if isinstance(message, raw.types.EphemeralMessage):
+            return await types.Message._parse_ephemeral_message(
+                client=client,
+                message=message,
+                users=users,
+                chats=chats,
+                replies=replies,
+            )
         return None
 
     def listen(
@@ -1164,6 +2536,7 @@ class Message(Object, Update):
             Union[:obj:`~pyrogram.types.Message`, :obj:`~pyrogram.types.CallbackQuery`]: The Message or CallbackQuery
         """
         return self._client.ask(
+            *args,
             chat_id=self.chat.id if self.chat else None,
             text=text,
             filters=filters,
@@ -1173,7 +2546,6 @@ class Message(Object, Update):
             user_id=user_id,
             message_id=message_id,
             inline_message_id=inline_message_id,
-            *args,
             **kwargs,
         )
 

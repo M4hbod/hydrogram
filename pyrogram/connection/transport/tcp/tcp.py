@@ -120,7 +120,7 @@ class TCP:
             asyncio.TimeoutError
         ):  # Re-raise as TimeoutError. asyncio.TimeoutError is deprecated in 3.11
             self._closed = True
-            raise TimeoutError("Connection timed out")
+            raise TimeoutError("Connection timed out") from None
 
     async def close(self) -> None:
         if self.writer is None:

@@ -49,7 +49,7 @@ class Venue(Object):
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         location: types.Location,
         title: str,
         address: str,
@@ -67,10 +67,10 @@ class Venue(Object):
     @staticmethod
     def _parse(client, venue: raw.types.MessageMediaVenue):
         return Venue(
-            location=types.Location._parse(client, venue.geo),
+            location=types.Location._parse(venue.geo),
             title=venue.title,
             address=venue.address,
             foursquare_id=venue.venue_id or None,
-            foursquare_type=venue.venue_type,
+            foursquare_type=venue.venue_type or None,
             client=client,
         )

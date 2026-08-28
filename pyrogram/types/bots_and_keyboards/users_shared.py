@@ -50,8 +50,11 @@ class UsersShared(Object):
     async def _parse(
         client: pyrogram.Client,
         action: raw.types.MessageActionRequestedPeer | raw.types.MessageActionRequestedPeerSentMe,
-        users: dict[int, raw.base.User] = {},
+        users: dict[int, raw.base.User] | None = None,
     ) -> UsersShared | None:
+        # A mutable default argument is shared between calls; normalise here instead.
+        users = users or {}
+
         requested_users = types.List()
 
         for peer in action.peers:
@@ -61,7 +64,7 @@ class UsersShared(Object):
                 raw_user = users.get(utils.get_raw_peer_id(peer))
 
                 if raw_user:
-                    requested_users.append(await types.User._parse(client, raw_user))
+                    requested_users.append(types.User._parse(client, raw_user))
                 else:
                     requested_users.append(types.User(id=peer_id, client=client))
             elif isinstance(action, raw.types.MessageActionRequestedPeerSentMe):

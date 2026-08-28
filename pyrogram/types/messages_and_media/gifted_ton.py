@@ -78,8 +78,8 @@ class GiftedTon(Object):
         )
 
         return GiftedTon(
-            gifter=await types.User._parse(client, gifter),
-            receiver=await types.User._parse(client, receiver),
+            gifter=types.User._parse(client, gifter),
+            receiver=types.User._parse(client, receiver),
             ton_amount=action.crypto_amount,
             transaction_id=action.transaction_id,
             sticker=random.choice(

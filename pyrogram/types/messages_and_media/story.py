@@ -256,14 +256,14 @@ class Story(Object, Update):
         else:
             raise ValueError(f"Invalid peer type: {type(peer)}")
 
-        from_user = await types.User._parse(client, users.get(peer_id))
+        from_user = types.User._parse(client, users.get(peer_id))
         sender_chat = (
-            await types.Chat._parse_channel_chat(client, chats[peer_id]) if not from_user else None
+            types.Chat._parse_channel_chat(client, chats[peer_id]) if not from_user else None
         )
         chat = (
             sender_chat
             if not from_user
-            else await types.Chat._parse_user_chat(client, users.get(peer_id))
+            else types.Chat._parse_user_chat(client, users.get(peer_id))
         )
 
         if isinstance(story, raw.types.StoryItemDeleted):
@@ -375,11 +375,9 @@ class Story(Object, Update):
             fwd_peer_id = utils.get_peer_id(forward_header.from_peer)
 
             if fwd_peer_id > 0:
-                forward_from = await types.User._parse(client, users[fwd_raw_peer_id])
+                forward_from = types.User._parse(client, users[fwd_raw_peer_id])
             else:
-                forward_from_chat = await types.Chat._parse_channel_chat(
-                    client, chats[fwd_raw_peer_id]
-                )
+                forward_from_chat = types.Chat._parse_channel_chat(client, chats[fwd_raw_peer_id])
                 forward_from_story_id = forward_header.story_id
 
         if story.views:
@@ -387,7 +385,7 @@ class Story(Object, Update):
             forwards = getattr(story.views, "forwards_count", None)
             reactions = [
                 types.Reaction._parse_count(client, reaction)
-                for reaction in getattr(story.views, "reactions", [])
+                for reaction in getattr(story.views, "reactions", None) or []
             ] or None
             reactions_count = getattr(story.views, "reactions_count", None)
 
@@ -409,7 +407,7 @@ class Story(Object, Update):
                     client,
                     doc,
                     video_attributes,
-                    alternative_videos=getattr(story.media, "alt_documents", []),
+                    alternative_videos=getattr(story.media, "alt_documents", None) or [],
                 )
                 media_type = enums.MessageMediaType.VIDEO
             else:
@@ -428,28 +426,26 @@ class Story(Object, Update):
 
             if isinstance(priv, raw.types.PrivacyValueAllowUsers):
                 allowed_users = types.List([
-                    await types.User._parse(client, users.get(user_id)) for user_id in priv.users
+                    types.User._parse(client, users.get(user_id)) for user_id in priv.users
                 ])
             elif isinstance(priv, raw.types.PrivacyValueAllowChatParticipants):
                 allowed_users = types.List([
-                    await types.Chat._parse_chat_chat(client, chats.get(chat_id))
+                    types.Chat._parse_chat_chat(client, chats.get(chat_id))
                     for chat_id in priv.chats
                 ])
             elif isinstance(priv, raw.types.PrivacyValueDisallowUsers):
                 disallowed_users = types.List([
-                    await types.User._parse(client, users.get(user_id)) for user_id in priv.users
+                    types.User._parse(client, users.get(user_id)) for user_id in priv.users
                 ])
             elif isinstance(priv, raw.types.PrivacyValueDisallowChatParticipants):
                 disallowed_users = types.List([
-                    await types.Chat._parse_chat_chat(client, chats.get(chat_id))
+                    types.Chat._parse_chat_chat(client, chats.get(chat_id))
                     for chat_id in priv.chats
                 ])
 
         entities = [
             e
-            for e in [
-                await types.MessageEntity._parse(client, entity, {}) for entity in story.entities
-            ]
+            for e in [types.MessageEntity._parse(client, entity, {}) for entity in story.entities]
             if e
         ]
 
@@ -486,7 +482,7 @@ class Story(Object, Update):
             reactions_count=reactions_count,
             media_areas=types.List([
                 await types.MediaArea._parse(client, area, chats)
-                for area in getattr(story, "media_areas", [])
+                for area in getattr(story, "media_areas", None) or []
             ])
             or None,
             raw=story,

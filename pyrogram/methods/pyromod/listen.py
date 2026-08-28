@@ -109,4 +109,4 @@ class Listen:
                         None, PyromodConfig.timeout_handler, pattern, listener, timeout
                     )
             elif PyromodConfig.throw_exceptions:
-                raise ListenerTimeout(timeout)
+                raise ListenerTimeout(timeout) from None

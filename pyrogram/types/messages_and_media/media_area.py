@@ -168,7 +168,7 @@ class MediaArea(Object):
         gift = None
 
         if isinstance(area, raw.types.MediaAreaChannelPost):
-            sender_chat = await types.Chat._parse_channel_chat(client, chats.get(area.channel_id))
+            sender_chat = types.Chat._parse_channel_chat(client, chats.get(area.channel_id))
             message_id = area.msg_id
 
             with contextlib.suppress(ChannelPrivate, ChannelInvalid):

@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from enum import auto
 
 from .auto_name import AutoName
@@ -24,6 +26,9 @@ from .auto_name import AutoName
 
 class MessageMediaType(AutoName):
     """Message media type enumeration used in :obj:`~pyrogram.types.Message`."""
+
+    UNSUPPORTED = auto()
+    "A message media content that is not supported in the current pyrogram version"
 
     AUDIO = auto()
     "Audio media"
@@ -33,6 +38,9 @@ class MessageMediaType(AutoName):
 
     PHOTO = auto()
     "Photo media"
+
+    LIVE_PHOTO = auto()
+    "Live photo media"
 
     STICKER = auto()
     "Sticker media"
@@ -69,3 +77,21 @@ class MessageMediaType(AutoName):
 
     GAME = auto()
     "Game media"
+
+    GIVEAWAY = auto()
+    "Giveaway media"
+
+    GIVEAWAY_WINNERS = auto()
+    "Giveaway winners media"
+
+    STORY = auto()
+    "Story media"
+
+    INVOICE = auto()
+    "Invoice media"
+
+    PAID_MEDIA = auto()
+    "Paid media"
+
+    CHECKLIST = auto()
+    "Checklist media"

@@ -19,15 +19,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 import pyrogram
 from pyrogram import raw, types, utils
 from pyrogram.file_id import FileId, FileType, FileUniqueId, FileUniqueType
 from pyrogram.types.object import Object
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 class Video(Object):
@@ -46,6 +43,9 @@ class Video(Object):
 
         height (``int``):
             Video height as defined by sender.
+
+        codec (``str``):
+            Codec used for video file encoding, for example, "h264", "h265", or "av1".
 
         duration (``int``):
             Duration of the video in seconds as defined by sender.
@@ -70,16 +70,26 @@ class Video(Object):
 
         thumbs (List of :obj:`~pyrogram.types.Thumbnail`, *optional*):
             Video thumbnails.
+
+        video_cover (:obj:`~pyrogram.types.Photo`, *optional*):
+            Video cover.
+
+        video_start_timestamp (``int``, *optional*):
+            Video startpoint, in seconds.
+
+        alternative_videos (List of :obj:`~pyrogram.types.Video`, *optional*):
+            Alternative qualities of the video in MPEG4 format, encoded with H.264 codec.
     """
 
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         file_id: str,
         file_unique_id: str,
         width: int,
         height: int,
+        codec: str,
         duration: int,
         file_name: str | None = None,
         mime_type: str | None = None,
@@ -88,6 +98,9 @@ class Video(Object):
         ttl_seconds: int | None = None,
         date: datetime | None = None,
         thumbs: list[types.Thumbnail] | None = None,
+        video_cover: types.Photo | None = None,
+        video_start_timestamp: int | None = None,
+        alternative_videos: list[types.Video] | None = None,
     ):
         super().__init__(client)
 
@@ -95,6 +108,7 @@ class Video(Object):
         self.file_unique_id = file_unique_id
         self.width = width
         self.height = height
+        self.codec = codec
         self.duration = duration
         self.file_name = file_name
         self.mime_type = mime_type
@@ -103,15 +117,38 @@ class Video(Object):
         self.ttl_seconds = ttl_seconds
         self.date = date
         self.thumbs = thumbs
+        self.video_cover = video_cover
+        self.video_start_timestamp = video_start_timestamp
+        self.alternative_videos = alternative_videos
 
     @staticmethod
     def _parse(
         client,
         video: raw.types.Document,
         video_attributes: raw.types.DocumentAttributeVideo,
-        file_name: str,
+        file_name: str | None = None,
         ttl_seconds: int | None = None,
+        video_cover=None,
+        video_start_timestamp: int | None = None,
+        alternative_videos: list[raw.types.Document] | None = None,
     ) -> Video:
+        # A mutable default argument is shared between calls; normalise here instead.
+        alternative_videos = alternative_videos or []
+
+        alt_videos = types.List()
+
+        for alt_doc in alternative_videos:
+            alt_attrs = {type(i): i for i in alt_doc.attributes}
+            alt_file_name = getattr(
+                alt_attrs.get(raw.types.DocumentAttributeFilename), "file_name", None
+            )
+            alt_video_attr = alt_attrs.get(raw.types.DocumentAttributeVideo)
+
+            if alt_video_attr:
+                alt_videos.append(
+                    types.Video._parse(client, alt_doc, alt_video_attr, alt_file_name)
+                )
+
         return Video(
             file_id=FileId(
                 file_type=FileType.VIDEO,
@@ -123,15 +160,19 @@ class Video(Object):
             file_unique_id=FileUniqueId(
                 file_unique_type=FileUniqueType.DOCUMENT, media_id=video.id
             ).encode(),
-            width=video_attributes.w,
-            height=video_attributes.h,
+            width=getattr(video_attributes, "w", None),
+            height=getattr(video_attributes, "h", None),
+            codec=getattr(video_attributes, "video_codec", None),
             duration=video_attributes.duration,
-            file_name=file_name,
+            file_name=file_name or f"video_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4",
             mime_type=video.mime_type,
             supports_streaming=video_attributes.supports_streaming,
             file_size=video.size,
             date=utils.timestamp_to_datetime(video.date),
             ttl_seconds=ttl_seconds,
             thumbs=types.Thumbnail._parse(client, video),
+            video_cover=types.Photo._parse(client, video_cover),
+            video_start_timestamp=video_start_timestamp,
+            alternative_videos=alt_videos or None,
             client=client,
         )

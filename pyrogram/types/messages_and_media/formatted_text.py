@@ -65,7 +65,7 @@ class FormattedText(Object):
         entities = types.List(
             filter(
                 lambda x: x is not None,
-                [await types.MessageEntity._parse(client, entity, {}) for entity in text.entities],
+                [types.MessageEntity._parse(client, entity, {}) for entity in text.entities],
             )
         )
 

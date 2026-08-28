@@ -45,6 +45,6 @@ class ChatOwnerLeft(Object):
     ) -> ChatOwnerLeft:
         if isinstance(action, raw.types.MessageActionNewCreatorPending):
             return ChatOwnerLeft(
-                new_owner=await types.User._parse(client, users.get(action.new_creator_id))
+                new_owner=types.User._parse(client, users.get(action.new_creator_id))
             )
         return None

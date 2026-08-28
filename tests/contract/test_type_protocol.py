@@ -45,11 +45,15 @@ CLASSES = [(n, getattr(types, n)) for n in EXPORTED if inspect.isclass(getattr(t
 NOT_OBJECTS = {"Identifier", "List", "Listener", "ListenerTypes", "Update"}
 
 # Types whose constructor needs a live client or a raw object to mean anything.
-NEEDS_ARGS = {n for n, c in CLASSES if any(
-    p.default is inspect.Parameter.empty
-    for k, p in inspect.signature(c.__init__).parameters.items()
-    if k not in ("self", "args", "kwargs") and p.kind is not inspect.Parameter.VAR_KEYWORD
-)}
+NEEDS_ARGS = {
+    n
+    for n, c in CLASSES
+    if any(
+        p.default is inspect.Parameter.empty
+        for k, p in inspect.signature(c.__init__).parameters.items()
+        if k not in {"self", "args", "kwargs"} and p.kind is not inspect.Parameter.VAR_KEYWORD
+    )
+}
 CONSTRUCTIBLE = [(n, c) for n, c in CLASSES if n not in NEEDS_ARGS and n not in NOT_OBJECTS]
 
 

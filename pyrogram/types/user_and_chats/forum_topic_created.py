@@ -1,4 +1,5 @@
 #  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2017-2023 Dan <https://github.com/delivrance>
 #  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
 #  This file is part of Pyrogram.
@@ -31,27 +32,36 @@ class ForumTopicCreated(Object):
 
 
     Parameters:
-        title (``String``):
+        id (``int``):
+            Id of the topic.
+
+        title (``str``):
             Name of the topic.
 
-        icon_color (``Integer``):
-            Color of the topic icon in RGB format
+        icon_color (``int``):
+            Color of the topic icon in decimal format.
 
-        icon_emoji_id (``Integer``, *optional*):
-            Unique identifier of the custom emoji shown as the topic icon
+        custom_emoji_id (``str``, *optional*):
+            Unique identifier of the custom emoji shown as the topic icon.
     """
 
-    def __init__(self, *, title: str, icon_color: int, icon_emoji_id: int | None = None):
+    def __init__(
+        self, *, id: int, title: str, icon_color: int, custom_emoji_id: str | None = None
+    ):
         super().__init__()
 
+        self.id = id
         self.title = title
         self.icon_color = icon_color
-        self.icon_emoji_id = icon_emoji_id
+        self.custom_emoji_id = custom_emoji_id
 
     @staticmethod
-    def _parse(action: raw.types.MessageActionTopicCreate) -> ForumTopicCreated:
+    def _parse(message: raw.base.Message) -> ForumTopicCreated:
+        custom_emoji_id = getattr(message.action, "icon_emoji_id", None)
+
         return ForumTopicCreated(
-            title=getattr(action, "title", None),
-            icon_color=getattr(action, "icon_color", None),
-            icon_emoji_id=getattr(action, "icon_emoji_id", None),
+            id=getattr(message, "id", None),
+            title=getattr(message.action, "title", None),
+            icon_color=getattr(message.action, "icon_color", None),
+            custom_emoji_id=str(custom_emoji_id) if custom_emoji_id else None,
         )

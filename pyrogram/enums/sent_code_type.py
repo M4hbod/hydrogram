@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from pyrogram import raw
 
 from .auto_name import AutoName
@@ -45,3 +47,15 @@ class SentCodeType(AutoName):
 
     EMAIL_CODE = raw.types.auth.SentCodeTypeEmailCode
     "The code was sent via email."
+
+    FIREBASE_SMS = raw.types.auth.SentCodeTypeFirebaseSms
+    "The code should be delivered via SMS after Firebase attestation."
+
+    SETUP_EMAIL_REQUIRED = raw.types.auth.SentCodeTypeSetUpEmailRequired
+    "The user should add and verify an email address in order to login."
+
+    SMS_PHRASE = raw.types.auth.SentCodeTypeSmsPhrase
+    "The code was sent via SMS with a phrase."
+
+    SMS_WORD = raw.types.auth.SentCodeTypeSmsWord
+    "The code was sent via SMS with a word."

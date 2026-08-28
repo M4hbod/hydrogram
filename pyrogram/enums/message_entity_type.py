@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from pyrogram import raw
 
 from .auto_name import AutoName
@@ -29,10 +31,10 @@ class MessageEntityType(AutoName):
     "``@username``"
 
     HASHTAG = raw.types.MessageEntityHashtag
-    "``#hashtag``"
+    "``#hashtag`` or ``#hashtag@username``"
 
     CASHTAG = raw.types.MessageEntityCashtag
-    "``$USD``"
+    "``$USD`` or ``$USD@username``"
 
     BOT_COMMAND = raw.types.MessageEntityBotCommand
     "``/start@pyrogrambot``"
@@ -81,6 +83,9 @@ class MessageEntityType(AutoName):
 
     CUSTOM_EMOJI = raw.types.MessageEntityCustomEmoji
     "Custom emoji"
+
+    DATE_TIME = raw.types.MessageEntityFormattedDate
+    "Date time"
 
     UNKNOWN = raw.types.MessageEntityUnknown
     "Unknown message entity type"

@@ -67,18 +67,18 @@ class MessageOrigin(Object):
             if peer_type == "user":
                 return types.MessageOriginUser(
                     date=forward_date,
-                    sender_user=await types.User._parse(client, users.get(raw_peer_id)),
+                    sender_user=types.User._parse(client, users.get(raw_peer_id)),
                 )
             if fwd_from.channel_post:
                 return types.MessageOriginChannel(
                     date=forward_date,
-                    chat=await types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
+                    chat=types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
                     message_id=fwd_from.channel_post,
                     author_signature=fwd_from.post_author,
                 )
             return types.MessageOriginChat(
                 date=forward_date,
-                sender_chat=await types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
+                sender_chat=types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
                 author_signature=fwd_from.post_author,
             )
         if fwd_from.from_name:

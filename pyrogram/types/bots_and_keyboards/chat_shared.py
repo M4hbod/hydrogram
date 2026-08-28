@@ -50,8 +50,11 @@ class ChatShared(Object):
     async def _parse(
         client: pyrogram.Client,
         action: raw.types.MessageActionRequestedPeer | raw.types.MessageActionRequestedPeerSentMe,
-        chats: dict[int, raw.base.Chat] = {},
+        chats: dict[int, raw.base.Chat] | None = None,
     ) -> ChatShared | None:
+        # A mutable default argument is shared between calls; normalise here instead.
+        chats = chats or {}
+
         peer = action.peers[0]
 
         if isinstance(peer, (raw.types.PeerUser, raw.types.RequestedPeerUser)):
@@ -68,7 +71,7 @@ class ChatShared(Object):
             raw_chat = chats.get(utils.get_raw_peer_id(peer))
 
             if raw_chat:
-                chat_shared = await types.Chat._parse_chat(client, raw_chat)
+                chat_shared = types.Chat._parse_chat(client, raw_chat)
             else:
                 chat_shared = types.Chat(id=peer_id, type=chat_type, client=client)
         elif isinstance(action, raw.types.MessageActionRequestedPeerSentMe):

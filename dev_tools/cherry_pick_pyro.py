@@ -46,7 +46,9 @@ def replace_text_in_file(file_path: Path, content: str, replacements: dict[str, 
 
 
 # Function to search for files and apply replacements
-def search_and_replace(root_dir: Path, replacements: dict[str, str], exclude_dirs={".git"}):
+def search_and_replace(root_dir: Path, replacements: dict[str, str], exclude_dirs=None):
+    if exclude_dirs is None:
+        exclude_dirs = {".git"}
     for root, dirs, files in root_dir.walk():
         # Skip the excluded directory
         dirs[:] = [d for d in dirs if d not in exclude_dirs]

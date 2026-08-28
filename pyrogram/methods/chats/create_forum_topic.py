@@ -65,4 +65,5 @@ class CreateForumTopic:
             )
         )
 
-        return types.ForumTopicCreated._parse(r.updates[1].message.action)
+        # _parse now takes the whole service message; it reads .action itself.
+        return types.ForumTopicCreated._parse(r.updates[1].message)

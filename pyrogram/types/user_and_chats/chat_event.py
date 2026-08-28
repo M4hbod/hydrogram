@@ -459,16 +459,16 @@ class ChatEvent(Object):
             action = enums.ChatEventAction.INVITE_LINK_DELETED
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionCreateTopic):
-            created_forum_topic = types.ForumTopic._parse(action.topic)
+            created_forum_topic = await types.ForumTopic._parse(action.topic)
             action = enums.ChatEventAction.CREATED_FORUM_TOPIC
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionEditTopic):
-            old_forum_topic = types.ForumTopic._parse(action.prev_topic)
-            new_forum_topic = types.ForumTopic._parse(action.new_topic)
+            old_forum_topic = await types.ForumTopic._parse(action.prev_topic)
+            new_forum_topic = await types.ForumTopic._parse(action.new_topic)
             action = enums.ChatEventAction.EDITED_FORUM_TOPIC
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionDeleteTopic):
-            created_forum_topic = types.ForumTopic._parse(action.topic)
+            created_forum_topic = await types.ForumTopic._parse(action.topic)
             action = enums.ChatEventAction.DELETED_FORUM_TOPIC
 
         else:

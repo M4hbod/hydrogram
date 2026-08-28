@@ -147,7 +147,7 @@ class GiftAttribute(Object):
 
         if isinstance(attr, raw.types.StarGiftAttributeOriginalDetails):
             caption, caption_entities = (
-                await utils.parse_text_with_entities(client, attr.message, users)
+                utils.parse_text_with_entities(client, attr.message, users)
             ).values()
 
             sender_id = utils.get_raw_peer_id(attr.sender_id)

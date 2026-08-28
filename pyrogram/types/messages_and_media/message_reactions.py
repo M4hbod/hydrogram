@@ -30,30 +30,57 @@ class MessageReactions(Object):
     Parameters:
         reactions (List of :obj:`~pyrogram.types.Reaction`):
             Reactions list.
+
+        are_tags (``bool``, *optional*):
+            True, if the reactions are tags and Telegram Premium users can filter messages by them.
+
+        paid_reactors (List of :obj:`~pyrogram.types.PaidReactor`, *optional*):
+            Information about top users that added the paid reaction.
+
+        can_get_added_reactions (``bool``, *optional*):
+            True, if the list of added reactions is available using :meth:`~pyrogram.Client.get_message_added_reactions`.
     """
+
+    # TODO: Add get_message_added_reactions method
 
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
-        reactions: list[types.Reaction] | None = None,
+        client: pyrogram.Client | None = None,
+        reactions: list[types.Reaction],
+        are_tags: bool | None = None,
+        paid_reactors: list[types.PaidReactor] | None = None,
+        can_get_added_reactions: bool | None = None,
     ):
         super().__init__(client)
 
         self.reactions = reactions
+        self.are_tags = are_tags
+        self.paid_reactors = paid_reactors
+        self.can_get_added_reactions = can_get_added_reactions
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: pyrogram.Client,
-        message_reactions: raw.base.MessageReactions | None = None,
+        message_reactions: raw.base.MessageReactions | None,
+        users: dict[int, types.User],
+        chats: dict[int, types.Chat],
     ) -> MessageReactions | None:
         if not message_reactions:
             return None
 
         return MessageReactions(
             client=client,
-            reactions=[
+            reactions=types.List([
                 types.Reaction._parse_count(client, reaction)
                 for reaction in message_reactions.results
-            ],
+            ]),
+            are_tags=message_reactions.reactions_as_tags,
+            paid_reactors=types.List([
+                await types.PaidReactor._parse(client, paid_reactor, users, chats)
+                for paid_reactor in message_reactions.top_reactors
+            ])
+            if message_reactions.top_reactors
+            else None,
+            can_get_added_reactions=message_reactions.can_see_list,
         )

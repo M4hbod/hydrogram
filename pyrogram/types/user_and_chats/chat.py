@@ -246,14 +246,17 @@ class Chat(Object):
             is_support=getattr(user, "support", None),
             username=user.usernames[0].username if user.usernames else user.username,
             active_usernames=types.List([
-                username.username for username in user.usernames if username.active
+                username.username for username in (user.usernames or []) if username.active
             ])
             or None,
-            usernames=types.List([types.Username._parse(r) for r in user.usernames]) or None,
+            usernames=types.List([types.Username._parse(r) for r in (user.usernames or [])])
+            or None,
             first_name=user.first_name,
             last_name=user.last_name,
             photo=types.ChatPhoto._parse(client, user.photo, peer_id, user.access_hash),
-            restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason])
+            restrictions=types.List([
+                types.Restriction._parse(r) for r in (user.restriction_reason or [])
+            ])
             or None,
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
             client=client,
@@ -262,7 +265,7 @@ class Chat(Object):
     @staticmethod
     def _parse_chat_chat(client, chat: raw.types.Chat) -> Chat:
         peer_id = -chat.id
-        usernames = getattr(chat, "usernames", [])
+        usernames = getattr(chat, "usernames", None) or []
 
         if isinstance(chat, raw.types.ChatForbidden):
             return Chat(id=peer_id, type=enums.ChatType.GROUP, title=chat.title, client=client)
@@ -306,14 +309,15 @@ class Chat(Object):
             username=channel.username,
             photo=types.ChatPhoto._parse(client, channel.photo, peer_id, channel.access_hash),
             restrictions=types.List([
-                types.Restriction._parse(r) for r in channel.restriction_reason
+                types.Restriction._parse(r) for r in (channel.restriction_reason or [])
             ])
             or None,
             permissions=types.ChatPermissions._parse(channel.default_banned_rights),
             members_count=channel.participants_count,
             dc_id=getattr(channel.photo, "dc_id", None),
             has_protected_content=channel.noforwards,
-            usernames=types.List([types.Username._parse(r) for r in channel.usernames]) or None,
+            usernames=types.List([types.Username._parse(r) for r in (channel.usernames or [])])
+            or None,
             client=client,
         )
 
@@ -555,6 +559,7 @@ class Chat(Object):
             Union[:obj:`~pyrogram.types.Message`, :obj:`~pyrogram.types.CallbackQuery`]: The Message or CallbackQuery
         """
         return self._client.ask(
+            *args,
             chat_id=self.id,
             text=text,
             filters=filters,
@@ -564,7 +569,6 @@ class Chat(Object):
             user_id=user_id,
             message_id=message_id,
             inline_message_id=inline_message_id,
-            *args,
             **kwargs,
         )
 

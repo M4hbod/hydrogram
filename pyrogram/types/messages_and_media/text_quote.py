@@ -71,8 +71,8 @@ class TextQuote(Object):
                 filter(
                     lambda x: x is not None,
                     [
-                        await types.MessageEntity._parse(client, entity, users)
-                        for entity in getattr(reply_to, "quote_entities", [])
+                        types.MessageEntity._parse(client, entity, users)
+                        for entity in getattr(reply_to, "quote_entities", None) or []
                     ],
                 )
             )

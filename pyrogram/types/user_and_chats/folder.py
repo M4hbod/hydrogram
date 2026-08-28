@@ -156,10 +156,10 @@ class Folder(Object):
         for peer in folder.include_peers:
             included_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
 
-        for peer in getattr(folder, "exclude_peers", []):
+        for peer in getattr(folder, "exclude_peers", None) or []:
             excluded_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
 
-        name, entities = (await utils.parse_text_with_entities(client, folder.title, {})).values()
+        name, entities = (utils.parse_text_with_entities(client, folder.title, {})).values()
 
         return Folder(
             id=folder.id,

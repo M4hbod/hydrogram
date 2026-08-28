@@ -65,9 +65,13 @@ class UpgradedGiftPurchaseOffer(Object):
     async def _parse(
         client: pyrogram.Client,
         action: raw.types.MessageActionStarGiftPurchaseOffer,
-        users: dict[int, raw.base.User] = {},
-        chats: dict[int, raw.base.Chat] = {},
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
     ) -> UpgradedGiftPurchaseOffer:
+        # A mutable default argument is shared between calls; normalise here instead.
+        users = users or {}
+        chats = chats or {}
+
         price = None
 
         if isinstance(action.price, raw.types.StarsTonAmount):
@@ -124,9 +128,13 @@ class UpgradedGiftPurchaseOfferRejected(Object):
         client: pyrogram.Client,
         action: raw.types.MessageActionStarGiftPurchaseOfferDeclined,
         offer_message_id: int | None = None,
-        users: dict[int, raw.base.User] = {},
-        chats: dict[int, raw.base.Chat] = {},
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
     ) -> UpgradedGiftPurchaseOfferRejected:
+        # A mutable default argument is shared between calls; normalise here instead.
+        users = users or {}
+        chats = chats or {}
+
         price = None
 
         if isinstance(action.price, raw.types.StarsTonAmount):

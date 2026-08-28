@@ -1,4 +1,5 @@
 #  Pyrogram - Telegram MTProto API Client Library for Python
+#  Copyright (C) 2017-2023 Dan <https://github.com/delivrance>
 #  Copyright (C) 2023-present Pyrogram <https://pyrogram.org>
 #
 #  This file is part of Pyrogram.
@@ -18,105 +19,149 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pyrogram
-from pyrogram import raw, types, utils
-from pyrogram.file_id import (
-    FileId,
-    FileType,
-    FileUniqueId,
-    FileUniqueType,
-    ThumbnailSource,
-)
+from pyrogram import raw, types
 from pyrogram.types.object import Object
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 class ChatBackground(Object):
     """Describes a background set for a specific chat.
 
     Parameters:
-        file_id (``str``):
-            Identifier for this file, which can be used to download the file.
+        id (``int``):
+            Unique background identifier.
 
-        file_unique_id (``str``):
-            Unique identifier for this file, which is supposed to be the same over time and for different accounts.
-            Can't be used to download or reuse the file.
+        document (:obj:`~pyrogram.types.Document`, *optional*):
+            Document with the background.
 
-        file_size (``int``):
-            File size.
+        is_creator (``bool``, *optional*):
+            True, if the background was created by the current user.
 
-        date (:py:obj:`~datetime.datetime`):
-            Date the background was setted.
+        is_default (``bool``, *optional*):
+            True, if this is one of default backgrounds.
 
-        slug (``str``):
-            Identifier of the background code.
-            You can combine it with `https://t.me/bg/{slug}`
-            to get link for this background.
+        is_pattern (``bool``, *optional*):
+            True, if this is a pattern wallpaper.
 
-        thumbs (List of :obj:`~pyrogram.types.Thumbnail`, *optional*):
-            Available thumbnails of this background.
+        is_dark (``bool``, *optional*):
+            True, if the background is dark and is recommended to be used with dark theme.
 
-        link (``str``, *property*):
-            Generate a link to this background code.
+        is_blurred (``bool``, *optional*):
+            True, if the wallpaper must be downscaled to fit in 450x450 square and then box-blurred with radius 12.
+
+        is_moving (``bool``, *optional*):
+            True, if the background needs to be slightly moved when device is tilted.
+
+        is_same (``bool``, *optional*):
+            True, if the set background is the same as the background of the current user.
+
+        only_for_self (``bool``, *optional*):
+            True, if the background was set only for self.
+
+        background_color (``int``, *optional*):
+            Used for solid, gradient and freeform gradient fills.
+
+        second_background_color (``int``, *optional*):
+            Used for gradient and freeform gradient fills.
+
+        third_background_color (``int``, *optional*):
+            Used for freeform gradient fills.
+
+        fourth_background_color (``int``, *optional*):
+            Used for freeform gradient fills.
+
+        intensity (``int``, *optional*):
+            Intensity of the pattern when it is shown above the filled background; 0-100.
+
+        rotation_angle (``int``, *optional*):
+            Clockwise rotation angle of the gradient, in degrees; 0-359. Must always be divisible by 45.
+
+        emoji (``str``, *optional*):
+            If set, this wallpaper can be used as a channel wallpaper and is represented by the specified UTF-8 emoji.
+
+        raw (:obj:`~pyrogram.raw.base.WallPaper`, *optional*):
+            Raw object.
     """
 
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
-        file_id: str,
-        file_unique_id: str,
-        file_size: int,
-        date: datetime,
-        slug: str,
-        thumbs: list[types.Thumbnail] | None = None,
+        id: int,
+        document: types.Document | None = None,
+        is_creator: bool | None = None,
+        is_default: bool | None = None,
+        is_pattern: bool | None = None,
+        is_dark: bool | None = None,
+        is_blurred: bool | None = None,
+        is_moving: bool | None = None,
+        is_same: bool | None = None,
+        only_for_self: bool | None = None,
+        background_color: int | None = None,
+        second_background_color: int | None = None,
+        third_background_color: int | None = None,
+        fourth_background_color: int | None = None,
+        intensity: int | None = None,
+        rotation_angle: int | None = None,
+        emoji: str | None = None,
+        raw: raw.base.WallPaper | None = None,
     ):
-        super().__init__(client)
+        super().__init__()
 
-        self.file_id = file_id
-        self.file_unique_id = file_unique_id
-        self.file_size = file_size
-        self.date = date
-        self.slug = slug
-        self.thumbs = thumbs
-
-    @property
-    def link(self) -> str:
-        return f"https://t.me/bg/{self.slug}"
+        self.id = id
+        self.document = document
+        self.is_creator = is_creator
+        self.is_default = is_default
+        self.is_pattern = is_pattern
+        self.is_dark = is_dark
+        self.is_blurred = is_blurred
+        self.is_moving = is_moving
+        self.is_same = is_same
+        self.only_for_self = only_for_self
+        self.background_color = background_color
+        self.second_background_color = second_background_color
+        self.third_background_color = third_background_color
+        self.fourth_background_color = fourth_background_color
+        self.intensity = intensity
+        self.rotation_angle = rotation_angle
+        self.emoji = emoji
+        self.raw = raw
 
     @staticmethod
     def _parse(
-        client,
-        wallpaper: raw.types.WallPaper,
+        client: pyrogram.Client,
+        background: raw.base.WallPaper,
+        is_same: bool | None = None,
+        only_for_self: bool | None = None,
     ) -> ChatBackground | None:
-        # A chat can set a document-less background (WallPaperNoFile: a solid
-        # colour / gradient with only settings, no file). There's nothing to build
-        # a downloadable ChatBackground from, so skip it instead of crashing on the
-        # missing `.document`.
-        if getattr(wallpaper, "document", None) is None:
+        if not background:
             return None
+
+        settings = getattr(background, "settings", None)
+        document = None
+
+        if getattr(background, "document", None):
+            document = types.Document._parse(client, background.document, "wallpaper.jpg")
+
+        if only_for_self is not None:
+            only_for_self = not only_for_self
+
         return ChatBackground(
-            file_id=FileId(
-                dc_id=wallpaper.document.dc_id,
-                file_reference=wallpaper.document.file_reference,
-                access_hash=wallpaper.document.access_hash,
-                file_type=FileType.BACKGROUND,
-                media_id=wallpaper.document.id,
-                volume_id=0,
-                local_id=0,
-                thumbnail_source=ThumbnailSource.THUMBNAIL,
-                thumbnail_file_type=FileType.BACKGROUND,
-            ).encode(),
-            file_unique_id=FileUniqueId(
-                file_unique_type=FileUniqueType.DOCUMENT, media_id=wallpaper.document.id
-            ).encode(),
-            file_size=wallpaper.document.size,
-            slug=wallpaper.slug,
-            date=utils.timestamp_to_datetime(wallpaper.document.date),
-            thumbs=types.Thumbnail._parse(client, wallpaper.document),
-            client=client,
+            id=background.id,
+            document=document,
+            is_creator=getattr(background, "creator", None),
+            is_default=getattr(background, "default", None),
+            is_pattern=getattr(background, "pattern", None),
+            is_dark=getattr(background, "dark", None),
+            is_blurred=getattr(settings, "blur", None),
+            is_moving=getattr(settings, "motion", None),
+            is_same=is_same,
+            only_for_self=only_for_self,
+            background_color=getattr(settings, "background_color", None),
+            second_background_color=getattr(settings, "second_background_color", None),
+            third_background_color=getattr(settings, "third_background_color", None),
+            fourth_background_color=getattr(settings, "fourth_background_color", None),
+            intensity=getattr(settings, "intensity", None),
+            rotation_angle=getattr(settings, "rotation", None),
+            emoji=getattr(settings, "emoticon", None),
+            raw=background,
         )

@@ -20,6 +20,7 @@ select = [
     "TC",   # flake8-type-checking
     "FA",   # flake8-future-annotations
     "PL",   # pylint
+    "B",    # flake8-bugbear: mutable default arguments, and the rest of that family
 ]
 ignore = [
     "RUF001",
@@ -35,6 +36,12 @@ ignore = [
     "PLW2901",
     "PLW0603",
     "FURB189", # This rule is unsafe and not relevant for us.
+    # `zero_datetime()` and `BotCommandScopeDefault()` are constants dressed as calls; the
+    # "evaluated once at import" hazard B008 warns about does not apply to them.
+    "B008",
+    # B903 fires on any plain data-holding class. This library is full of them by design, and a
+    # test stub does not become clearer as a namedtuple.
+    "B903",
 ]
 preview = true
 

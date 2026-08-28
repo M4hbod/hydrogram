@@ -74,7 +74,7 @@ class Markdown:
         delims = set()
         is_fixed_width = False
 
-        for i, match in enumerate(re.finditer(MARKDOWN_RE, text)):
+        for _i, match in enumerate(re.finditer(MARKDOWN_RE, text)):
             start, _ = match.span()
             delim, text_url, url = match.groups()
             full = match.group(0)

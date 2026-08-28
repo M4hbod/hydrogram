@@ -35,13 +35,38 @@ class WebPage(Object):
         url (``str``):
             Full URL for this webpage.
 
-        display_url (``str``):
+        display_url (``str``, *optional*):
             Display URL for this webpage.
 
         type (``str``, *optional*):
-            Type of webpage preview, known types (at the time of writing) are:
-            *"article"*, *"photo"*, *"gif"*, *"video"* and *"document"*,
-            *"telegram_user"*, *"telegram_bot"*, *"telegram_channel"*, *"telegram_megagroup"*.
+            Type of webpage preview.
+            One of the following:
+
+            - video
+            - gif
+            - photo
+            - document
+            - profile
+            - telegram_background
+            - telegram_theme
+            - telegram_story
+            - telegram_channel
+            - telegram_channel_request
+            - telegram_megagroup
+            - telegram_chat
+            - telegram_megagroup_request
+            - telegram_chat_request
+            - telegram_album
+            - telegram_message
+            - telegram_bot
+            - telegram_voicechat
+            - telegram_livestream
+            - telegram_user
+            - telegram_botapp
+            - telegram_channel_boost
+            - telegram_group_boost
+            - telegram_giftcode
+            - telegram_stickerset
 
         site_name (``str``, *optional*):
             Webpage site name.
@@ -79,35 +104,59 @@ class WebPage(Object):
         embed_height (``int``, *optional*):
             Embedded content height.
 
+        has_large_media (``bool``, *optional*):
+            Whether the webpage preview is large.
+
+        prefer_large_media (``bool``, *optional*):
+            Whether the webpage preview is large.
+
+        prefer_small_media (``bool``, *optional*):
+            Whether the webpage preview is small.
+
+        manual (``bool``, *optional*):
+            Whether the webpage preview was changed by the user.
+
+        safe (``bool``, *optional*):
+            Whether the webpage preview is safe.
+
         duration (``int``, *optional*):
             Unknown at the time of writing.
 
         author (``str``, *optional*):
             Author of the webpage, eg the Twitter user for a tweet, or the author in an article.
+
+        raw (:obj:`~pyrogram.raw.types.MessageMediaWebPage`):
+            The raw version of this object.
     """
 
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         id: str,
         url: str,
-        display_url: str,
+        display_url: str | None = None,
         type: str | None = None,
         site_name: str | None = None,
         title: str | None = None,
         description: str | None = None,
-        audio: types.Audio = None,
-        document: types.Document = None,
-        photo: types.Photo = None,
-        animation: types.Animation = None,
-        video: types.Video = None,
+        audio: types.Audio | None = None,
+        document: types.Document | None = None,
+        photo: types.Photo | None = None,
+        animation: types.Animation | None = None,
+        video: types.Video | None = None,
         embed_url: str | None = None,
         embed_type: str | None = None,
         embed_width: int | None = None,
         embed_height: int | None = None,
+        has_large_media: bool | None = None,
+        prefer_large_media: bool | None = None,
+        prefer_small_media: bool | None = None,
+        manual: bool | None = None,
+        safe: bool | None = None,
         duration: int | None = None,
         author: str | None = None,
+        raw: raw.types.MessageMediaWebPage | None = None,
     ):
         super().__init__(client)
 
@@ -127,63 +176,82 @@ class WebPage(Object):
         self.embed_type = embed_type
         self.embed_width = embed_width
         self.embed_height = embed_height
+        self.has_large_media = has_large_media
+        self.prefer_large_media = prefer_large_media
+        self.prefer_small_media = prefer_small_media
+        self.manual = manual
+        self.safe = safe
         self.duration = duration
         self.author = author
+        self.raw = raw
 
     @staticmethod
-    def _parse(client, webpage: raw.types.WebPage) -> WebPage:
+    def _parse(client, media: raw.types.MessageMediaWebPage) -> WebPage | None:
+        if not media:
+            return None
+
+        if isinstance(media.webpage, raw.types.WebPageNotModified):
+            return None
+
         audio = None
         document = None
         photo = None
         animation = None
         video = None
 
-        if isinstance(webpage.photo, raw.types.Photo):
-            photo = types.Photo._parse(client, webpage.photo)
+        webpage = media.webpage
 
-        doc = webpage.document
+        if isinstance(webpage, raw.types.WebPage):
+            if isinstance(webpage.photo, raw.types.Photo):
+                photo = types.Photo._parse(client, webpage.photo)
 
-        if isinstance(doc, raw.types.Document):
-            attributes = {type(i): i for i in doc.attributes}
+            doc = webpage.document
 
-            file_name = getattr(
-                attributes.get(raw.types.DocumentAttributeFilename),
-                "file_name",
-                None,
-            )
+            if isinstance(doc, raw.types.Document):
+                attributes = {type(i): i for i in doc.attributes}
 
-            if raw.types.DocumentAttributeAudio in attributes:
-                audio_attributes = attributes[raw.types.DocumentAttributeAudio]
-                audio = types.Audio._parse(client, doc, audio_attributes, file_name)
+                file_name = getattr(
+                    attributes.get(raw.types.DocumentAttributeFilename), "file_name", None
+                )
 
-            elif raw.types.DocumentAttributeAnimated in attributes:
-                video_attributes = attributes.get(raw.types.DocumentAttributeVideo)
-                animation = types.Animation._parse(client, doc, video_attributes, file_name)
+                if raw.types.DocumentAttributeAudio in attributes:
+                    audio_attributes = attributes[raw.types.DocumentAttributeAudio]
+                    audio = types.Audio._parse(client, doc, audio_attributes, file_name)
 
-            elif raw.types.DocumentAttributeVideo in attributes:
-                video_attributes = attributes[raw.types.DocumentAttributeVideo]
-                video = types.Video._parse(client, doc, video_attributes, file_name)
+                elif raw.types.DocumentAttributeAnimated in attributes:
+                    video_attributes = attributes.get(raw.types.DocumentAttributeVideo)
+                    animation = types.Animation._parse(client, doc, video_attributes, file_name)
 
-            else:
-                document = types.Document._parse(client, doc, file_name)
+                elif raw.types.DocumentAttributeVideo in attributes:
+                    video_attributes = attributes[raw.types.DocumentAttributeVideo]
+                    video = types.Video._parse(client, doc, video_attributes, file_name)
+
+                else:
+                    document = types.Document._parse(client, doc, file_name)
 
         return WebPage(
             id=str(webpage.id),
             url=webpage.url,
-            display_url=webpage.display_url,
-            type=webpage.type,
-            site_name=webpage.site_name,
-            title=webpage.title,
-            description=webpage.description,
+            display_url=getattr(webpage, "display_url", None),
+            type=getattr(webpage, "type", None),
+            site_name=getattr(webpage, "site_name", None),
+            title=getattr(webpage, "title", None),
+            description=getattr(webpage, "description", None),
             audio=audio,
             document=document,
             photo=photo,
             animation=animation,
             video=video,
-            embed_url=webpage.embed_url,
-            embed_type=webpage.embed_type,
-            embed_width=webpage.embed_width,
-            embed_height=webpage.embed_height,
-            duration=webpage.duration,
-            author=webpage.author,
+            embed_url=getattr(webpage, "embed_url", None),
+            embed_type=getattr(webpage, "embed_type", None),
+            embed_width=getattr(webpage, "embed_width", None),
+            embed_height=getattr(webpage, "embed_height", None),
+            has_large_media=getattr(webpage, "has_large_media", None),
+            prefer_large_media=media.force_large_media,
+            prefer_small_media=media.force_small_media,
+            manual=media.manual,
+            safe=media.safe,
+            duration=getattr(webpage, "duration", None),
+            author=getattr(webpage, "author", None),
+            raw=media,
         )

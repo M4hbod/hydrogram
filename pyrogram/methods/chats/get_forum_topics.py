@@ -68,4 +68,4 @@ class GetForumTopics:
         r = await self.invoke(rpc, sleep_threshold=-1)
 
         for topic in r.topics:
-            yield types.ForumTopic._parse(topic)
+            yield await types.ForumTopic._parse(topic)

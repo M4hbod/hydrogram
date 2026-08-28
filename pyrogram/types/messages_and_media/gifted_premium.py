@@ -108,12 +108,12 @@ class GiftedPremium(Object):
         )
 
         caption, caption_entities = (
-            await utils.parse_text_with_entities(client, getattr(action, "message", None), users)
+            utils.parse_text_with_entities(client, getattr(action, "message", None), users)
         ).values()
 
         return GiftedPremium(
-            gifter=await types.User._parse(client, gifter),
-            receiver=await types.User._parse(client, receiver),
+            gifter=types.User._parse(client, gifter),
+            receiver=types.User._parse(client, receiver),
             currency=action.currency,
             amount=action.amount,
             cryptocurrency=getattr(action, "crypto_currency", None),

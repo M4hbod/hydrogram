@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 import pyrogram
 from pyrogram import raw, types
 from pyrogram.types.object import Object
@@ -50,13 +52,13 @@ class Game(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: pyrogram.Client | None = None,
         id: int,
         title: str,
         short_name: str,
         description: str,
-        photo: "types.Photo",
-        animation: "types.Animation" = None,
+        photo: types.Photo,
+        animation: types.Animation | None = None,
     ):
         super().__init__(client)
 
@@ -68,32 +70,29 @@ class Game(Object):
         self.animation = animation
 
     @staticmethod
-    def _parse(client, message: "raw.types.Message") -> "Game":
-        game: raw.types.Game = message.media.game
+    def _parse(client, media: raw.types.MessageMediaGame) -> Game:
         animation = None
 
-        if game.document:
-            attributes = {type(i): i for i in game.document.attributes}
+        if media.game.document:
+            attributes = {type(i): i for i in media.game.document.attributes}
 
             file_name = getattr(
-                attributes.get(raw.types.DocumentAttributeFilename),
-                "file_name",
-                None,
+                attributes.get(raw.types.DocumentAttributeFilename), "file_name", None
             )
 
             animation = types.Animation._parse(
                 client,
-                game.document,
+                media.game.document,
                 attributes.get(raw.types.DocumentAttributeVideo),
                 file_name,
             )
 
         return Game(
-            id=game.id,
-            title=game.title,
-            short_name=game.short_name,
-            description=game.description,
-            photo=types.Photo._parse(client, game.photo),
+            id=media.game.id,
+            title=media.game.title,
+            short_name=media.game.short_name,
+            description=media.game.description,
+            photo=types.Photo._parse(client, media.game.photo),
             animation=animation,
             client=client,
         )

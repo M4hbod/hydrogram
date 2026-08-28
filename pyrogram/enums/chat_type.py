@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from enum import auto
 
 from .auto_name import AutoName
@@ -39,3 +41,9 @@ class ChatType(AutoName):
 
     CHANNEL = auto()
     "Chat is a channel"
+
+    FORUM = auto()
+    "Chat is a forum"
+
+    DIRECT = auto()
+    "Chat is a direct with a channel"

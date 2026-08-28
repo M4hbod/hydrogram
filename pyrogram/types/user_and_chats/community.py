@@ -102,7 +102,7 @@ class Community(Object):
                 id=utils.get_channel_id(community.id),
                 have_access=bool(community.access_hash),
                 name=community.title,
-                photo=await types.ChatPhoto._parse(
+                photo=types.ChatPhoto._parse(
                     client,
                     community.photo,
                     utils.get_channel_id(community.id),

@@ -111,7 +111,7 @@ class PremiumGiftCode(Object):
         )
 
         return PremiumGiftCode(
-            creator=await types.Chat._parse_chat(
+            creator=types.Chat._parse_chat(
                 client, users.get(raw_peer_id) or chats.get(raw_peer_id)
             ),
             text=await types.FormattedText._parse(client, giftcode.message),

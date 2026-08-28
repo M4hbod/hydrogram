@@ -316,7 +316,7 @@ class ExternalReplyInfo(Object):
                 users,
                 chats,
             ),
-            chat=await types.Chat._parse_chat(
+            chat=types.Chat._parse_chat(
                 client,
                 chats.get(utils.get_raw_peer_id(reply.reply_to_peer_id)),
             ),

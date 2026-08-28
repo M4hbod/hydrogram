@@ -24,6 +24,7 @@ import base64
 import functools
 import hashlib
 import os
+import re
 import struct
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -347,7 +348,7 @@ async def parse_text_entities(
     return {"message": text, "entities": entities}
 
 
-async def parse_text_with_entities(
+def parse_text_with_entities(
     client: pyrogram.Client,
     message: raw.types.TextWithEntities | None,
     users: dict[int, raw.base.User],
@@ -365,7 +366,7 @@ async def parse_text_with_entities(
         filter(
             None,
             [
-                await types.MessageEntity._parse(client, entity, users)
+                types.MessageEntity._parse(client, entity, users)
                 for entity in getattr(message, "entities", [])
             ],
         )
@@ -379,6 +380,27 @@ async def parse_text_with_entities(
         "text": Str(getattr(message, "text", "")).init(entities) or None,
         "entities": entities or None,
     }
+
+
+URL_RE = re.compile(
+    r"(https?):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])"
+)
+_LEADING_TAG_RE = re.compile(r"^\s*(<[\w<>=\s\"]*>)\s*")
+_TRAILING_TAG_RE = re.compile(r"\s*(</[\w</>]*>)\s*$")
+
+
+def get_first_url(text: str) -> str | None:
+    """First http(s) URL in ``text``, or None.
+
+    Used to name the previewed link when Telegram sends a web page without echoing back which URL
+    it came from. Surrounding HTML tags are trimmed first so a link wrapped in markup still
+    matches.
+    """
+    text = _LEADING_TAG_RE.sub(r"\1", text)
+    text = _TRAILING_TAG_RE.sub(r"\1", text)
+
+    match = URL_RE.search(text)
+    return f"{match.group(1)}://{match.group(2)}{match.group(3)}" if match else None
 
 
 def zero_datetime() -> datetime:

@@ -66,7 +66,7 @@ class FactCheck(Object):
             return None
 
         message, entities = (
-            await utils.parse_text_with_entities(client, getattr(fact_check, "text", None), users)
+            utils.parse_text_with_entities(client, getattr(fact_check, "text", None), users)
         ).values()
 
         return FactCheck(
