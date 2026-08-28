@@ -44,7 +44,7 @@ class CopyMessage:
         caption_entities: list[types.MessageEntity] | None = None,
         show_caption_above_media: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
         reply_markup: types.InlineKeyboardMarkup
@@ -96,8 +96,8 @@ class CopyMessage:
                 Unique identifier for the target message thread (topic) of the forum.
                 for forum supergroups only.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -129,7 +129,7 @@ class CopyMessage:
             show_caption_above_media=show_caption_above_media,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             schedule_date=schedule_date,
             protect_content=protect_content,
             reply_markup=reply_markup,

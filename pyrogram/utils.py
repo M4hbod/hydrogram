@@ -417,17 +417,69 @@ def datetime_to_timestamp(dt: datetime | None) -> int | None:
     return int(dt.timestamp()) if dt else None
 
 
-def get_reply_head_fm(
-    message_thread_id: int, reply_to_message_id: int
-) -> raw.types.InputReplyToMessage:
-    reply_to = None
-    if reply_to_message_id or message_thread_id:
-        if not reply_to_message_id:
-            reply_to = raw.types.InputReplyToMessage(
-                reply_to_msg_id=message_thread_id, top_msg_id=message_thread_id
+async def get_reply_to(
+    client: pyrogram.Client,
+    reply_parameters: types.ReplyParameters | None = None,
+    message_thread_id: int | None = None,
+) -> raw.base.InputReplyTo | None:
+    """Build the ``InputReplyTo`` for a send call.
+
+    Layer 229 has four reply targets and :obj:`~pyrogram.types.ReplyParameters` maps onto them
+    field for field, so this is a dispatcher rather than a translation. ``None`` means "not a
+    reply", which is what every send method passes when the user did not ask for one.
+
+    ``message_thread_id`` alone still produces a reply header: replying to the topic's root
+    message is how Telegram scopes a message to a forum topic.
+    """
+    if reply_parameters is not None:
+        if reply_parameters.story_id is not None:
+            if reply_parameters.chat_id is None:
+                raise ValueError("ReplyParameters.chat_id is required when replying to a story")
+            return raw.types.InputReplyToStory(
+                peer=await client.resolve_peer(reply_parameters.chat_id),
+                story_id=reply_parameters.story_id,
             )
-        else:
-            reply_to = raw.types.InputReplyToMessage(
-                reply_to_msg_id=reply_to_message_id, top_msg_id=message_thread_id
+
+        if reply_parameters.message_id is not None:
+            quote_text = None
+            quote_entities = None
+            if reply_parameters.quote is not None:
+                quote_text, quote_entities = (
+                    await parse_text_entities(
+                        client,
+                        reply_parameters.quote,
+                        reply_parameters.quote_parse_mode,
+                        reply_parameters.quote_entities,
+                    )
+                ).values()
+
+            return raw.types.InputReplyToMessage(
+                reply_to_msg_id=reply_parameters.message_id,
+                top_msg_id=message_thread_id,
+                # Resolved only when set: resolve_peer(None) goes straight to
+                # storage.get_peer_by_id(None) and raises.
+                reply_to_peer_id=(
+                    await client.resolve_peer(reply_parameters.chat_id)
+                    if reply_parameters.chat_id is not None
+                    else None
+                ),
+                quote_text=quote_text,
+                quote_entities=quote_entities,
+                quote_offset=reply_parameters.quote_position,
+                todo_item_id=reply_parameters.checklist_task_id,
+                poll_option=(
+                    reply_parameters.poll_option_id.encode()
+                    if reply_parameters.poll_option_id is not None
+                    else None
+                ),
             )
-    return reply_to
+
+        if reply_parameters.ephemeral_message_id is not None:
+            return raw.types.InputReplyToEphemeralMessage(id=reply_parameters.ephemeral_message_id)
+
+    if message_thread_id:
+        return raw.types.InputReplyToMessage(
+            reply_to_msg_id=message_thread_id, top_msg_id=message_thread_id
+        )
+
+    return None

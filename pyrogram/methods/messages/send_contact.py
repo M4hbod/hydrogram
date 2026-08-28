@@ -39,7 +39,7 @@ class SendContact:
         message_thread_id: int | None = None,
         vcard: str | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
         reply_markup: types.InlineKeyboardMarkup
@@ -77,8 +77,8 @@ class SendContact:
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -99,7 +99,7 @@ class SendContact:
                 await app.send_contact("me", "+1-123-456-7890", "Name")
         """
 
-        reply_to = utils.get_reply_head_fm(message_thread_id, reply_to_message_id)
+        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
 
         r = await self.invoke(
             raw.functions.messages.SendMedia(

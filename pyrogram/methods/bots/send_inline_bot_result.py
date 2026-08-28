@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 import pyrogram
-from pyrogram import raw, utils
+from pyrogram import raw, types, utils
 
 
 class SendInlineBotResult:
@@ -32,7 +32,7 @@ class SendInlineBotResult:
         *,
         message_thread_id: int | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
     ) -> raw.base.Updates:
         """Send an inline bot result.
         Bot results can be retrieved using :meth:`~pyrogram.Client.get_inline_bot_results`
@@ -59,8 +59,8 @@ class SendInlineBotResult:
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
         Returns:
             :obj:`~pyrogram.raw.base.Updates`: Currently, on success, a raw result is returned.
@@ -71,7 +71,7 @@ class SendInlineBotResult:
                 await app.send_inline_bot_result(chat_id, query_id, result_id)
         """
 
-        reply_to = utils.get_reply_head_fm(message_thread_id, reply_to_message_id)
+        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
 
         return await self.invoke(
             raw.functions.messages.SendInlineBotResult(

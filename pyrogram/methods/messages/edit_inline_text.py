@@ -31,7 +31,7 @@ class EditInlineText:
         inline_message_id: str,
         text: str,
         parse_mode: enums.ParseMode | None = None,
-        disable_web_page_preview: bool | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
         reply_markup: types.InlineKeyboardMarkup = None,
     ) -> bool:
         """Edit the text of inline messages.
@@ -49,8 +49,9 @@ class EditInlineText:
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            disable_web_page_preview (``bool``, *optional*):
-                Disables link previews for links in this message.
+            link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+                Options for how the link preview is generated. Only ``is_disabled`` and
+                ``show_above_text`` apply when editing; the previewed URL cannot be changed.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
@@ -68,7 +69,9 @@ class EditInlineText:
 
                 # Take the same text message, remove the web page preview only
                 await app.edit_inline_text(
-                    inline_message_id, message.text, disable_web_page_preview=True
+                    inline_message_id,
+                    message.text,
+                    link_preview_options=LinkPreviewOptions(is_disabled=True),
                 )
         """
 
@@ -80,7 +83,11 @@ class EditInlineText:
         return await session.invoke(
             raw.functions.messages.EditInlineBotMessage(
                 id=unpacked,
-                no_webpage=disable_web_page_preview or None,
+                no_webpage=(link_preview_options.is_disabled if link_preview_options else None)
+                or None,
+                invert_media=(
+                    link_preview_options.show_above_text if link_preview_options else None
+                ),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 **await self.parser.parse(text, parse_mode),
             ),

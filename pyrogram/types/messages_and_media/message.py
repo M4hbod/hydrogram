@@ -1261,9 +1261,9 @@ class Message(Object, Update):
         quote: bool | None = None,
         parse_mode: enums.ParseMode | None = None,
         entities: list[types.MessageEntity] | None = None,
-        disable_web_page_preview: bool | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
         reply_markup=None,
@@ -1280,7 +1280,7 @@ class Message(Object, Update):
                 chat_id=message.chat.id,
                 message_thread_id=message.message_thread_id,
                 text="hello",
-                reply_to_message_id=message.id,
+                reply_parameters=ReplyParameters(message_id=message.id),
             )
 
         Example:
@@ -1294,7 +1294,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
@@ -1304,15 +1304,15 @@ class Message(Object, Update):
             entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
-            disable_web_page_preview (``bool``, *optional*):
-                Disables link previews for links in this message.
+            link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+                Options for how the link preview is generated.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -1333,8 +1333,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_message(
             chat_id=self.chat.id,
@@ -1342,9 +1342,9 @@ class Message(Object, Update):
             text=text,
             parse_mode=parse_mode,
             entities=entities,
-            disable_web_page_preview=disable_web_page_preview,
+            link_preview_options=link_preview_options,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             schedule_date=schedule_date,
             protect_content=protect_content,
             reply_markup=reply_markup,
@@ -1369,7 +1369,7 @@ class Message(Object, Update):
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
         | types.ForceReply = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
     ) -> Message:
@@ -1399,7 +1399,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             caption (``str``, *optional*):
@@ -1434,8 +1434,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1474,8 +1474,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_animation(
             chat_id=self.chat.id,
@@ -1490,7 +1490,7 @@ class Message(Object, Update):
             height=height,
             thumb=thumb,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -1508,7 +1508,7 @@ class Message(Object, Update):
         title: str | None = None,
         thumb: str | BinaryIO | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1540,7 +1540,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             caption (``str``, *optional*):
@@ -1572,8 +1572,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1612,8 +1612,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_audio(
             chat_id=self.chat.id,
@@ -1627,7 +1627,7 @@ class Message(Object, Update):
             title=title,
             thumb=thumb,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -1641,7 +1641,7 @@ class Message(Object, Update):
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[types.MessageEntity] | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1671,7 +1671,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             caption (``bool``, *optional*):
@@ -1688,8 +1688,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1704,8 +1704,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_cached_media(
             chat_id=self.chat.id,
@@ -1715,7 +1715,7 @@ class Message(Object, Update):
             parse_mode=parse_mode,
             caption_entities=caption_entities,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
         )
 
@@ -1764,7 +1764,7 @@ class Message(Object, Update):
         last_name: str = "",
         vcard: str = "",
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1797,7 +1797,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             last_name (``str``, *optional*):
@@ -1810,8 +1810,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1826,8 +1826,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_contact(
             chat_id=self.chat.id,
@@ -1837,7 +1837,7 @@ class Message(Object, Update):
             last_name=last_name,
             vcard=vcard,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
         )
 
@@ -1852,7 +1852,7 @@ class Message(Object, Update):
         file_name: str | None = None,
         force_document: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
@@ -1887,7 +1887,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             thumb (``str | BinaryIO``, *optional*):
@@ -1919,8 +1919,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -1962,8 +1962,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_document(
             chat_id=self.chat.id,
@@ -1976,7 +1976,7 @@ class Message(Object, Update):
             file_name=file_name,
             force_document=force_document,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             schedule_date=schedule_date,
             reply_markup=reply_markup,
             progress=progress,
@@ -1988,7 +1988,7 @@ class Message(Object, Update):
         game_short_name: str,
         quote: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -2017,15 +2017,15 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An object for an inline keyboard. If empty, one ‘Play game_title’ button will be shown automatically.
@@ -2040,15 +2040,15 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_game(
             chat_id=self.chat.id,
             message_thread_id=self.message_thread_id,
             game_short_name=game_short_name,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
         )
 
@@ -2058,7 +2058,7 @@ class Message(Object, Update):
         result_id: str,
         quote: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
     ) -> Message:
         """Bound method *reply_inline_bot_result* of :obj:`~pyrogram.types.Message`.
 
@@ -2087,15 +2087,15 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
         Returns:
             On success, the sent Message is returned.
@@ -2106,8 +2106,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_inline_bot_result(
             chat_id=self.chat.id,
@@ -2115,7 +2115,7 @@ class Message(Object, Update):
             query_id=query_id,
             result_id=result_id,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
         )
 
     async def reply_location(
@@ -2124,7 +2124,7 @@ class Message(Object, Update):
         longitude: float,
         quote: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -2157,15 +2157,15 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2180,8 +2180,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_location(
             chat_id=self.chat.id,
@@ -2189,7 +2189,7 @@ class Message(Object, Update):
             latitude=latitude,
             longitude=longitude,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
         )
 
@@ -2198,7 +2198,7 @@ class Message(Object, Update):
         media: list[types.InputMediaPhoto | types.InputMediaVideo],
         quote: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
     ) -> list[types.Message]:
         """Bound method *reply_media_group* of :obj:`~pyrogram.types.Message`.
 
@@ -2225,15 +2225,15 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
         Returns:
             On success, a :obj:`~pyrogram.types.Messages` object is returned containing all the
@@ -2245,15 +2245,15 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_media_group(
             chat_id=self.chat.id,
             message_thread_id=self.message_thread_id,
             media=media,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
         )
 
     async def reply_photo(
@@ -2266,7 +2266,7 @@ class Message(Object, Update):
         has_spoiler: bool | None = None,
         ttl_seconds: int | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -2298,7 +2298,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             caption (``str``, *optional*):
@@ -2323,8 +2323,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2363,8 +2363,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_photo(
             chat_id=self.chat.id,
@@ -2376,7 +2376,7 @@ class Message(Object, Update):
             has_spoiler=has_spoiler,
             ttl_seconds=ttl_seconds,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -2401,7 +2401,7 @@ class Message(Object, Update):
         quote: bool | None = None,
         disable_notification: bool | None = None,
         protect_content: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
@@ -2492,7 +2492,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             disable_notification (``bool``, *optional*):
@@ -2502,8 +2502,8 @@ class Message(Object, Update):
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -2521,8 +2521,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_poll(
             chat_id=self.chat.id,
@@ -2543,7 +2543,7 @@ class Message(Object, Update):
             is_closed=is_closed,
             disable_notification=disable_notification,
             protect_content=protect_content,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             schedule_date=schedule_date,
             reply_markup=reply_markup,
         )
@@ -2553,7 +2553,7 @@ class Message(Object, Update):
         sticker: str | BinaryIO,
         quote: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -2587,15 +2587,15 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2634,15 +2634,15 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_sticker(
             chat_id=self.chat.id,
             message_thread_id=self.message_thread_id,
             sticker=sticker,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -2658,7 +2658,7 @@ class Message(Object, Update):
         foursquare_id: str = "",
         foursquare_type: str = "",
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -2699,7 +2699,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             foursquare_id (``str``, *optional*):
@@ -2713,8 +2713,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -2729,8 +2729,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_venue(
             chat_id=self.chat.id,
@@ -2742,7 +2742,7 @@ class Message(Object, Update):
             foursquare_id=foursquare_id,
             foursquare_type=foursquare_type,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
         )
 
@@ -2761,7 +2761,7 @@ class Message(Object, Update):
         thumb: str | BinaryIO | None = None,
         supports_streaming: bool = True,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         no_sound: bool | None = False,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
@@ -2794,7 +2794,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             caption (``str``, *optional*):
@@ -2837,8 +2837,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             no_sound (``bool``, *optional*):
                 Pass True if the video you are uploading is a video message with no sound.
@@ -2881,8 +2881,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_video(
             chat_id=self.chat.id,
@@ -2899,7 +2899,7 @@ class Message(Object, Update):
             thumb=thumb,
             supports_streaming=supports_streaming,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             no_sound=no_sound,
             reply_markup=reply_markup,
             progress=progress,
@@ -2914,7 +2914,7 @@ class Message(Object, Update):
         length: int = 1,
         thumb: str | BinaryIO | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -2948,7 +2948,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             duration (``int``, *optional*):
@@ -2967,8 +2967,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3007,8 +3007,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_video_note(
             chat_id=self.chat.id,
@@ -3018,7 +3018,7 @@ class Message(Object, Update):
             length=length,
             thumb=thumb,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -3033,7 +3033,7 @@ class Message(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         duration: int = 0,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -3065,7 +3065,7 @@ class Message(Object, Update):
 
             quote (``bool``, *optional*):
                 If ``True``, the message will be sent as a reply to this message.
-                If *reply_to_message_id* is passed, this parameter will be ignored.
+                If *reply_parameters* is passed, this parameter will be ignored.
                 Defaults to ``True`` in group chats and ``False`` in private chats.
 
             caption (``str``, *optional*):
@@ -3085,8 +3085,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3125,8 +3125,8 @@ class Message(Object, Update):
         if quote is None:
             quote = self.chat.type != enums.ChatType.PRIVATE
 
-        if reply_to_message_id is None and quote:
-            reply_to_message_id = self.id
+        if reply_parameters is None and quote:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
 
         return await self._client.send_voice(
             chat_id=self.chat.id,
@@ -3137,7 +3137,7 @@ class Message(Object, Update):
             caption_entities=caption_entities,
             duration=duration,
             disable_notification=disable_notification,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -3148,7 +3148,7 @@ class Message(Object, Update):
         text: str,
         parse_mode: enums.ParseMode | None = None,
         entities: list[types.MessageEntity] | None = None,
-        disable_web_page_preview: bool | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
         reply_markup: types.InlineKeyboardMarkup = None,
     ) -> Message:
         """Bound method *edit_text* of :obj:`~pyrogram.types.Message`.
@@ -3179,8 +3179,8 @@ class Message(Object, Update):
             entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
-            disable_web_page_preview (``bool``, *optional*):
-                Disables link previews for links in this message.
+            link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+                Options for how the link preview is generated.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
@@ -3197,7 +3197,7 @@ class Message(Object, Update):
             text=text,
             parse_mode=parse_mode,
             entities=entities,
-            disable_web_page_preview=disable_web_page_preview,
+            link_preview_options=link_preview_options,
             reply_markup=reply_markup,
         )
 
@@ -3387,7 +3387,7 @@ class Message(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         show_caption_above_media: bool | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
         reply_markup: types.InlineKeyboardMarkup
@@ -3439,8 +3439,8 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -3483,10 +3483,10 @@ class Message(Object, Update):
                 text=self.text,
                 entities=self.entities,
                 parse_mode=enums.ParseMode.DISABLED,
-                disable_web_page_preview=not self.web_page,
+                link_preview_options=types.LinkPreviewOptions(is_disabled=not self.web_page),
                 disable_notification=disable_notification,
                 message_thread_id=message_thread_id,
-                reply_to_message_id=reply_to_message_id,
+                reply_parameters=reply_parameters,
                 schedule_date=schedule_date,
                 protect_content=protect_content,
                 reply_markup=self.reply_markup if reply_markup is object else reply_markup,
@@ -3497,7 +3497,7 @@ class Message(Object, Update):
                 chat_id=chat_id,
                 disable_notification=disable_notification,
                 message_thread_id=message_thread_id,
-                reply_to_message_id=reply_to_message_id,
+                reply_parameters=reply_parameters,
                 schedule_date=schedule_date,
                 protect_content=protect_content,
                 reply_markup=self.reply_markup if reply_markup is object else reply_markup,

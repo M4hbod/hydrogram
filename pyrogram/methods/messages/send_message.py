@@ -37,9 +37,9 @@ class SendMessage:
         message_thread_id: int | None = None,
         parse_mode: enums.ParseMode | None = None,
         entities: list[types.MessageEntity] | None = None,
-        disable_web_page_preview: bool | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
         disable_notification: bool | None = None,
-        reply_to_message_id: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
         reply_markup: types.InlineKeyboardMarkup
@@ -71,15 +71,17 @@ class SendMessage:
             entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
-            disable_web_page_preview (``bool``, *optional*):
-                Disables link previews for links in this message.
+            link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+                Options for how the link preview is generated. Can disable the preview, choose
+                which URL it previews, prefer a larger or smaller image, and put the preview above
+                the text instead of below it.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Description of the message to reply to.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -102,11 +104,17 @@ class SendMessage:
 
                 # Disable web page previews
                 await app.send_message(
-                    "me", "https://docs.pyrogram.org", disable_web_page_preview=True
+                    "me",
+                    "https://docs.pyrogram.org",
+                    link_preview_options=LinkPreviewOptions(is_disabled=True),
                 )
 
                 # Reply to a message using its id
-                await app.send_message("me", "this is a reply", reply_to_message_id=123)
+                await app.send_message(
+                    "me",
+                    "this is a reply",
+                    reply_parameters=ReplyParameters(message_id=123),
+                )
 
             .. code-block:: python
 
@@ -138,22 +146,51 @@ class SendMessage:
             await utils.parse_text_entities(self, text, parse_mode, entities)
         ).values()
 
-        reply_to = utils.get_reply_head_fm(message_thread_id, reply_to_message_id)
+        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
 
-        r = await self.invoke(
-            raw.functions.messages.SendMessage(
-                peer=await self.resolve_peer(chat_id),
-                no_webpage=disable_web_page_preview or None,
-                silent=disable_notification or None,
-                reply_to=reply_to,
-                random_id=self.rnd_id(),
-                schedule_date=utils.datetime_to_timestamp(schedule_date),
-                reply_markup=await reply_markup.write(self) if reply_markup else None,
-                message=message,
-                entities=entities,
-                noforwards=protect_content,
-            )
+        # A preview whose URL or size is specified cannot be expressed by sendMessage's
+        # no_webpage flag: it needs an explicit InputMediaWebPage, which means sendMedia.
+        wants_explicit_preview = link_preview_options is not None and (
+            link_preview_options.url is not None
+            or link_preview_options.prefer_large_media is not None
+            or link_preview_options.prefer_small_media is not None
         )
+
+        common = {
+            "peer": await self.resolve_peer(chat_id),
+            "silent": disable_notification or None,
+            "reply_to": reply_to,
+            "random_id": self.rnd_id(),
+            "schedule_date": utils.datetime_to_timestamp(schedule_date),
+            "reply_markup": await reply_markup.write(self) if reply_markup else None,
+            "message": message,
+            "entities": entities,
+            "noforwards": protect_content,
+            "invert_media": (
+                link_preview_options.show_above_text if link_preview_options else None
+            ),
+        }
+
+        if wants_explicit_preview:
+            rpc = raw.functions.messages.SendMedia(
+                media=raw.types.InputMediaWebPage(
+                    url=link_preview_options.url,
+                    force_large_media=link_preview_options.prefer_large_media,
+                    force_small_media=link_preview_options.prefer_small_media,
+                    # The preview is a bonus, not the point of the message: without this the
+                    # send fails outright when Telegram cannot build one.
+                    optional=True,
+                ),
+                **common,
+            )
+        else:
+            rpc = raw.functions.messages.SendMessage(
+                no_webpage=(link_preview_options.is_disabled if link_preview_options else None)
+                or None,
+                **common,
+            )
+
+        r = await self.invoke(rpc)
 
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)

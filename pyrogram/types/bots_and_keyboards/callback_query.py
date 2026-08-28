@@ -173,7 +173,7 @@ class CallbackQuery(Object, Update):
         self,
         text: str,
         parse_mode: enums.ParseMode | None = None,
-        disable_web_page_preview: bool | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
         reply_markup: types.InlineKeyboardMarkup = None,
     ) -> types.Message | bool:
         """Edit the text of messages attached to callback queries.
@@ -188,8 +188,8 @@ class CallbackQuery(Object, Update):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            disable_web_page_preview (``bool``, *optional*):
-                Disables link previews for links in this message.
+            link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+                Options for how the link preview is generated.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
@@ -207,14 +207,14 @@ class CallbackQuery(Object, Update):
                 message_id=self.message.id,
                 text=text,
                 parse_mode=parse_mode,
-                disable_web_page_preview=disable_web_page_preview,
+                link_preview_options=link_preview_options,
                 reply_markup=reply_markup,
             )
         return await self._client.edit_inline_text(
             inline_message_id=self.inline_message_id,
             text=text,
             parse_mode=parse_mode,
-            disable_web_page_preview=disable_web_page_preview,
+            link_preview_options=link_preview_options,
             reply_markup=reply_markup,
         )
 

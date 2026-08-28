@@ -39,8 +39,8 @@ class InputTextMessageContent(InputMessageContent):
         entities (List of :obj:`~pyrogram.types.MessageEntity`):
             List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
-        disable_web_page_preview (``bool``, *optional*):
-            Disables link previews for links in this message.
+        link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
+            Options for how the link preview is generated.
     """
 
     def __init__(
@@ -48,14 +48,14 @@ class InputTextMessageContent(InputMessageContent):
         message_text: str,
         parse_mode: enums.ParseMode | None = None,
         entities: list[types.MessageEntity] | None = None,
-        disable_web_page_preview: bool | None = None,
+        link_preview_options: types.LinkPreviewOptions | None = None,
     ):
         super().__init__()
 
         self.message_text = message_text
         self.parse_mode = parse_mode
         self.entities = entities
-        self.disable_web_page_preview = disable_web_page_preview
+        self.link_preview_options = link_preview_options
 
     async def write(self, client: pyrogram.Client, reply_markup):
         message, entities = (
@@ -65,7 +65,13 @@ class InputTextMessageContent(InputMessageContent):
         ).values()
 
         return raw.types.InputBotInlineMessageText(
-            no_webpage=self.disable_web_page_preview or None,
+            no_webpage=(
+                self.link_preview_options.is_disabled if self.link_preview_options else None
+            )
+            or None,
+            invert_media=(
+                self.link_preview_options.show_above_text if self.link_preview_options else None
+            ),
             reply_markup=await reply_markup.write(client) if reply_markup else None,
             message=message,
             entities=entities,
