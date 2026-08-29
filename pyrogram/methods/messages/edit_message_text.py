@@ -40,6 +40,7 @@ class EditMessageText:
         reply_markup: types.InlineKeyboardMarkup = None,
         business_connection_id: str | None = None,
         schedule_date: datetime | None = None,
+        rich_message: types.InputRichMessage | None = None,
     ) -> types.Message:
         """Edit the text of messages.
 
@@ -77,6 +78,9 @@ class EditMessageText:
             schedule_date (``datetime``, *optional*):
                 Date when the edit will be applied, for a scheduled message.
 
+            rich_message (:obj:`~pyrogram.types.InputRichMessage`, *optional*):
+                New rich content for the message. Required when *text* is not given.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
 
@@ -106,6 +110,7 @@ class EditMessageText:
                     link_preview_options.show_above_text if link_preview_options else None
                 ),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
+                rich_message=rich_message.write() if rich_message else None,
                 **await utils.parse_text_entities(self, text, parse_mode, entities),
             ),
             business_connection_id=business_connection_id,

@@ -42,6 +42,7 @@ async def get_chunk(
     message_thread_id: int | None = None,
     min_date: datetime | None = None,
     max_date: datetime | None = None,
+    offset_id: int = 0,
 ) -> list[types.Message]:
     r = await client.invoke(
         raw.functions.messages.Search(
@@ -50,7 +51,7 @@ async def get_chunk(
             filter=filter.value(),
             min_date=utils.datetime_to_timestamp(min_date) or 0,
             max_date=utils.datetime_to_timestamp(max_date) or 0,
-            offset_id=0,
+            offset_id=offset_id,
             add_offset=offset,
             limit=limit,
             max_id=max_id or 0,
@@ -79,6 +80,7 @@ class SearchMessages:
         message_thread_id: int | None = None,
         min_date: datetime | None = None,
         max_date: datetime | None = None,
+        offset_id: int = 0,
     ) -> AsyncGenerator[types.Message, None] | None:
         """Search for text and media messages inside a specific chat.
 
@@ -128,6 +130,9 @@ class SearchMessages:
             max_date (:py:obj:`~datetime.datetime`, *optional*):
                 Only return messages sent on or before this date.
 
+            offset_id (``int``, *optional*):
+                Identifier of the first message to return.
+
         Returns:
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
 
@@ -169,6 +174,7 @@ class SearchMessages:
                 message_thread_id=message_thread_id,
                 min_date=min_date,
                 max_date=max_date,
+                offset_id=offset_id,
             )
 
             if not messages:

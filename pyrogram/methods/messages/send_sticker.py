@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
-from pyrogram import StopTransmission, raw, types, utils
+from pyrogram import StopTransmission, enums, raw, types, utils
 from pyrogram.errors import FilePartMissing
 from pyrogram.file_id import FileType
 
@@ -60,6 +60,9 @@ class SendSticker:
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
         emoji: str | None = None,
+        caption: str = "",
+        caption_entities: list[types.MessageEntity] | None = None,
+        parse_mode: enums.ParseMode | None = None,
     ) -> types.Message | None:
         """Send static .webp or animated .tgs stickers.
 
@@ -152,6 +155,15 @@ class SendSticker:
             emoji (``str``, *optional*):
                 Emoji associated with the sticker.
 
+            caption (``str``, *optional*):
+                Sticker caption, 0-1024 characters.
+
+            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities in the caption, which can be specified instead of *parse_mode*.
+
+            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles. You can combine both syntaxes together.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent sticker message is returned, otherwise,
             in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is
@@ -216,6 +228,9 @@ class SendSticker:
                             raw.functions.messages.SendMedia(
                                 peer=await self.resolve_peer(chat_id),
                                 media=media,
+                                **await utils.parse_text_entities(
+                                    self, caption, parse_mode, caption_entities
+                                ),
                                 silent=disable_notification or None,
                                 reply_to=reply_to,
                                 random_id=self.rnd_id(),
@@ -231,7 +246,6 @@ class SendSticker:
                                 reply_markup=await reply_markup.write(self)
                                 if reply_markup
                                 else None,
-                                message="",
                             ),
                             receiver_user_id,
                             callback_query_id,

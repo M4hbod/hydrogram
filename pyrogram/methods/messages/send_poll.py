@@ -70,6 +70,11 @@ class SendPoll:
         allow_adding_options: bool | None = None,
         country_codes: list[str] | None = None,
         correct_option_ids: list[int] | None = None,
+        description: str | types.FormattedText | None = None,
+        description_media: types.InputPollMedia | None = None,
+        explanation_media: types.InputPollMedia | None = None,
+        description_parse_mode: enums.ParseMode | None = None,
+        description_entities: list[types.MessageEntity] | None = None,
     ) -> types.Message:
         """Send a new poll.
 
@@ -197,6 +202,21 @@ class SendPoll:
             correct_option_ids (List of ``int``, *optional*):
                 Identifiers of the correct options, for a quiz with more than one answer.
 
+            description (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
+                Poll description, 0-1024 characters.
+
+            description_media (:obj:`~pyrogram.types.InputPollMedia`, *optional*):
+                Media attached to the poll description.
+
+            explanation_media (:obj:`~pyrogram.types.InputPollMedia`, *optional*):
+                Media attached to a quiz's explanation.
+
+            description_parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles. You can combine both syntaxes together.
+
+            description_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities in the description, which can be specified instead of *description_parse_mode*.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent poll message is returned.
 
@@ -205,6 +225,16 @@ class SendPoll:
 
                 await app.send_poll(chat_id, "Is this a poll question?", ["Yes", "No", "Maybe"])
         """
+
+        poll_description, poll_description_entities = (
+            (
+                await utils.parse_text_entities(
+                    self, description, description_parse_mode, description_entities
+                )
+            ).values()
+            if description is not None
+            else ("", None)
+        )
 
         solution, solution_entities = (
             (
@@ -281,10 +311,19 @@ class SendPoll:
                         if correct_option_id is not None
                         else None
                     ),
+                    attached_media=await description_media.write(client=self)
+                    if description_media is not None
+                    else None,
+                    solution_media=await explanation_media.write(client=self)
+                    if explanation_media is not None
+                    else None,
                     solution=solution,
                     solution_entities=None if solution is None else (solution_entities or []),
                 ),
-                message="",
+                # A poll's description rides in the message body of the send,
+                # not in the Poll itself.
+                message=poll_description,
+                entities=poll_description_entities,
                 silent=disable_notification,
                 reply_to=reply_to,
                 random_id=self.rnd_id(),

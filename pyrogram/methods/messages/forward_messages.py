@@ -50,6 +50,7 @@ class ForwardMessages:
         hide_sender_name: bool | None = None,
         hide_captions: bool | None = None,
         video_start_timestamp: int | None = None,
+        reply_parameters: types.ReplyParameters | None = None,
     ) -> types.Message | list[types.Message]:
         """Forward messages of any kind.
 
@@ -92,6 +93,9 @@ class ForwardMessages:
             video_start_timestamp (``int``, *optional*):
                 Timestamp in seconds from which the forwarded video will play.
 
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Describes the message to reply to.
+
         Returns:
             :obj:`~pyrogram.types.Message` | List of :obj:`~pyrogram.types.Message`: In case *message_ids* was not
             a list, a single message is returned, otherwise a list of messages is returned.
@@ -117,6 +121,7 @@ class ForwardMessages:
                 top_msg_id=message_thread_id,
                 reply_to=await utils.get_reply_to(
                     self,
+                    reply_parameters,
                     message_thread_id=message_thread_id,
                     direct_messages_topic_id=direct_messages_topic_id,
                 ),

@@ -33,6 +33,8 @@ class EditInlineText:
         parse_mode: enums.ParseMode | None = None,
         link_preview_options: types.LinkPreviewOptions | None = None,
         reply_markup: types.InlineKeyboardMarkup = None,
+        rich_message: types.InputRichMessage | None = None,
+        entities: list[types.MessageEntity] | None = None,
     ) -> bool:
         """Edit the text of inline messages.
 
@@ -55,6 +57,12 @@ class EditInlineText:
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
+
+            rich_message (:obj:`~pyrogram.types.InputRichMessage`, *optional*):
+                New rich content for the message. Required when *text* is not given.
+
+            entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities in the text, which can be specified instead of *parse_mode*.
 
         Returns:
             ``bool``: On success, True is returned.
@@ -89,7 +97,8 @@ class EditInlineText:
                     link_preview_options.show_above_text if link_preview_options else None
                 ),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
-                **await self.parser.parse(text, parse_mode),
+                rich_message=rich_message.write() if rich_message else None,
+                **await utils.parse_text_entities(self, text, parse_mode, entities),
             ),
             sleep_threshold=self.sleep_threshold,
         )

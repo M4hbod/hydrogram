@@ -133,18 +133,13 @@ These encode the porting hazards that actually bit, and they are cheap to run:
 
 ### Not done
 
-- **The `Client` parameter gap is down to 39 across 25 methods, and 25 of those are
-  deliberate.** `parse_mode` on `send_contact`/`send_dice`/`send_location`/`send_venue`/
-  `send_video_note`/`send_sticker`/`send_media_group`/`send_inline_bot_result` exists in Kurigram
-  to parse `quote_text`, which is removed here; `show_caption_above_media` on `send_message`,
-  `edit_message_text`, `send_media_group` and `copy_media_group` is expressed through
-  `link_preview_options.show_above_text`, which is the same wire field. The rest are client
-  lifecycle differences (`run`/`start`/`stop`/`restart`/`terminate`/`on_error`/`on_raw_update`)
-  and two session extras on `invoke`. Genuinely missing: `add_contact.note`,
-  `edit_inline_text.entities`/`rich_message`, `edit_message_text.rich_message`,
-  `forward_messages.reply_parameters`, `get_messages.pinned`/`reply`,
-  `search_messages.offset_id`, `send_poll.description`/`description_media`/`explanation_media`,
-  `send_sticker.caption`/`caption_entities`.
+- **The `Client` parameter gap is closed except for what is deliberate.** `parse_mode` on
+  `send_contact`/`send_dice`/`send_location`/`send_venue`/`send_video_note`/`send_media_group`/
+  `send_inline_bot_result`/`copy_media_group` exists in Kurigram to parse `quote_text`, which is
+  removed here; `show_caption_above_media` is expressed through
+  `link_preview_options.show_above_text`, the same wire field. The remainder are client lifecycle
+  differences (`run`/`start`/`stop`/`restart`/`terminate`/`on_error`/`on_raw_update`) and two
+  session extras on `invoke`.
   Never re-add `reply_to_message_id`, `quote_text`, `quote_entities`, `quote_offset`,
   `reply_to_chat_id`, `reply_to_story_id` or `disable_web_page_preview`; Kurigram carries them as
   deprecated shims and they are removed here on purpose.

@@ -40,6 +40,8 @@ class GetMessages:
         message_ids: int | Iterable[int] | None = None,
         reply_to_message_ids: int | Iterable[int] | None = None,
         replies: int = 1,
+        pinned: bool | None = None,
+        reply: bool | None = None,
     ) -> types.Message | list[types.Message]:
         """Get one or more messages from a chat by using message identifiers.
 
@@ -67,6 +69,12 @@ class GetMessages:
                 Pass 0 for no reply at all or -1 for unlimited replies.
                 Defaults to 1.
 
+            pinned (``bool``, *optional*):
+                Pass True to get the chat's most recent pinned message.
+
+            reply (``bool``, *optional*):
+                Pass True to get the messages the given ids replied to, rather than the messages themselves.
+
         Returns:
             :obj:`~pyrogram.types.Message` | List of :obj:`~pyrogram.types.Message`: In case *message_ids* was not
             a list, a single message is returned, otherwise a list of messages is returned.
@@ -92,24 +100,34 @@ class GetMessages:
         Raises:
             ValueError: In case of invalid arguments.
         """
-        ids, ids_type = (
-            (message_ids, raw.types.InputMessageID)
-            if message_ids
-            else (reply_to_message_ids, raw.types.InputMessageReplyTo)
-            if reply_to_message_ids
-            else (None, None)
-        )
+        # `pinned` asks the server for one message the caller cannot name, so it
+        # carries its own id type and needs no ids at all.
+        if pinned:
+            # It takes no id: the request is "whatever is pinned here".
+            ids, ids_type = None, None
+        else:
+            ids, ids_type = (
+                (message_ids, raw.types.InputMessageReplyTo if reply else raw.types.InputMessageID)
+                if message_ids
+                else (reply_to_message_ids, raw.types.InputMessageReplyTo)
+                if reply_to_message_ids
+                else (None, None)
+            )
 
-        if ids is None:
+        if ids is None and not pinned:
             raise ValueError(
-                "No argument supplied. Either pass message_ids or reply_to_message_ids"
+                "No argument supplied. Either pass message_ids, reply_to_message_ids or pinned"
             )
 
         peer = await self.resolve_peer(chat_id)
 
-        is_iterable = not isinstance(ids, int)
-        ids = list(ids) if is_iterable else [ids]
-        ids = [ids_type(id=i) for i in ids]
+        if pinned:
+            is_iterable = False
+            ids = [raw.types.InputMessagePinned()]
+        else:
+            is_iterable = not isinstance(ids, int)
+            ids = list(ids) if is_iterable else [ids]
+            ids = [ids_type(id=i) for i in ids]
 
         if replies < 0:
             replies = (1 << 31) - 1

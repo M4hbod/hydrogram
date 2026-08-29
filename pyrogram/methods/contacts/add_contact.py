@@ -31,12 +31,16 @@ class AddContact:
         last_name: str = "",
         phone_number: str = "",
         share_phone_number: bool = False,
+        note: str | types.FormattedText | None = None,
     ):
         """Add an existing Telegram user as contact, even without a phone number.
 
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
+            note (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
+                A private note about the contact. Only you can see it.
+
             user_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target user.
 
@@ -70,6 +74,11 @@ class AddContact:
                 id=await self.resolve_peer(user_id),
                 first_name=first_name,
                 last_name=last_name,
+                note=await (
+                    types.FormattedText(text=note) if isinstance(note, str) else note
+                ).write(self)
+                if note
+                else None,
                 phone=phone_number,
                 add_phone_privacy_exception=share_phone_number,
             )
