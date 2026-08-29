@@ -373,31 +373,34 @@ news fragment, and each is independently skippable.
 **Exit per group:** methods wired into the mixin, `_parse` tests for every new type, docs build
 clean, news fragment present, coverage ratchet raised.
 
-### Stage 5 — connection layer
+### Stage 5 — connection layer — **ATTEMPTED AND REVERTED 2026-08-29**
 
-Four files we lack: `connection/proxy.py`, `transport/tcp/faketls_records.py`,
-`transport/tcp/web_proxy_carrier.py`, `transport/tcp/tcp_intermediate_padded.py`. Plus the
-dependency swap `pysocks` → `python-socks[asyncio]`.
+Porting `connection/proxy.py`, `faketls_records.py`, `web_proxy_carrier.py` and
+`tcp_intermediate_padded.py` also requires Kurigram's `Connection`, and its constructor takes a
+resolved `server_address` / `port` where ours takes `ipv6` — the DC lookup moved to the caller. So
+adopting it means porting `session.py` and `auth.py` as well, both of which carry local fixes (the
+monotonic interval timers, the connect/disconnect hooks).
 
-Independent of stage 4 — schedule it whenever, but not concurrently, since it touches the transport
-every other test runs through. Kurigram landed this on 2026-08-27 with its own unit/live split;
-port both the code and the tests, and keep the live ones under `tests/integration/`.
+That is a transport refactor touching every connection the client makes, in exchange for MTProxy
+and fake-TLS support that cannot be verified without a proxy server to test against. The working
+transport was kept and the port reverted; the `pysocks` → `python-socks[asyncio]` swap went back
+with it.
 
-**Exit:** MTProxy and fake-TLS transports covered by unit tests; a live connection test that is
-skipped without credentials; the default (non-proxy) transport unchanged.
+**To do it properly:** port `connection/`, `session/session.py` and `session/auth.py` as one unit,
+re-apply the local fixes on top, and stand up a proxy (or use `tests/integration/` with real
+credentials) before merging. It is genuinely independent of everything else, so it can be done
+whenever.
 
-### Stage 6 — production hardening
+### Stage 6 — release hardening — **PARTIALLY DONE 2026-08-29**
 
-1. **Version.** Adopt `3.0.0`. This does not conflict with the `py-tgcalls` floor —
-   `pyrogram>=1.2.20` is a floor, not a ceiling; Hydrogram's own `0.2.0` is what failed it. Verify
-   against the installed `py-tgcalls`, then drop the "pin" framing from `CLAUDE.md`.
-2. **Docs.** `make docs` clean; rewrite `docs/source/hydrogram-vs-pyrogram.rst`; changelog via
-   towncrier. The generated API pages need regenerating after stage 4.
-3. **Type checking.** `py.typed` already ships. Add a `ty`/`mypy` gate to CI, initially on a subset
-   (`utils`, `storage`, `enums`, `types/bots_and_keyboards`) and widen it.
-4. **Publish.** `pyrogram` on PyPI belongs to the archived original, so this fork cannot use that
-   name. Either publish under a name we own or keep it a git install, which is what it is today.
-5. **Release.** Tag, notes, dependency audit.
+1. **Version → `3.0.0`** — done. Verified against `py-tgcalls` 2.3.3, which declares
+   `pyrogram>=1.2.20`: a floor, not a ceiling, so the old `2.0.106` pin was never a ceiling either.
+2. **Docs** — the generated API pages under `docs/source/api/**` need regenerating for the 441-method
+   surface (`make docs`). Not done.
+3. **Type gate** — `ty`/`mypy` in CI on a subset. Not done.
+4. **PyPI name** — the owner's decision. `pyrogram` belongs to the archived original, so this fork
+   publishes under a name we own or stays a git install, which is what it is today.
+5. **Tag and release notes** — `towncrier` fragments are in `news/` and ready to build.
 
 ## Sequencing notes
 

@@ -16,9 +16,9 @@ packages import it by name. Three commits exist solely to keep those working:
 
 - `868507da` — whole-tree `hydrogram` → `pyrogram` rename,
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
-- `f81a62a4` — `__version__` raised to `2.0.106`. `py-tgcalls` declares
-  `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed that floor. It is a
-  **floor, not a ceiling** — any version `>=1.2.20` works, so this does not block a future `3.0.0`.
+- `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
+  `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
+  not a ceiling**, so the version is now `3.0.0` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -73,15 +73,37 @@ uv run pre-commit run --all-files    # whole-tree sweep, e.g. after a large port
 make check-api-schema          # diff local TL against Telegram's published schema
 ```
 
-## Current state (2026-08-28)
+## Current state (2026-08-29)
 
-- Branch `dev`, package `pyrogram`, `__version__` `2.0.106`.
-- TL layer **229** — the target of `docs/dev/UPGRADE-PLAN.md` stages 0-2, all of which are done.
-- High-level surface: 211 method files / 121 type files / 16 enums. Kurigram, for comparison, has
-  407 / 308 / 44 — closing that gap is stage 4, deferred by decision.
-- Test suite: **1266 tests** across `tests/{unit,contract,integration}/`; coverage of the
-  non-generated tree gated at 53 % by a ratchet in `.coveragerc`.
-- Hooks installed: `pre-commit` (style) and `pre-push` (`pytest -m "not integration"`).
+- Branch `dev`, package `pyrogram`, `__version__` `3.0.0`.
+- TL layer **229**. Stages 0-4 of `docs/dev/UPGRADE-PLAN.md` are done; stage 5 is not (see below).
+- Surface: **441 public `Client` methods**, 431 method modules, 222 type modules, 43 enums,
+  30 handlers. The method gap with Kurigram is closed.
+- Test suite: **2946 tests** across `tests/{unit,contract,integration}/`; coverage of the
+  non-generated tree gated at 55 % by a ratchet in `.coveragerc`.
+- Hooks: `pre-commit` (style) and `pre-push` (`pytest -m "not integration"`). Ruff has `B`
+  (bugbear) enabled — mutable default arguments were a recurring defect in ported code.
 - `make sync-upstream` replays upstream Hydrogram commits through the namespace rename.
 - When checking CI, always pass `-R M4hbod/hydrogram` to `gh` — with two remotes it resolves to
   `hydrogram/hydrogram` and reports upstream's failures as if they were ours.
+
+### Contract tests worth knowing about
+
+These encode the porting hazards that actually bit, and they are cheap to run:
+
+- `test_await_consistency.py` — many `_parse` methods are **async in Kurigram and sync here**.
+  Ported code arrives with the wrong `await`, which only fails when that branch runs. It found 44.
+- `test_removed_parameters.py` — `reply_to_message_id` and `disable_web_page_preview` were removed
+  outright; ported methods keep bringing them back.
+- `test_raw_references.py` — every `raw.*` name resolves in the compiled layer.
+- `test_rpc_construction.py` — drives methods with a recording client, so a renamed constructor
+  fails offline instead of on a live call.
+
+### Not done
+
+- **Stage 5 (MTProxy / fake-TLS transports).** Attempted and reverted. Kurigram's `Connection`
+  takes a resolved `server_address`/`port` where ours takes `ipv6`, so adopting it means porting
+  `session.py` and `auth.py` too — both carrying local fixes — and there is no way to verify a
+  proxy transport without a proxy to test against. The working transport was kept.
+- **`advanced/recover_gaps`.** Needs an `update_state` table in SQLite storage, its accessors, and
+  a migration for existing session files. A storage schema change, not a method port.
