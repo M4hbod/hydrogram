@@ -373,23 +373,44 @@ news fragment, and each is independently skippable.
 **Exit per group:** methods wired into the mixin, `_parse` tests for every new type, docs build
 clean, news fragment present, coverage ratchet raised.
 
-### Stage 5 — connection layer — **ATTEMPTED AND REVERTED 2026-08-29**
+### Stage 5 — connection layer — **DONE 2026-08-29**
 
-Porting `connection/proxy.py`, `faketls_records.py`, `web_proxy_carrier.py` and
-`tcp_intermediate_padded.py` also requires Kurigram's `Connection`, and its constructor takes a
-resolved `server_address` / `port` where ours takes `ipv6` — the DC lookup moved to the caller. So
-adopting it means porting `session.py` and `auth.py` as well, both of which carry local fixes (the
-monotonic interval timers, the connect/disconnect hooks).
+Done on our own transport stack rather than by adopting Kurigram's. The first attempt tried to port
+`connection/proxy.py`, `faketls_records.py`, `web_proxy_carrier.py` and `tcp_intermediate_padded.py`
+wholesale, which drags in Kurigram's `Connection` (its constructor takes a resolved
+`server_address` / `port` where ours takes `ipv6`), and with it `session.py` and `auth.py` — both of
+which carry local fixes. That port was reverted.
 
-That is a transport refactor touching every connection the client makes, in exchange for MTProxy
-and fake-TLS support that cannot be verified without a proxy server to test against. The working
-transport was kept and the port reverted; the `pysocks` → `python-socks[asyncio]` swap went back
-with it.
+What landed instead is the feature without the refactor:
 
-**To do it properly:** port `connection/`, `session/session.py` and `session/auth.py` as one unit,
-re-apply the local fixes on top, and stand up a proxy (or use `tests/integration/` with real
-credentials) before merging. It is genuinely independent of everything else, so it can be done
-whenever.
+- **`pyrogram/connection/proxy.py`** — the `Proxy` dict, secret decoding (hex / base64 / base64url;
+  plain 16 bytes, `dd` + 16, `ee` + 16 + SNI domain), `normalize_proxy` validation at the `Client`
+  boundary, and `parse_proxy_url` for `tg://proxy` / `t.me/proxy` / `tg://socks` links.
+- **`transport/tcp/tcp.py`** — obfuscation moved out of the `*_o` subclasses and into `TCP.send` /
+  `TCP.recv`, where it is armed by `build_obfuscated2_header`. One builder now serves both the
+  secret-less handshake a direct connection speaks and the secret-mixed one MTProxy speaks, so the
+  two cannot drift. `_connect_via_mtproxy` dials the proxy's own address with `AF_UNSPEC`.
+- **`transport/tcp/tcp_intermediate_padded.py`** — the framing a `dd` or `ee` secret requires.
+- **`crypto/faketls.py` + `transport/tcp/faketls_records.py`** — the fake-TLS ClientHello (TDLib's
+  op list, GREASE, x25519 and ML-KEM-768 key shares, extension permutation) and the record layer
+  the obfuscated2 stream is cut into afterwards. The proxy's answer is authenticated against the
+  secret.
+- **`Connection`** — `transport_class_for` lets the secret pick the framing, `protocol_dc_id` folds
+  media and test mode into the dc id the header carries, and `Session` reports an MTProxy in
+  `initConnection` the way tdesktop does.
+- **`pysocks` → `python-socks[asyncio]`** — this one went with it after all. The old handshake ran
+  synchronously on the event loop; a proxy served from that same loop deadlocked outright, and a
+  wrong password surfaced as a bare `TimeoutError` instead of a `ProxyError`.
+
+**Verified live** against a real `dd` MTProxy: main DC, media DC (which is what exercises the
+negated dc id), message send/read and a file download. All six framing transports were re-checked
+direct against DC1 afterwards, and SOCKS5 with and without authentication against a stand-in server.
+Fake-TLS is covered end to end in `tests/unit/connection/test_fake_tls.py`, which drives the
+handshake against a stand-in proxy that answers the greeting — no `ee` proxy was available to test
+against live.
+
+**Not ported:** `web_proxy_carrier.py`. It is the client half of Kurigram's own WEB relay scheme,
+which needs their relay to talk to; it is not a Telegram protocol.
 
 ### Stage 6 — release hardening — **PARTIALLY DONE 2026-08-29**
 

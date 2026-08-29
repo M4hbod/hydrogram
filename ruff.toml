@@ -45,6 +45,13 @@ ignore = [
 ]
 preview = true
 
+# Test doubles are held to the shape of what they stand in for, not to what
+# their own body happens to need: a stub that replaces an async I/O call stays
+# `async` with nothing to await (RUF029), and one that replaces a bound method
+# keeps `self` whether or not it reads it (PLR6301).
+[lint.per-file-ignores]
+"tests/**" = ["RUF029", "PLR6301"]
+
 [lint.isort]
 known-first-party = ["pyrogram"]
 

@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pyrogram
 from pyrogram import raw
+from pyrogram.connection.proxy import is_mtproxy
 from pyrogram.crypto import mtproto
 from pyrogram.errors import (
     AuthKeyDuplicated,
@@ -117,6 +118,20 @@ class Session:
 
         self.last_reconnect_attempt = None
 
+    def _client_proxy(self) -> raw.types.InputClientProxy | None:
+        """The proxy ``initConnection`` reports, or None when there is nothing to report.
+
+        tdesktop reports one for MTProxy and for no other scheme: a SOCKS or
+        HTTP proxy is not one of Telegram's own, and the server has no use for
+        its address.
+        """
+        proxy = self.client.proxy
+
+        if not is_mtproxy(proxy):
+            return None
+
+        return raw.types.InputClientProxy(address=proxy["hostname"], port=proxy["port"])
+
     async def start(self):
         while True:
             self.connection = self.client.connection_factory(
@@ -147,6 +162,7 @@ class Session:
                                 system_lang_code=self.client.lang_code,
                                 lang_code=self.client.lang_code,
                                 lang_pack="",
+                                proxy=self._client_proxy(),
                                 query=raw.functions.help.GetConfig(),
                             ),
                         ),

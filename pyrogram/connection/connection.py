@@ -21,16 +21,48 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from pyrogram.session.internals import DataCenter
 
-from .transport import TCP, TCPAbridged
+from .proxy import decode_mtproxy_secret, is_mtproxy
+from .transport import TCP, TCPAbridged, TCPAbridgedO, TCPIntermediatePadded
 
 if TYPE_CHECKING:
-    from .transport.tcp.tcp import Proxy
+    from .proxy import Proxy
 
 log = logging.getLogger(__name__)
+
+# tdesktop's ``kTestModeDcIdShift``.
+_TEST_MODE_DC_ID_SHIFT: Final[int] = 10000
+
+
+def transport_class_for(proxy: Proxy | None, *, default: type[TCP] = TCPAbridged) -> type[TCP]:
+    """The transport a proxy requires, or ``default`` when it requires none.
+
+    An MTProxy secret decides the framing, not the caller: the padded
+    intermediate is the only framing a ``dd`` or ``ee`` secret accepts, and a
+    plain secret still needs a transport that can open an obfuscated2 stream.
+    """
+    if not is_mtproxy(proxy):
+        return default
+
+    if decode_mtproxy_secret(proxy["secret"]).padded:
+        return TCPIntermediatePadded
+
+    return TCPAbridgedO
+
+
+def protocol_dc_id(dc_id: int, *, test_mode: bool, media: bool) -> int:
+    """The dc id an obfuscated2 header carries, as tdesktop computes it.
+
+    The media cluster is the negated dc id and test-mode servers get a fixed
+    shift. Only a proxy ever reads this; a DC we dial by IP already knows which
+    one it is.
+    """
+    shifted = dc_id + (_TEST_MODE_DC_ID_SHIFT if test_mode else 0)
+
+    return -shifted if media else shifted
 
 
 class Connection:
@@ -50,14 +82,27 @@ class Connection:
         self.ipv6 = ipv6
         self.proxy = proxy
         self.media = media
-        self.protocol_factory = protocol_factory
+
+        # The proxy overrides whatever framing the caller asked for, so a proxy
+        # is the only thing a caller has to pass to reach one.
+        self.protocol_factory = transport_class_for(proxy, default=protocol_factory)
+
+        if self.protocol_factory is not protocol_factory:
+            log.debug(
+                "This proxy requires %s, overriding %s",
+                self.protocol_factory.__name__,
+                protocol_factory.__name__,
+            )
 
         self.address = DataCenter(dc_id, test_mode, ipv6, media)
         self.protocol: TCP | None = None
+        self._protocol_dc_id = protocol_dc_id(dc_id, test_mode=test_mode, media=media)
 
     async def connect(self) -> None:
         for _i in range(Connection.MAX_CONNECTION_ATTEMPTS):
-            self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=self.proxy)
+            self.protocol = self.protocol_factory(
+                ipv6=self.ipv6, proxy=self.proxy, dc_id=self._protocol_dc_id
+            )
 
             try:
                 log.info("Connecting...")
@@ -68,11 +113,14 @@ class Connection:
                 await asyncio.sleep(1)
             else:
                 log.info(
-                    "Connected! %s DC%s%s - IPv%s",
+                    "Connected! %s DC%s%s - IPv%s%s",
                     "Test" if self.test_mode else "Production",
                     self.dc_id,
                     " (media)" if self.media else "",
                     "6" if self.ipv6 else "4",
+                    f" via MTProxy {self.proxy['hostname']}:{self.proxy['port']}"
+                    if is_mtproxy(self.proxy)
+                    else "",
                 )
                 break
         else:

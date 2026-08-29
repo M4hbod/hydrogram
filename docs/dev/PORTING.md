@@ -299,10 +299,20 @@ every parameter you remove, because stage 4.1 collects them into the downstream 
 
 ### 7.4 Connection layer
 
-Kurigram depends on `python-socks[asyncio]`; we depend on `pysocks`. Kurigram additionally ships
-`connection/proxy.py`, `transport/tcp/faketls_records.py`, `transport/tcp/web_proxy_carrier.py`
-and `tcp_intermediate_padded.py`, none of which we have. Porting MTProxy/fake-TLS means porting the
-dependency change too — treat it as its own stage, with its own tests.
+Done as stage 5 (`docs/dev/UPGRADE-PLAN.md`), but **not** by adopting Kurigram's `Connection`:
+their constructor takes a resolved `server_address` / `port` where ours takes `ipv6`, which drags
+`session.py` and `auth.py` in with it. We now ship our own `connection/proxy.py`,
+`transport/tcp/faketls_records.py`, `transport/tcp/tcp_intermediate_padded.py` and
+`crypto/faketls.py`, and depend on `python-socks[asyncio]` as they do.
+
+`web_proxy_carrier.py` is deliberately **not** ported: it is the client half of Kurigram's own WEB
+relay scheme, not a Telegram protocol, and it needs their relay to talk to.
+
+The obfuscated2 handshake is the one place to be careful. Ours arms the ciphers in `TCP.send` /
+`TCP.recv` from `build_obfuscated2_header`, where theirs keeps a parallel `_encrypt` / `_decrypt`
+pair and a `marker_event`. A secret-less header takes its keys straight out of the nonce; a
+secret-mixed one hashes the secret in. Feeding an empty secret through the hashing path produces a
+handshake that looks right and connects to nothing.
 
 ### 7.5 Storage
 

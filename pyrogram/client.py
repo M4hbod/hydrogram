@@ -43,6 +43,7 @@ from typing import TYPE_CHECKING, Any
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
+from pyrogram.connection.proxy import normalize_proxy, parse_proxy_url
 from pyrogram.crypto import aes
 from pyrogram.errors import (
     AuthBytesInvalid,
@@ -109,10 +110,31 @@ class Client(Methods):
             Pass True to connect to Telegram using IPv6.
             Defaults to False (IPv4).
 
-        proxy (``dict``, *optional*):
-            The Proxy settings as dict.
-            E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*.
-            The *username* and *password* can be omitted if the proxy doesn't require authorization.
+        proxy (``dict`` | ``str``, *optional*):
+            The proxy settings, as a dict or as a shared proxy link.
+
+            The ``socks4``, ``socks5`` and ``http`` schemes take an optional
+            *username* and *password*, omitted when the proxy needs no
+            authorization::
+
+                dict(
+                    scheme="socks5",
+                    hostname="11.22.33.44",
+                    port=1234,
+                    username="user",
+                    password="pass",
+                )
+
+            The ``mtproxy`` scheme takes a *secret* instead -- hex or base64,
+            with or without a ``dd`` marker -- and speaks Telegram's own
+            obfuscated transport rather than tunnelling through a proxy
+            protocol::
+
+                dict(scheme="mtproxy", hostname="1.2.3.4", port=443, secret="dd0123...")
+
+            A ``tg://proxy?...`` or ``https://t.me/proxy?...`` link (and the
+            ``socks`` equivalents) is accepted in place of the dict and parsed
+            into one. Fake-TLS (``ee``) secrets are not supported yet.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.
@@ -255,7 +277,7 @@ class Client(Methods):
         system_version: str = SYSTEM_VERSION,
         lang_code: str = LANG_CODE,
         ipv6: bool = False,
-        proxy: dict | None = None,
+        proxy: dict | str | None = None,
         test_mode: bool = False,
         bot_token: str | None = None,
         session_string: str | None = None,
@@ -292,7 +314,7 @@ class Client(Methods):
         self.system_version = system_version
         self.lang_code = lang_code.lower()
         self.ipv6 = ipv6
-        self.proxy = proxy
+        self.proxy = normalize_proxy(parse_proxy_url(proxy) if isinstance(proxy, str) else proxy)
         self.test_mode = test_mode
         self.bot_token = bot_token
         self.session_string = session_string

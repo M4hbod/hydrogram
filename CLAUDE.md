@@ -76,11 +76,14 @@ make check-api-schema          # diff local TL against Telegram's published sche
 ## Current state (2026-08-29)
 
 - Branch `dev`, package `pyrogram`, `__version__` `3.0.0`.
-- TL layer **229**. Stages 0-4 of `docs/dev/UPGRADE-PLAN.md` are done; stage 5 is not (see below).
+- TL layer **229**. Stages 0-5 of `docs/dev/UPGRADE-PLAN.md` are done; stage 6 is partial.
 - Surface: **441 public `Client` methods**, 431 method modules, 222 type modules, 43 enums,
   30 handlers. The method gap with Kurigram is closed.
-- Test suite: **2946 tests** across `tests/{unit,contract,integration}/`; coverage of the
-  non-generated tree gated at 55 % by a ratchet in `.coveragerc`.
+- Test suite: **3010 tests** across `tests/{unit,contract,integration}/`; coverage of the
+  non-generated tree gated at 57 % by a ratchet in `.coveragerc`.
+- Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
+  (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
+  or a `tg://proxy` / `t.me/proxy` link.
 - Hooks: `pre-commit` (style) and `pre-push` (`pytest -m "not integration"`). Ruff has `B`
   (bugbear) enabled — mutable default arguments were a recurring defect in ported code.
 - `make sync-upstream` replays upstream Hydrogram commits through the namespace rename.
@@ -101,9 +104,10 @@ These encode the porting hazards that actually bit, and they are cheap to run:
 
 ### Not done
 
-- **Stage 5 (MTProxy / fake-TLS transports).** Attempted and reverted. Kurigram's `Connection`
-  takes a resolved `server_address`/`port` where ours takes `ipv6`, so adopting it means porting
-  `session.py` and `auth.py` too — both carrying local fixes — and there is no way to verify a
-  proxy transport without a proxy to test against. The working transport was kept.
+- **Fake-TLS (`ee`) MTProxy has never been run against a live proxy** — only against the stand-in
+  in `tests/unit/connection/test_fake_tls.py`, which answers the greeting the way a real proxy
+  would. Plain and `dd` secrets *are* live-verified. If an `ee` proxy is ever to hand, run it.
+- **Kurigram's `web_proxy_carrier.py` is deliberately not ported.** It is the client half of their
+  own WEB relay scheme, not a Telegram protocol.
 - **`advanced/recover_gaps`.** Needs an `update_state` table in SQLite storage, its accessors, and
   a migration for existing session files. A storage schema change, not a method port.
