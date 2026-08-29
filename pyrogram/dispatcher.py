@@ -224,49 +224,47 @@ class Dispatcher:
                 StoryHandler,
             )
 
-        async def pre_checkout_query_parser(update, users, chats):
+        def pre_checkout_query_parser(update, users, chats):
             return (
-                await pyrogram.types.PreCheckoutQuery._parse(self.client, update, users),
+                pyrogram.types.PreCheckoutQuery._parse(self.client, update, users),
                 PreCheckoutQueryHandler,
             )
 
-        async def shipping_query_parser(update, users, chats):
+        def shipping_query_parser(update, users, chats):
             return (
-                await pyrogram.types.ShippingQuery._parse(self.client, update, users),
+                pyrogram.types.ShippingQuery._parse(self.client, update, users),
                 ShippingQueryHandler,
             )
 
-        async def message_reaction_parser(update, users, chats):
+        def message_reaction_parser(update, users, chats):
             return (
-                await pyrogram.types.MessageReactionUpdated._parse(
-                    self.client, update, users, chats
-                ),
+                pyrogram.types.MessageReactionUpdated._parse(self.client, update, users, chats),
                 MessageReactionHandler,
             )
 
-        async def message_reaction_count_parser(update, users, chats):
+        def message_reaction_count_parser(update, users, chats):
             return (
-                await pyrogram.types.MessageReactionCountUpdated._parse(
+                pyrogram.types.MessageReactionCountUpdated._parse(
                     self.client, update, users, chats
                 ),
                 MessageReactionCountHandler,
             )
 
-        async def chat_boost_parser(update, users, chats):
+        def chat_boost_parser(update, users, chats):
             return (
-                await pyrogram.types.ChatBoostUpdated._parse(self.client, update, users, chats),
+                pyrogram.types.ChatBoostUpdated._parse(self.client, update, users, chats),
                 ChatBoostHandler,
             )
 
-        async def purchased_paid_media_parser(update, users, chats):
+        def purchased_paid_media_parser(update, users, chats):
             return (
-                await pyrogram.types.PurchasedPaidMedia._parse(self.client, update, users),
+                pyrogram.types.PurchasedPaidMedia._parse(self.client, update, users),
                 PurchasedPaidMediaHandler,
             )
 
-        async def business_connection_parser(update, users, chats):
+        def business_connection_parser(update, users, chats):
             return (
-                await pyrogram.types.BusinessConnection._parse(self.client, update, users),
+                pyrogram.types.BusinessConnection._parse(self.client, update, users),
                 BusinessConnectionHandler,
             )
 
@@ -291,9 +289,9 @@ class Dispatcher:
                 DeletedBusinessMessagesHandler,
             )
 
-        async def managed_bot_parser(update, users, chats):
+        def managed_bot_parser(update, users, chats):
             return (
-                await pyrogram.types.ManagedBotUpdated._parse(self.client, update, users),
+                pyrogram.types.ManagedBotUpdated._parse(self.client, update, users),
                 ManagedBotUpdatedHandler,
             )
 

@@ -48,4 +48,4 @@ class GetBusinessConnection:
 
         users = {i.id: i for i in r.users}
 
-        return await types.BusinessConnection._parse(self, r.updates[0].connection, users)
+        return types.BusinessConnection._parse(self, r.updates[0].connection, users)

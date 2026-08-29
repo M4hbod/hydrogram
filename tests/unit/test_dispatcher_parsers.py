@@ -34,9 +34,16 @@ import pyrogram
 from pyrogram import enums, raw
 from pyrogram.dispatcher import Dispatcher
 from pyrogram.handlers import (
+    BusinessConnectionHandler,
+    ChatBoostHandler,
     ChatMemberUpdatedHandler,
     DeletedMessagesHandler,
     InlineQueryHandler,
+    MessageReactionCountHandler,
+    MessageReactionHandler,
+    PreCheckoutQueryHandler,
+    PurchasedPaidMediaHandler,
+    ShippingQueryHandler,
     UserStatusHandler,
 )
 
@@ -121,3 +128,142 @@ async def test_chat_member_update_is_parsed(dispatcher):
 
     assert handler is ChatMemberUpdatedHandler
     assert parsed.chat.id == -99
+
+
+# --- the eight that parsed into types which did not exist -------------------
+#
+# Each of these routed an update to `pyrogram.types.X._parse`, where X was never
+# ported. AttributeError inside the handler worker is logged and swallowed, so
+# the only symptom was that the update type never arrived.
+
+USER = raw.types.User(id=7, first_name="Test", access_hash=0)
+CHANNEL = raw.types.Channel(
+    id=1234567890, title="Channel", photo=None, date=1700000000, access_hash=0, broadcast=True
+)
+
+
+async def test_pre_checkout_query_is_parsed(dispatcher):
+    update = raw.types.UpdateBotPrecheckoutQuery(
+        query_id=1,
+        user_id=7,
+        payload=b"order-1",
+        currency="XTR",
+        total_amount=100,
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is PreCheckoutQueryHandler
+    assert parsed.id == "1"
+    assert parsed.invoice_payload == "order-1"
+    assert parsed.total_amount == 100
+
+
+async def test_a_pre_checkout_payload_that_is_not_text_stays_bytes(dispatcher):
+    # Decoding with errors="ignore" would corrupt a binary payload, and the
+    # answer has to echo it back exactly.
+    update = raw.types.UpdateBotPrecheckoutQuery(
+        query_id=1, user_id=7, payload=b"\xff\xfe", currency="XTR", total_amount=1
+    )
+
+    parsed, _handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert parsed.invoice_payload == b"\xff\xfe"
+
+
+async def test_shipping_query_is_parsed(dispatcher):
+    update = raw.types.UpdateBotShippingQuery(
+        query_id=2,
+        user_id=7,
+        payload=b"ship-1",
+        shipping_address=raw.types.PostAddress(
+            street_line1="1 Road",
+            street_line2="",
+            city="Town",
+            state="",
+            country_iso2="GB",
+            post_code="AA1 1AA",
+        ),
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is ShippingQueryHandler
+    assert parsed.invoice_payload == "ship-1"
+    assert parsed.shipping_address.city == "Town"
+
+
+async def test_message_reaction_update_is_parsed(dispatcher):
+    update = raw.types.UpdateBotMessageReaction(
+        peer=raw.types.PeerUser(user_id=7),
+        msg_id=5,
+        date=1700000000,
+        actor=raw.types.PeerUser(user_id=7),
+        old_reactions=[],
+        new_reactions=[raw.types.ReactionEmoji(emoticon="👍")],
+        qts=1,
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is MessageReactionHandler
+    assert parsed.message_id == 5
+    assert [reaction.emoji for reaction in parsed.new_reaction] == ["👍"]
+
+
+async def test_message_reaction_count_update_is_parsed(dispatcher):
+    update = raw.types.UpdateBotMessageReactions(
+        peer=raw.types.PeerChannel(channel_id=1234567890),
+        msg_id=5,
+        date=1700000000,
+        reactions=[
+            raw.types.ReactionCount(reaction=raw.types.ReactionEmoji(emoticon="🔥"), count=3)
+        ],
+        qts=1,
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, chats={1234567890: CHANNEL})
+
+    assert handler is MessageReactionCountHandler
+    assert parsed.reactions[0].count == 3
+
+
+async def test_chat_boost_update_is_parsed(dispatcher):
+    update = raw.types.UpdateBotChatBoost(
+        peer=raw.types.PeerChannel(channel_id=1234567890),
+        boost=raw.types.Boost(id="b1", date=1700000000, expires=1800000000, user_id=7),
+        qts=1,
+    )
+
+    parsed, handler = await dispatch(
+        dispatcher, update, users={7: USER}, chats={1234567890: CHANNEL}
+    )
+
+    assert handler is ChatBoostHandler
+    assert parsed.chat.id == -1001234567890
+    assert parsed.boost.id == "b1"
+
+
+async def test_purchased_paid_media_update_is_parsed(dispatcher):
+    update = raw.types.UpdateBotPurchasedPaidMedia(payload="paid-1", user_id=7, qts=1)
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is PurchasedPaidMediaHandler
+    assert parsed.payload == "paid-1"
+    assert parsed.from_user.id == 7
+
+
+async def test_business_connection_update_is_parsed(dispatcher):
+    update = raw.types.UpdateBotBusinessConnect(
+        connection=raw.types.BotBusinessConnection(
+            connection_id="c1", user_id=7, dc_id=2, date=1700000000
+        ),
+        qts=1,
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is BusinessConnectionHandler
+    assert parsed.id == "c1"
+    assert parsed.is_enabled is True

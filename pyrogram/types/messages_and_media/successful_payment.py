@@ -50,7 +50,7 @@ class SuccessfulPayment(Object):
         shipping_option_id (``str``, *optional*):
             Identifier of the shipping option chosen by the user. Only available to the bot that received the payment.
 
-        payment_info (:obj:`~pyrogram.types.PaymentInfo`, *optional*):
+        payment_info (:obj:`~pyrogram.types.OrderInfo`, *optional*):
             Payment information provided by the user. Only available to the bot that received the payment.
 
         is_recurring (``bool``, *optional*):

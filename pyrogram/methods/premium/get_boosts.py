@@ -46,7 +46,7 @@ class GetBoosts:
         chats = {i.id: i for i in r.chats}
 
         return await types.List(
-            types.MyBoost._parse(
+            await types.MyBoost._parse(
                 self,
                 boost,
                 users,

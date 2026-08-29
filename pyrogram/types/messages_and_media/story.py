@@ -999,7 +999,7 @@ class Story(Object, Update):
                 Users will receive a notification with no sound.
 
         Returns:
-            On success, a :obj:`~pyrogram.types.Messages` object is returned containing all the
+            On success, a :obj:`~pyrogram.types.List` object is returned containing all the
             single messages sent.
 
         Raises:

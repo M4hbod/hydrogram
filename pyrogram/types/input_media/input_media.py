@@ -42,7 +42,10 @@ class InputMedia(Object):
 
     def __init__(
         self,
-        media: str | BinaryIO,
+        # Optional on the base because not every kind carries a file: a location,
+        # a venue and a contact are InputMedia with nothing to upload. The kinds
+        # that do carry one make it required in their own signature.
+        media: str | BinaryIO | None = None,
         caption: str = "",
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[MessageEntity] | None = None,

@@ -429,7 +429,7 @@ class Message(Object, Update):
         video_chat_ended (:obj:`~pyrogram.types.VideoChatEnded`, *optional*):
             Service message: the voice chat has ended.
 
-        video_chat_members_invited (:obj:`~pyrogram.types.VoiceChatParticipantsInvited`, *optional*):
+        video_chat_members_invited (:obj:`~pyrogram.types.VideoChatMembersInvited`, *optional*):
             Service message: new members were invited to the voice chat.
 
         phone_call_started (:obj:`~pyrogram.types.PhoneCallStarted`, *optional*):
@@ -574,7 +574,7 @@ class Message(Object, Update):
         chat_has_protected_content_toggled (:obj:`~pyrogram.types.ChatHasProtectedContentToggled`, *optional*):
             Service message: An ``has_protected_content`` setting was changed or request to change it was rejected in a chat.
 
-        chat_has_protected_content_disable_requested (:obj:`~pyrogram.types.ChatProtectedContentDisableRequested`, *optional*):
+        chat_has_protected_content_disable_requested (:obj:`~pyrogram.types.Chat`, *optional*):
             Service message: An process requested to disable ``has_protected_content`` in a chat.
 
         business_connection_id (``str``, *optional*):
@@ -3609,7 +3609,7 @@ class Message(Object, Update):
                 Description of the message to reply to.
 
         Returns:
-            On success, a :obj:`~pyrogram.types.Messages` object is returned containing all the
+            On success, a :obj:`~pyrogram.types.List` object is returned containing all the
             single messages sent.
 
         Raises:

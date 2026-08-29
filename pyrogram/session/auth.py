@@ -196,7 +196,7 @@ class Auth:
 
                 retry_id = 0
 
-                data = raw.types.ClientDHInnerData(
+                data = raw.pyrogram.ClientDHInnerData(
                     nonce=nonce, server_nonce=server_nonce, retry_id=retry_id, g_b=g_b
                 ).write()
 
