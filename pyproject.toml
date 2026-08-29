@@ -8,6 +8,11 @@ readme = "README.md"
 license = "LGPL-3.0-or-later"
 requires-python = ">=3.9"
 classifiers = [
+    # PyPI refuses an upload carrying this classifier. The distribution name is
+    # "Pyrogram" because the import name has to be `pyrogram` for py-tgcalls and
+    # pykeyboard, and that name belongs to the archived original on PyPI -- so
+    # this fork is installed from git and never published.
+    "Private :: Do Not Upload",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Natural Language :: English",
@@ -65,6 +70,7 @@ dev = [
     "lxml>=5.3.2",
     "requests>=2.32.0",
     "hatchling>=1.27.0",
+    "ty>=0.0.1a1",
 ]
 
 [tool.pytest.ini_options]
@@ -125,7 +131,7 @@ package = "pyrogram"
 filename = "NEWS.rst"
 directory = "news/"
 template = "news/.template.rst.jinja2"
-issue_format = "`#{issue} <https://github.com/pyrogram/pyrogram/issues/{issue}>`_"
+issue_format = "`#{issue} <https://github.com/M4hbod/hydrogram/issues/{issue}>`_"
 
 [[tool.towncrier.section]]
 path = ""
@@ -154,3 +160,10 @@ showcontent = true
 directory = "misc"
 name = "Misc"
 showcontent = true
+
+[tool.ty.src]
+# pyrogram/raw/ and the generated exception tree come out of `make api`; a type
+# finding there is a bug in the compiler templates, not something a contributor
+# can fix in a PR, and they are covered structurally by the round-trip and
+# constructor-ID tests instead.
+exclude = ["pyrogram/raw", "pyrogram/errors/exceptions"]

@@ -1,1 +1,0 @@
-Defer loop obtaining to when it's actually used.

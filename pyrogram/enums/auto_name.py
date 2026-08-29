@@ -21,8 +21,12 @@ from enum import Enum
 
 
 class AutoName(Enum):
-    def _generate_next_value_(self, *args):
-        return self.lower()
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):
+        # Enum passes the member's *name* here, not an instance -- naming the
+        # first parameter `self` reads as a method and is what made the type
+        # checker complain about `self.lower()`.
+        return name.lower()
 
     def __repr__(self):
         return f"pyrogram.enums.{self}"

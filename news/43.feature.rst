@@ -1,1 +1,0 @@
-Added the `transfer_chat_ownershipt` method to the `Client`. This method allows the owner of a chat to transfer ownership to another user.

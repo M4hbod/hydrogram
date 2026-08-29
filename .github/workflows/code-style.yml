@@ -27,3 +27,10 @@ jobs:
       # TOML/YAML and NEWS-fragment checks.
       - name: Run pre-commit
         run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      # A ratchet, not a gate on a clean tree: most findings are resolve_peer
+      # returning a union of input peers where a raw constructor wants one
+      # specific kind, which is right at runtime and wrong in the annotations.
+      # New code may not add to the count; see dev_tools/type_ratchet.py.
+      - name: Type ratchet
+        run: uv run python dev_tools/type_ratchet.py

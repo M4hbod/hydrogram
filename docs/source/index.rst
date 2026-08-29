@@ -103,7 +103,7 @@ Meta
     - :doc:`Pyrogram FAQ <faq/index>`: Answers to common Pyrogram questions.
     - :doc:`Support Pyrogram <support>`: Ways to show your appreciation.
     - :doc:`Release Notes <releases>`: Release notes for Pyrogram releases.
-    - :doc:`Pyrogram vs Pyrogram <pyrogram-vs-pyrogram>`: Comparison between Pyrogram and Pyrogram.
+    - :doc:`What this fork changes <fork-differences>`: How this fork differs from Hydrogram and Pyrogram.
 
 .. toctree::
     :hidden:
@@ -111,6 +111,7 @@ Meta
 
     intro/quickstart
     intro/install
+    fork-differences
 
 .. toctree::
     :hidden:
@@ -165,7 +166,6 @@ Meta
     faq/index
     support
     releases
-    pyrogram-vs-pyrogram
 
 .. toctree::
     :hidden:

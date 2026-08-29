@@ -430,16 +430,21 @@ normal handler pipeline.
 Verified live: rewind the stored `pts` by six, call `recover_gaps`, watch the
 server fill the gap and the counter catch back up.
 
-### Stage 6 — release hardening — **PARTIALLY DONE 2026-08-29**
+### Stage 6 — release hardening — **DONE 2026-08-29**
 
-1. **Version → `3.0.0`** — done. Verified against `py-tgcalls` 2.3.3, which declares
-   `pyrogram>=1.2.20`: a floor, not a ceiling, so the old `2.0.106` pin was never a ceiling either.
-2. **Docs** — the generated API pages under `docs/source/api/**` need regenerating for the 441-method
-   surface (`make docs`). Not done.
-3. **Type gate** — `ty`/`mypy` in CI on a subset. Not done.
-4. **PyPI name** — the owner's decision. `pyrogram` belongs to the archived original, so this fork
-   publishes under a name we own or stays a git install, which is what it is today.
-5. **Tag and release notes** — `towncrier` fragments are in `news/` and ready to build.
+1. **Version `3.0.0`** — done. `py-tgcalls` declares `pyrogram>=1.2.20`, a floor rather than a
+   ceiling.
+2. **Docs** — the generated pages are now derived from the package by
+   `compiler/docs/compiler.py` rather than from three hand-written lists, which had drifted 71
+   methods and 128 types behind. 436 method, 395 type and 111 bound-method pages;
+   `sphinx-build` is warning-clean. `hydrogram-vs-pyrogram.rst` was an orphan titled "Pyrogram vs
+   Pyrogram"; it is now `fork-differences.rst`, in the toctree, and says what actually differs.
+3. **Type gate** — `ty` as a ratchet (`make types`), wired into `code-style.yml`. A gate on a
+   clean tree was not available: 3479 findings, most of them `resolve_peer` returning a union of
+   input peers where a raw constructor wants one kind.
+4. **PyPI** — decided: never published. `Private :: Do Not Upload` is in the classifiers so an
+   accidental `twine upload` fails.
+5. **Changelog** — 48 fragments built into `NEWS.rst` under 3.0.0, tagged `v3.0.0`.
 
 ## Sequencing notes
 

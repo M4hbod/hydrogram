@@ -13,35 +13,93 @@ to apply only a valid value among the expected ones.
 .. autosummary::
     :nosignatures:
 
+    BlockList
+    BusinessSchedule
+    ButtonStyle
     ChatAction
     ChatEventAction
+    ChatJoinRequestQueryResult
+    ChatJoinType
     ChatMemberStatus
     ChatMembersFilter
+    ChatPhotoStickerType
     ChatType
+    ClientPlatform
+    FolderColor
+    GiftAttributeType
+    GiftForResaleOrder
+    GiftPurchaseOfferState
+    GiftType
+    MaskPointType
+    MediaAreaType
     MessageEntityType
     MessageMediaType
+    MessageOriginType
     MessageServiceType
     MessagesFilter
-    ParseMode
-    PollType
-    SentCodeType
     NextCodeType
+    PaidReactionPrivacy
+    ParseMode
+    PaymentFormType
+    PhoneCallDiscardReason
+    PhoneNumberCodeType
+    PollType
+    PrivacyKey
+    PrivacyRuleType
+    ProfileTab
+    ProxyScheme
+    SentCodeType
+    StickerType
+    StoriesPrivacyRules
+    SuggestedPostRefundReason
+    SuggestedPostState
+    TopChatCategory
+    UpgradedGiftOrigin
     UserStatus
 
 .. toctree::
     :hidden:
 
+    BlockList
+    BusinessSchedule
+    ButtonStyle
     ChatAction
     ChatEventAction
+    ChatJoinRequestQueryResult
+    ChatJoinType
     ChatMemberStatus
     ChatMembersFilter
+    ChatPhotoStickerType
     ChatType
+    ClientPlatform
+    FolderColor
+    GiftAttributeType
+    GiftForResaleOrder
+    GiftPurchaseOfferState
+    GiftType
+    MaskPointType
+    MediaAreaType
     MessageEntityType
     MessageMediaType
+    MessageOriginType
     MessageServiceType
     MessagesFilter
-    ParseMode
-    PollType
-    SentCodeType
     NextCodeType
+    PaidReactionPrivacy
+    ParseMode
+    PaymentFormType
+    PhoneCallDiscardReason
+    PhoneNumberCodeType
+    PollType
+    PrivacyKey
+    PrivacyRuleType
+    ProfileTab
+    ProxyScheme
+    SentCodeType
+    StickerType
+    StoriesPrivacyRules
+    SuggestedPostRefundReason
+    SuggestedPostState
+    TopChatCategory
+    UpgradedGiftOrigin
     UserStatus

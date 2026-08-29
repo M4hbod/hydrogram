@@ -15,6 +15,413 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0 (2026-08-29)
+===================
+
+Features
+--------
+
+- Added the `transfer_chat_ownershipt` method to the `Client`. This method allows the owner of a chat to transfer ownership to another user.
+  `#43 <https://github.com/M4hbod/hydrogram/issues/43>`_
+- 22 filters are added: ``admin``, ``business``, ``chat_shared``, ``direct``,
+  ``ephemeral``, ``forum``, ``gift``, ``gift_code``, ``gift_offer``,
+  ``gift_offer_accepted``, ``gift_offer_rejected``, ``giveaway``,
+  ``giveaway_winners``, ``live_location``, ``paid_message``, ``quote``,
+  ``self_destruction``, ``sender_chat``, ``story``, ``successful_payment``,
+  ``topic`` and ``users_shared``. ``Chat`` gains ``is_admin``, which ``admin``
+  reads.
+
+- 96 types are added, closing the gap with Kurigram's type surface: privacy rules
+  and ``GlobalPrivacySettings``, payment forms and credentials, gift collections,
+  upgrades and craft results, business intro/hours/recipients, active sessions and
+  authentication settings, chat folder invite links, group call members, boost
+  status, story views, and the reply-keyboard request buttons. 66 of them were
+  already named by shipped methods, which would have raised ``AttributeError`` on
+  use.
+
+- :obj:`~pyrogram.types.Message` now parses everything layer 229 can send. Attributes go from 79 to
+  168, handled service actions from 18 to 67, and handled media types from 9 to 16 - checklists, paid
+  media, suggested posts, business messages, giveaways, stories, gifts, boosts, reactions and the
+  rest. 133 supporting types were added, along with the enum members they need
+  (``MessageServiceType`` alone gains 53).
+
+  ``Client`` gains ``fetch_replies``, ``fetch_topics``, ``fetch_stories`` and ``topic_cache_size``.
+  ``fetch_topics`` and ``fetch_stories`` default to ``False`` until the chats and stories method
+  groups land, because the paths they gate call methods that do not exist yet.
+
+- Added 16 update handlers and their decorators: ``on_story``, ``on_message_reaction``,
+  ``on_message_reaction_count``, ``on_chat_boost``, ``on_business_message``,
+  ``on_edited_business_message``, ``on_deleted_business_messages``, ``on_business_connection``,
+  ``on_pre_checkout_query``, ``on_shipping_query``, ``on_purchased_paid_media``, ``on_guest_message``,
+  ``on_managed_bot``, ``on_connect``, ``on_start`` and ``on_stop``.
+
+  The dispatcher was updated to route them, and ``add_handler``/``remove_handler`` now recognise the
+  four lifecycle handlers (start, stop, connect, disconnect), which are invoked by the dispatcher and
+  the session rather than by the routing table.
+
+  Also added six ``users`` methods: :meth:`~pyrogram.Client.check_username`,
+  :meth:`~pyrogram.Client.get_chat_audios`, :meth:`~pyrogram.Client.get_chat_audios_count`,
+  :meth:`~pyrogram.Client.set_personal_channel`, :meth:`~pyrogram.Client.update_birthday` and
+  :meth:`~pyrogram.Client.update_status`.
+
+- Added 28 enums, taking the public set from 15 to 43: ``BlockList``, ``BusinessSchedule``,
+  ``ChatJoinRequestQueryResult``, ``ChatJoinType``, ``ChatPhotoStickerType``, ``ClientPlatform``,
+  ``FolderColor``, ``GiftAttributeType``, ``GiftForResaleOrder``, ``GiftPurchaseOfferState``,
+  ``GiftType``, ``MaskPointType``, ``MediaAreaType``, ``MessageOriginType``, ``PaidReactionPrivacy``,
+  ``PaymentFormType``, ``PhoneCallDiscardReason``, ``PhoneNumberCodeType``, ``PrivacyKey``,
+  ``PrivacyRuleType``, ``ProfileTab``, ``ProxyScheme``, ``StickerType``, ``StoriesPrivacyRules``,
+  ``SuggestedPostRefundReason``, ``SuggestedPostState``, ``TopChatCategory`` and
+  ``UpgradedGiftOrigin``.
+
+  These are the value types the remaining API-surface work depends on. Enum member names and values
+  are now frozen by a snapshot test, since renaming either is a breaking change nothing else would
+  catch.
+
+- Added 44 methods across five groups.
+
+  **chats (36)** - chat folders (create, edit, delete, reorder, join, leave, invite links, tags),
+  direct-message topics, forum topic pin/unpin and toggling, accent and profile colours, chat TTL,
+  discussion and direct-message groups, member tags, similar and personal channels, top chats,
+  per-chat notification settings, and message reaction deletion.
+
+  **contacts (3)** - :meth:`~pyrogram.Client.search_contacts`,
+  :meth:`~pyrogram.Client.set_contact_note`, :meth:`~pyrogram.Client.get_blocked_message_senders`.
+
+  **premium (3)** - :meth:`~pyrogram.Client.apply_boost`, :meth:`~pyrogram.Client.get_boosts`,
+  :meth:`~pyrogram.Client.get_boosts_status`.
+
+  **phone (1)** - :meth:`~pyrogram.Client.get_call_members`.
+
+  **folders (1)** - :meth:`~pyrogram.Client.check_chat_folder_invite_link`, in a new ``folders``
+  method group.
+
+- Added :obj:`~pyrogram.types.ReplyParameters` and :obj:`~pyrogram.types.LinkPreviewOptions`, the
+  parameter objects that replace the flat ``reply_to_message_id`` and ``disable_web_page_preview``
+  arguments in the Bot API 7 model.
+
+  They are the prerequisite for that migration rather than the migration itself: the send and edit
+  methods still take the flat parameters for now. ``ReplyParameters`` expresses the combinations the
+  flat argument could not -- quoting a substring with a position, replying to a story, an ephemeral
+  message, a checklist task or a poll option -- and ``LinkPreviewOptions`` can choose a preview's URL
+  and size instead of only switching it off.
+
+- Added the 31 shared value types that the remaining API-surface work depends on: the gift cluster
+  (:obj:`~pyrogram.types.Gift`, :obj:`~pyrogram.types.GiftAttribute`,
+  :obj:`~pyrogram.types.GiftAuction`, the auction states, resale prices, purchase limits and upgraded
+  gift rarities), :obj:`~pyrogram.types.Folder` and :obj:`~pyrogram.types.FolderInviteLink`,
+  :obj:`~pyrogram.types.Invoice` and :obj:`~pyrogram.types.LabeledPrice`,
+  :obj:`~pyrogram.types.SuggestedPostParameters` with its price variants,
+  :obj:`~pyrogram.types.FormattedText` and :obj:`~pyrogram.types.Birthday`.
+
+  ``utils.parse_text_with_entities`` was added alongside them - the read-side counterpart to
+  ``parse_text_entities``, turning a received ``TextWithEntities`` into text plus high-level entities.
+
+- Added the ``skip_updates`` client option. It defaults to ``True``, dropping updates that queued
+  while the client was offline; pass ``False`` to receive them on connect. The ported dispatcher
+  requires it.
+
+- Added the remaining 154 methods, taking the public ``Client`` surface from 285 to 441 and closing
+  the gap with Kurigram.
+
+  **payments (44)** - gifts, stars, auctions, resale, gift collections, invoices, payment forms, star
+  subscriptions and TON balances.
+  **messages (41)** - checklists, paid media, paid reactions, scheduled messages, post search,
+  translation, AI compose, web-app links, drafts, read/view marking and forwarding of media groups.
+  **bots (27)** - invoices and invoice links, pre-checkout and shipping answers, bot info and name
+  management, managed bots, ephemeral message editing, star payment refunds.
+  **stories (21)** - send, edit, delete, forward and copy stories; pin, hide and read them; stealth
+  mode and view lists.
+  **account (10)** - privacy rules and keys, global privacy settings, account and session TTLs,
+  profile audio.
+  **auth (6)** - active sessions, session reset, phone-number change and code resending.
+  **business (5)** - business connections, account gifts, star balance and transfers.
+
+- New ``Client.recover_gaps()``: fetch the updates that arrived while the client
+  was offline and feed them through the normal handler pipeline. ``Client`` now
+  remembers each chat's update counters in an ``update_state`` table, which
+  ``skip_updates=False`` catches up from at start and again whenever the updates
+  watchdog fires. ``skip_updates=False`` previously raised ``AttributeError``: the
+  dispatcher already called ``recover_gaps``, and the method did not exist.
+
+- New ``Client.set_bot_profile_photo()``: set, replace or remove the profile photo
+  or video of a bot you own.
+
+- New ``pyrogram.crypto.faketls`` and
+  ``pyrogram.connection.transport.tcp.faketls_records``: the ClientHello an ``ee``
+  MTProxy secret is greeted with, and the TLS record layer the stream is cut into
+  afterwards. The proxy's answer is authenticated against the secret, so a censor
+  answering the greeting in its place is rejected rather than trusted.
+
+- The ``proxy`` dict is validated when the ``Client`` is built rather than on the
+  first connection attempt: an unknown scheme, a missing ``hostname``/``port``, or
+  a secret that does not decode now raises ``ValueError`` immediately.
+
+- The send, edit, copy and forward methods gain the layer-229 parameters they were
+  missing: ``business_connection_id``, ``allow_paid_broadcast``,
+  ``paid_message_star_count``, ``effect_id``, ``direct_messages_topic_id``,
+  ``suggested_post_parameters``, ``repeat_period``, and ``receiver_user_id`` /
+  ``callback_query_id`` for ephemeral messages. ``Client.invoke()`` takes
+  ``business_connection_id`` and routes the request to the connection's own data
+  centre; ``Client.get_session()`` is the reusable session lookup that makes that
+  possible. The bound methods on ``Message`` and ``Story`` pass them through.
+
+- Updated the MTProto API schema to layer 229.
+
+  Keyboard buttons were redesigned in this layer: the eighteen flat ``= KeyboardButton;``
+  constructors are replaced by two base types -- ``keyboardButton`` for reply keyboards and a new
+  ``keyboardInlineButton`` for inline ones -- each carrying the kind in a discriminator union
+  (``ButtonType`` and ``InlineButtonType``). The public :obj:`~pyrogram.types.InlineKeyboardButton`
+  and :obj:`~pyrogram.types.KeyboardButton` API is unchanged, and ``style`` /
+  ``icon_custom_emoji_id`` behave exactly as before.
+
+  :obj:`~pyrogram.types.InlineKeyboardButton` also gains ``copy_text``, ``pay``, ``disabled`` and
+  ``requires_password``, which the new union makes reachable. Button kinds that previously had no
+  ``read()`` branch -- and so disappeared silently from parsed markup -- are now all handled.
+
+- ``BaseStorage`` gains ``get_update_states``, ``set_update_state`` and
+  ``delete_update_state``, and a ``UpdateState`` record to go with them. Custom
+  storage engines must implement all three. SQLite session files are migrated to
+  schema version 4 on open; nothing has to be done by hand.
+
+- ``Client.send_reaction`` reacts to stories, via ``story_id``, and accepts custom
+  emoji ids and lists of reactions as well as a single emoji string. ``Story.react``
+  depended on the story path and raised ``TypeError`` without it.
+
+- ``Client`` speaks Telegram's own MTProxy transport. Pass
+  ``proxy=dict(scheme="mtproxy", hostname=..., port=..., secret=...)`` -- or the
+  ``tg://proxy?...`` / ``https://t.me/proxy?...`` link itself, which is parsed
+  into one. Plain 16-byte, ``dd`` (random padding) and ``ee`` (fake-TLS) secrets
+  are all accepted, in hex or base64, and the secret picks the framing:
+  ``TCPIntermediatePadded`` for a padded secret, ``TCPAbridgedO`` for a plain one.
+  A ``tg://socks?...`` link is accepted for SOCKS5 the same way.
+
+- ``Message`` gains 18 members: ``reply_dice``, ``reply_invoice``,
+  ``reply_paid_media``, ``reply_checklist``, ``reply_rich``, ``edit_checklist``,
+  ``edit_live_location``, ``stop_live_location``, ``copy_media_group``, ``read``,
+  ``view``, ``summarize``, ``pay``, ``accept_gift_purchase_offer``,
+  ``reject_gift_purchase_offer``, and the ``content``, ``html_text`` and
+  ``md_text`` properties. Every ``reply_*`` also answers to ``answer_*``, the Bot
+  API spelling -- the same method object under both names, not a second
+  implementation. Kurigram's deprecated ``forward_from`` family is deliberately
+  not ported; ``forward_origin`` carries the same information.
+
+- ``send_poll`` takes ``allows_revoting``, ``shuffle_options``,
+  ``hide_results_until_closes``, ``members_only``, ``allow_adding_options``,
+  ``country_codes`` and ``correct_option_ids``. ``send_location`` sends live
+  locations through ``live_period``, ``heading`` and ``proximity_alert_radius``.
+  ``send_video`` takes ``video_cover`` and ``video_start_timestamp``,
+  ``send_voice`` takes ``waveform``, ``send_sticker`` takes ``emoji``, and
+  ``send_photo``/``send_video``/``send_video_note``/``send_voice`` take
+  ``view_once``. ``get_chat_history`` takes ``reverse``, ``max_id`` and ``min_id``;
+  ``get_chat`` takes ``force_full``; the search methods take date and id bounds and
+  the ``users_only``/``groups_only``/``channels_only`` filters.
+
+
+
+Bugfixes
+--------
+
+- Fixes a bug that caused the chat parser to return `ChatForbidden` or `ChannelForbidden` which caused some methods like `get_chat_history` to throw `AttributeError`.
+  `#45 <https://github.com/M4hbod/hydrogram/issues/45>`_
+- 13 bound methods raised ``TypeError`` on every call. Each passed keywords its
+  client method does not accept -- all eleven ``Story.reply_*`` shortcuts, plus
+  ``Story.react`` and two new ``Message`` ones -- because the bound methods were
+  ported with Kurigram's signatures while the client methods stayed behind. The
+  parameters that could not work are gone from both the call and the signature,
+  and ``tests/contract/test_bound_method_delegation.py`` now walks every
+  ``self._client.X(...)`` in the type tree and fails when a keyword is not in
+  ``Client.X``'s signature.
+
+- :meth:`Chat._parse_chat` now returns ``None`` for a missing peer instead of raising
+  ``AttributeError``. Callers routinely look a peer up in the ``users``/``chats`` maps that arrive
+  with an update and pass the result straight in; a miss yields ``None``, which fell through to the
+  channel parser. :meth:`User._parse` already behaved this way.
+
+- :meth:`str` on a type that keeps its source MTProto object no longer dumps it. Several types
+  (:obj:`~pyrogram.types.Gift`, :obj:`~pyrogram.types.Invoice`, :obj:`~pyrogram.types.Folder`) hold
+  the raw constructor they were parsed from as an escape hatch; it is enormous, it is an
+  implementation detail, and it can carry fields the wrapper deliberately masks. ``Object.default``
+  now hides it, as it already masked ``phone_number``.
+
+- Eight update types never reached their handlers. The dispatcher routed them to
+  ``pyrogram.types.PreCheckoutQuery``, ``ShippingQuery``, ``MessageReactionUpdated``,
+  ``MessageReactionCountUpdated``, ``ChatBoostUpdated``, ``BusinessConnection``,
+  ``ManagedBotUpdated`` and ``PurchasedPaidMedia`` -- none of which existed, so the
+  ``AttributeError`` was logged and swallowed by the handler worker and
+  ``@on_pre_checkout_query`` and friends simply never fired. All eight types are
+  ported, and ``tests/contract/test_type_references.py`` now fails on any
+  ``types.X`` that hand-written code names but the package does not define.
+
+- Filters that read a field off the update no longer assume it is a ``Message``.
+  ``filters.private``/``group``/``channel`` raised ``ValueError`` on any update
+  that was not a ``Message`` or a ``CallbackQuery``, and ``incoming``/``outgoing``
+  raised ``AttributeError``; both die inside the handler worker, where they are
+  logged and swallowed, so the handler just never runs. Each field is now taken
+  only from the update types that carry it -- ``me``, ``bot``, ``incoming``,
+  ``outgoing`` and the chat-type filters work across the whole update surface and
+  simply do not match where the field is absent.
+
+- Five update parsers never reached their handlers. The dispatcher awaits whatever
+  its routing table returns, and ``user_status``, ``inline_query``,
+  ``chosen_inline_result``, ``chat_member_updated`` and ``chat_join_request`` were
+  plain functions returning a tuple -- awaiting which raises inside the handler
+  worker, where it is logged and swallowed. ``deleted_messages`` was called with
+  four arguments where ``utils.parse_deleted_messages`` takes two.
+
+- Fixed :obj:`~pyrogram.types.InlineKeyboardButton` silently dropping ``style`` and
+  ``icon_custom_emoji_id`` on buttons that use ``login_url``. ``LoginUrl.write()`` accepted no style
+  argument, so the value computed by the caller was discarded for that branch alone.
+
+- Fixed crashes parsing users, chats and messages that omit a flags-gated vector.
+  ``User._parse`` and ``Chat._parse_*`` iterated ``usernames`` and ``restriction_reason``
+  unconditionally, and ``Message`` did the same with ``entities`` - all of which are absent rather
+  than empty for the many peers and messages that have none. ``getattr(obj, "field", [])`` was also
+  used in nine places where it cannot work: the attribute exists and holds ``None``, so the default
+  never applies.
+
+- Fixed every forum-topic method and :meth:`~pyrogram.Client.transfer_chat_ownership` raising
+  ``AttributeError`` at call time. They invoked ``raw.functions.channels.*``, but Telegram moved
+  ``createForumTopic``, ``editForumTopic``, ``getForumTopics``, ``getForumTopicsByID`` and
+  ``deleteTopicHistory`` to the ``messages`` namespace (taking ``peer`` rather than ``channel``), and
+  replaced ``channels.editCreator`` with ``messages.editChatCreator``.
+
+- Fixed serialization of any TL object with an optional ``Vector`` field that had been deserialized
+  first. ``read()`` gives an absent ``flags.n?Vector<T>`` the value ``[]``, but the generated
+  ``write()`` guarded the body on ``is not None`` while the flag bit was computed by truthiness, so
+  re-serializing wrote an empty vector with no flag set - eight stray bytes that desynchronized every
+  field after it. 97 generated types were affected.
+
+- Fixed the updates watchdog and the session reconnect throttle measuring elapsed time with a wall
+  clock. Both used ``datetime.now()``, which steps at DST boundaries, on NTP corrections and when the
+  system time is set: a backward step stalled the watchdog for the length of the step and made the
+  reconnect throttle see a negative interval, so it throttled every attempt. Both now use
+  ``time.monotonic()``.
+
+  ``Session.RECONNECT_THRESHOLD`` is consequently a number of seconds (``10.0``) rather than a
+  ``timedelta``, and the throttle tests ``is not None`` rather than truthiness -- a monotonic reading
+  of ``0.0`` is legitimate and would previously have disabled the throttle.
+
+- ``@on_chat_boost`` registered a ``ShippingQueryHandler`` rather than a ``ChatBoostHandler``, so the
+  decorated callback would never have fired for a boost and would have fired for shipping queries
+  instead. The bug came in with the ported decorator and was caught by a test asserting every
+  decorator registers its own handler.
+
+- ``Client.message_cache`` is now a proper LRU guarded by a lock. It was an unlocked dict that, once
+  full, discarded *half* its contents at once - so a burst of traffic threw away entries that were
+  still in use. Access is now ``await client.message_cache.get(key)`` / ``.set(key, value)`` rather
+  than subscripting.
+
+- ``SQLiteStorage.close()`` commits before closing. SQLite rolls an open
+  transaction back on close, so anything written without an explicit commit --
+  which now includes every chat's update counters -- was discarded exactly when
+  it was needed, on the next start.
+
+- ``delete_forum_topic`` no longer swallows every exception. It caught all errors, printed them to
+  stdout and returned ``False``, so a ``FloodWait`` looked identical to "the topic was not deleted" --
+  and a caller retrying on ``False`` would hammer straight through the flood wait. Errors now
+  propagate, matching every other forum-topic method.
+
+- ``pin_forum_topic`` and ``unpin_forum_topic`` raised ``TypeError`` on every call:
+  they passed ``channel=`` to ``messages.UpdatePinnedForumTopic``, whose field is
+  ``peer``. ``tests/contract/test_raw_keywords.py`` now checks every keyword handed
+  to a raw constructor against that constructor's signature.
+
+- ``pin_forum_topic`` called ``raw.functions.channels.UpdatePinnedForumTopic``, which does not exist
+  at layer 229 - Telegram moved it to the ``messages`` namespace along with the rest of the
+  forum-topic RPCs. It would have raised ``AttributeError`` on the first call.
+
+- ``send_paid_media`` passed ``direct_messages_topic_id`` into
+  ``get_reply_to``'s ``message_thread_id`` slot, scoping the message to the wrong
+  topic. ``tests/contract/test_parameters_are_used.py`` now fails when a method
+  declares a parameter its own body never reads -- an option accepted and silently
+  dropped is worse than one that is missing.
+
+- ``send_poll`` raised ``TypeError`` on every call since the layer-229 bump:
+  ``raw.types.Poll`` gained a required ``hash`` field and the request did not pass
+  it. Parsing the reply then failed too -- ``Poll._parse`` built ``PollOption``
+  with seven fields it did not have, so any poll reaching the parser raised inside
+  the handler worker. ``PollOption`` now carries the full set (persistent id,
+  media, vote percentage, recent voters, who added the option and when).
+
+- ``types.Location`` accepts ``client``. Two inline-query parsers passed it and
+  raised ``TypeError``, which meant an inline query carrying a location never
+  reached its handler.
+
+
+
+Improved Documentation
+----------------------
+
+- Corrected the documentation for :obj:`~pyrogram.types.InlineKeyboardButton`'s ``style`` and
+  ``icon_custom_emoji_id``. Both were documented as requiring the bot owner to have Telegram Premium.
+  Verified against production Telegram from a non-Premium bot owner: ``style`` works and has no such
+  requirement, while ``icon_custom_emoji_id`` is accepted and then **silently dropped** by the server
+  -- the message sends without error and the button reads back with no icon.
+
+
+
+Deprecations and Removals
+-------------------------
+
+- **Breaking.** Dates returned by the library are now timezone-aware UTC.
+
+  :func:`~pyrogram.utils.timestamp_to_datetime` -- and therefore every date on a parsed object, such
+  as ``Message.date`` and ``Message.edit_date`` -- previously returned a *naive local* datetime while
+  :func:`~pyrogram.utils.zero_datetime` returned an aware UTC one. The two could not be compared:
+  checking a message date against the library's own default for ``until_date`` or ``offset_date``
+  raised ``TypeError: can't compare offset-naive and offset-aware datetimes``.
+
+  Telegram sends dates as Unix timestamps, which are instants rather than wall-clock readings, so the
+  aware form is the accurate one. Code that compares a message date against a naive datetime now
+  raises ``TypeError`` instead of silently working; use ``datetime.now(timezone.utc)`` in place of
+  ``datetime.now()``, or call ``.astimezone()`` on the message date to render it locally.
+
+  Datetimes *passed to* the library are unchanged: an aware one converts exactly, and a naive one is
+  still read as local time, matching ``datetime.now()``.
+
+- **Breaking.** ``reply_to_message_id`` and ``disable_web_page_preview`` are removed from every send
+  and edit method, replaced by :obj:`~pyrogram.types.ReplyParameters` and
+  :obj:`~pyrogram.types.LinkPreviewOptions`. There are no deprecation shims: passing the old names
+  raises ``TypeError``.
+
+  The exhaustive list, so the downstream sweep is a grep:
+
+  * ``reply_to_message_id=N`` becomes ``reply_parameters=ReplyParameters(message_id=N)``. Affects
+    ``send_message``, ``send_photo``, ``send_audio``, ``send_document``, ``send_sticker``,
+    ``send_video``, ``send_animation``, ``send_voice``, ``send_video_note``, ``send_location``,
+    ``send_venue``, ``send_contact``, ``send_dice``, ``send_poll``, ``send_media_group``,
+    ``send_cached_media``, ``send_game``, ``send_inline_bot_result``, ``copy_message``,
+    ``copy_media_group``, and the 18 ``Message.reply_*`` bound methods.
+  * ``disable_web_page_preview=True`` becomes
+    ``link_preview_options=LinkPreviewOptions(is_disabled=True)``. Affects ``send_message``,
+    ``edit_message_text``, ``edit_inline_text``, :obj:`~pyrogram.types.InputTextMessageContent` and
+    ``CallbackQuery.edit_message_text``.
+
+  Two things that keep the old spelling and are **not** affected: the ``Message.reply_to_message_id``
+  attribute, which describes an incoming message, and ``get_messages(reply_to_message_ids=...)``,
+  which fetches replies.
+
+  The replacements do more than the parameters they retire. ``ReplyParameters`` can quote a substring
+  at a given UTF-16 position, and can reply to a story, an ephemeral message, a checklist task or a
+  poll option. ``LinkPreviewOptions`` can choose which URL is previewed, prefer a larger or smaller
+  image, and place the preview above the text -- a message with an explicit preview URL is now sent
+  through ``messages.sendMedia`` with an ``InputMediaWebPage``, which is the only way to express it.
+
+- ``pysocks`` is replaced by ``python-socks[asyncio]``. The SOCKS and HTTP proxy
+  handshake was synchronous and ran on the event loop, blocking every other task
+  for its duration -- long enough to deadlock outright against a proxy served
+  from the same loop. Proxy failures now raise ``python_socks.ProxyError`` with
+  the reason rather than a bare ``TimeoutError``. The ``proxy`` dict is unchanged.
+
+
+
+Misc
+----
+
+- Defer loop obtaining to when it's actually used.
+  `#49 <https://github.com/M4hbod/hydrogram/issues/49>`_
+
+
 0.2.0 (2024-06-30)
 ===================
 
