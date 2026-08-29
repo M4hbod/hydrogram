@@ -430,7 +430,7 @@ normal handler pipeline.
 Verified live: rewind the stored `pts` by six, call `recover_gaps`, watch the
 server fill the gap and the counter catch back up.
 
-### Stage 6 — release hardening — **DONE 2026-08-29**
+### Stage 6 — release hardening — **DONE 2026-08-29**, released as 3.1.0 on 2026-08-30
 
 1. **Version `3.0.0`** — done. `py-tgcalls` declares `pyrogram>=1.2.20`, a floor rather than a
    ceiling.

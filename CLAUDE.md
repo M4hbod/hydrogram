@@ -18,7 +18,7 @@ packages import it by name. Three commits exist solely to keep those working:
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
 - `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
   `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
-  not a ceiling**, so the version is now `3.0.0` and no longer pinned. Keep it `>=1.2.20`.
+  not a ceiling**, so the version is now `3.1.0` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -73,14 +73,14 @@ uv run pre-commit run --all-files    # whole-tree sweep, e.g. after a large port
 make check-api-schema          # diff local TL against Telegram's published schema
 ```
 
-## Current state (2026-08-29)
+## Current state (2026-08-30)
 
-- Branch `dev`, package `pyrogram`, `__version__` `3.0.0`.
-- TL layer **229**. Stages 0-5 of `docs/dev/UPGRADE-PLAN.md` are done; stage 6 is partial.
-- Surface: **443 public `Client` methods**, **502 types**, 43 enums, 30 handlers,
-  **121 filters**, 55 `Message` members. The method, type, enum, filter and parameter gaps with
-  Kurigram are closed bar the 39 noted below, 25 of which are deliberate.
-- Test suite: **5066 tests** across `tests/{unit,contract,integration}/`; coverage of the
+- Branch `dev`, package `pyrogram`, `__version__` `3.1.0`.
+- TL layer **229**. Every stage of `docs/dev/UPGRADE-PLAN.md` is done.
+- Surface: **445 public `Client` methods**, **397 types**, 43 enums, 30 handlers,
+  **121 filters**, 55 `Message` members. Every gap with Kurigram — methods, types, enums,
+  filters, bound methods and parameters — is closed except what is deliberate (see below).
+- Test suite: **5484 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict

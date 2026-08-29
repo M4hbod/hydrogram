@@ -15,6 +15,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.0 (2026-08-30)
+===================
+
+Features
+--------
+
+- The last thirteen parameters Kurigram had and this fork did not:
+  ``add_contact(note=)``, ``search_messages(offset_id=)``,
+  ``get_messages(pinned=, reply=)``, ``send_sticker(caption=, caption_entities=,
+  parse_mode=)``, ``send_poll(description=, description_media=,
+  explanation_media=)`` with its own ``description_parse_mode`` and
+  ``description_entities``, ``edit_message_text(rich_message=)``,
+  ``edit_inline_text(rich_message=, entities=)`` and
+  ``forward_messages(reply_parameters=)``, which forwards a message as a reply.
+
+
+
+Bugfixes
+--------
+
+- ``types.FormattedText(text=...)`` accepts a plain ``str``. It was annotated
+  ``Str`` -- the ``str`` subclass the parser hands back -- which no caller passes.
+
+
+
 3.0.0 (2026-08-29)
 ===================
 
