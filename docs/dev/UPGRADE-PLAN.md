@@ -412,6 +412,24 @@ against live.
 **Not ported:** `web_proxy_carrier.py`. It is the client half of Kurigram's own WEB relay scheme,
 which needs their relay to talk to; it is not a Telegram protocol.
 
+### Update-gap recovery — **DONE 2026-08-29**
+
+Not a numbered stage; it was on the "not done" list because it is a storage
+schema change rather than a method port. `Client.recover_gaps()` asks the server
+for everything past each chat's remembered counter and replays it through the
+normal handler pipeline.
+
+- `storage.UpdateState` plus `get_update_states` / `set_update_state` /
+  `delete_update_state` on `BaseStorage`, an `update_state` table, and a
+  version 3 → 4 migration for existing session files.
+- `Client.handle_updates` records the counters as updates arrive; `close()` now
+  commits, and the updates watchdog checkpoints every 15 minutes.
+- `skip_updates=False` was already wired to call `recover_gaps` in the
+  dispatcher and raised `AttributeError` because the method did not exist.
+
+Verified live: rewind the stored `pts` by six, call `recover_gaps`, watch the
+server fill the gap and the counter catch back up.
+
 ### Stage 6 — release hardening — **PARTIALLY DONE 2026-08-29**
 
 1. **Version → `3.0.0`** — done. Verified against `py-tgcalls` 2.3.3, which declares

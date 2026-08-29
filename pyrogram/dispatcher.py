@@ -169,9 +169,11 @@ class Dispatcher:
 
             return (parsed, EditedMessageHandler)
 
-        async def deleted_messages_parser(update, users, chats):
+        def deleted_messages_parser(update, users, chats):
+            # Sync, and it reads nothing but the update: users and chats carry
+            # no information about a message that is already gone.
             return (
-                await utils.parse_deleted_messages(self.client, update, users, chats),
+                utils.parse_deleted_messages(self.client, update),
                 DeletedMessagesHandler,
             )
 
@@ -421,11 +423,17 @@ class Dispatcher:
                 update, users, chats = packet
                 parser = self.update_parsers.get(type(update), None)
 
-                parsed_update, handler_type = (
-                    await parser(update, users, chats)
-                    if parser is not None
-                    else (None, type(None))
-                )
+                # Some parsers have something to await and some do not, and
+                # which is which changes as types are ported. Awaiting a plain
+                # function's tuple raises in here, where it is logged and
+                # swallowed -- so the update type silently stops arriving rather
+                # than failing loudly. Accept either shape instead.
+                parsed = parser(update, users, chats) if parser is not None else None
+
+                if inspect.isawaitable(parsed):
+                    parsed = await parsed
+
+                parsed_update, handler_type = parsed if parsed is not None else (None, type(None))
 
                 async with lock:
                     for group in self.groups.values():

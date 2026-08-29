@@ -56,7 +56,7 @@ from pyrogram.errors import (
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
 from pyrogram.session import Auth, Session
-from pyrogram.storage import BaseStorage, SQLiteStorage
+from pyrogram.storage import BaseStorage, SQLiteStorage, UpdateState
 from pyrogram.types import ListenerTypes, TermsOfService, User
 from pyrogram.utils import ainput
 
@@ -435,8 +435,17 @@ class Client(Methods):
             else:
                 break
 
+            # Update counters are written without a commit each, so a long-lived
+            # client checkpoints them here rather than only on a clean exit.
+            await self.storage.save()
+
             if time.monotonic() - self.last_update_time > self.UPDATES_WATCHDOG_INTERVAL:
                 await self.invoke(raw.functions.updates.GetState())
+
+                # Silence for this long usually means the update stream stalled
+                # rather than that nothing happened, so ask for what was missed.
+                if not self.skip_updates:
+                    await self.recover_gaps()
 
     async def authorize(self) -> User:
         if self.bot_token:
@@ -671,6 +680,17 @@ class Client(Methods):
 
                 pts = getattr(update, "pts", None)
                 pts_count = getattr(update, "pts_count", None)
+                qts = getattr(update, "qts", None)
+
+                if pts is not None or qts is not None:
+                    # What recover_gaps asks the server to catch up from. Only
+                    # the counters this update actually carries are written; the
+                    # storage leaves the rest of the row alone.
+                    await self.storage.set_update_state(
+                        UpdateState(
+                            utils.get_channel_id(channel_id) if channel_id else 0, pts, qts
+                        )
+                    )
 
                 if isinstance(update, raw.types.UpdateChannelTooLong):
                     log.info(update)
@@ -705,7 +725,11 @@ class Client(Methods):
                                 chats.update({c.id: c for c in diff.chats})
 
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
+
+            await self.storage.set_update_state(UpdateState(0, date=updates.date, seq=updates.seq))
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
+            await self.storage.set_update_state(UpdateState(0, pts=updates.pts, date=updates.date))
+
             diff = await self.invoke(
                 raw.functions.updates.GetDifference(
                     pts=updates.pts - updates.pts_count, date=updates.date, qts=-1

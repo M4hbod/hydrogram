@@ -142,3 +142,34 @@ def test_lifecycle_callbacks_are_actually_invoked(name, attribute, module):
     """Registered but never called is the failure this catches."""
     source = inspect.getsource(importlib.import_module(module))
     assert f"{attribute}(" in source, f"{attribute} is stored but never invoked in {module}"
+
+
+async def test_every_update_parser_returns_a_parsed_update_and_a_handler():
+    """The routing table's contract, whether or not a parser is a coroutine.
+
+    The dispatcher used to await every parser unconditionally, so the five that
+    were written as plain functions raised inside the handler worker -- logged
+    and swallowed, which meant those update types silently never arrived. The
+    call site accepts either shape now; this pins the part that must not vary.
+    """
+    dispatcher = Dispatcher(pyrogram.Client("test", api_id=1, api_hash="x", in_memory=True))
+
+    for parser in set(dispatcher.update_parsers.values()):
+        source = inspect.getsource(parser)
+
+        assert "Handler," in source or "Handler)" in source, parser.__name__
+
+
+async def test_every_update_parser_takes_update_users_chats():
+    """The routing table is called with exactly three positional arguments."""
+    dispatcher = Dispatcher(pyrogram.Client("test", api_id=1, api_hash="x", in_memory=True))
+
+    wrong_arity = {}
+
+    for parser in set(dispatcher.update_parsers.values()):
+        parameters = list(inspect.signature(parser).parameters)
+
+        if parameters != ["update", "users", "chats"]:
+            wrong_arity[parser.__name__] = parameters
+
+    assert wrong_arity == {}

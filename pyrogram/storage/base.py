@@ -22,11 +22,32 @@ from __future__ import annotations
 import base64
 import struct
 from abc import ABC, abstractmethod
-from typing import Union
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Union
 
 from pyrogram import raw
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 InputPeer = Union[raw.types.InputPeerUser, raw.types.InputPeerChat, raw.types.InputPeerChannel]
+
+
+@dataclass(frozen=True)
+class UpdateState:
+    """How far through the update sequence a chat was when we last saw it.
+
+    Telegram numbers updates per chat rather than globally, so catching up after
+    being offline means asking for the difference from a remembered counter.
+    ``id`` is the chat, or ``0`` for the account-wide sequence. Every other
+    field may be ``None``, meaning "unknown, leave whatever is stored alone".
+    """
+
+    id: int
+    pts: int | None = None
+    qts: int | None = None
+    date: int | None = None
+    seq: int | None = None
 
 
 class BaseStorage(ABC):
@@ -115,6 +136,30 @@ class BaseStorage(ABC):
         Returns:
             :obj:`~pyrogram.storage.base.InputPeer`: The retrieved peer.
         """
+        ...
+
+    @abstractmethod
+    async def get_update_states(self, ids: int | Iterable[int] | None = None) -> list[UpdateState]:
+        """Return the stored update states, oldest first.
+
+        Parameters:
+            ids (``int`` | Iterable of ``int``, *optional*):
+                Restrict the result to these chat ids. All of them when omitted.
+        """
+        ...
+
+    @abstractmethod
+    async def set_update_state(self, update_state: UpdateState | Iterable[UpdateState]) -> None:
+        """Store one or more update states.
+
+        A ``None`` field leaves the stored value alone rather than clearing it,
+        because an update carries only the counters it advances.
+        """
+        ...
+
+    @abstractmethod
+    async def delete_update_state(self, state_id: int | Iterable[int]) -> None:
+        """Forget the update state of one or more chats."""
         ...
 
     @abstractmethod

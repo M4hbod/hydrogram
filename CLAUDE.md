@@ -79,8 +79,8 @@ make check-api-schema          # diff local TL against Telegram's published sche
 - TL layer **229**. Stages 0-5 of `docs/dev/UPGRADE-PLAN.md` are done; stage 6 is partial.
 - Surface: **441 public `Client` methods**, 431 method modules, 222 type modules, 43 enums,
   30 handlers. The method gap with Kurigram is closed.
-- Test suite: **3010 tests** across `tests/{unit,contract,integration}/`; coverage of the
-  non-generated tree gated at 57 % by a ratchet in `.coveragerc`.
+- Test suite: **3048 tests** across `tests/{unit,contract,integration}/`; coverage of the
+  non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
   or a `tg://proxy` / `t.me/proxy` link.
@@ -101,6 +101,9 @@ These encode the porting hazards that actually bit, and they are cheap to run:
 - `test_raw_references.py` — every `raw.*` name resolves in the compiled layer.
 - `test_rpc_construction.py` — drives methods with a recording client, so a renamed constructor
   fails offline instead of on a live call.
+- `test_handlers_and_decorators.py` — ties each `on_x` decorator to its `Handler` and to the
+  dispatcher's routing table. A parser that raises is logged and swallowed by the handler worker,
+  so a broken one shows up as "that update type never arrives", never as an error.
 
 ### Not done
 
@@ -109,5 +112,3 @@ These encode the porting hazards that actually bit, and they are cheap to run:
   would. Plain and `dd` secrets *are* live-verified. If an `ee` proxy is ever to hand, run it.
 - **Kurigram's `web_proxy_carrier.py` is deliberately not ported.** It is the client half of their
   own WEB relay scheme, not a Telegram protocol.
-- **`advanced/recover_gaps`.** Needs an `update_state` table in SQLite storage, its accessors, and
-  a migration for existing session files. A storage schema change, not a method port.

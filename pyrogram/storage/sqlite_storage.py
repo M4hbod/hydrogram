@@ -23,14 +23,18 @@ import base64
 import logging
 import struct
 import time
+from itertools import starmap
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiosqlite
 
 from pyrogram import raw, utils
 
-from .base import BaseStorage, InputPeer
+from .base import BaseStorage, InputPeer, UpdateState
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 SCHEMA = """
 CREATE TABLE sessions
@@ -73,6 +77,19 @@ BEGIN
 END;
 """
 
+# Kept apart from SCHEMA so a session file created before version 4 can be
+# brought up to date with the same statement a fresh one is created with.
+UPDATE_STATE_SCHEMA = """
+CREATE TABLE update_state
+(
+    id   INTEGER PRIMARY KEY,
+    pts  INTEGER,
+    qts  INTEGER,
+    date INTEGER,
+    seq  INTEGER
+);
+"""
+
 
 def get_input_peer(peer_id: int, access_hash: int, peer_type: str) -> InputPeer:
     if peer_type in {"user", "bot"}:
@@ -87,7 +104,7 @@ def get_input_peer(peer_id: int, access_hash: int, peer_type: str) -> InputPeer:
 
 
 class SQLiteStorage(BaseStorage):
-    VERSION = 3
+    VERSION = 4
     USERNAME_TTL = 8 * 60 * 60
     FILE_EXTENSION = ".session"
 
@@ -122,6 +139,10 @@ class SQLiteStorage(BaseStorage):
             await self.conn.execute("ALTER TABLE sessions ADD api_id INTEGER")
             version += 1
 
+        if version == 3:
+            await self.conn.executescript(UPDATE_STATE_SCHEMA)
+            version += 1
+
         await self.version(version)
         await self.conn.commit()
 
@@ -131,6 +152,7 @@ class SQLiteStorage(BaseStorage):
             return
 
         await self.conn.executescript(SCHEMA)
+        await self.conn.executescript(UPDATE_STATE_SCHEMA)
         await self.conn.execute(
             "INSERT INTO version VALUES (?)",
             (self.VERSION,),
@@ -190,8 +212,18 @@ class SQLiteStorage(BaseStorage):
         await self.conn.commit()
 
     async def close(self) -> None:
-        if self.conn:
-            await self.conn.close()
+        if not self.conn:
+            return
+
+        # sqlite rolls an open transaction back on close, and update states are
+        # written without committing each one -- so closing without this throws
+        # away everything learned since the last save.
+        try:
+            await self.conn.commit()
+        except Exception as e:
+            logging.warning("Could not flush the session before closing: %s", e)
+
+        await self.conn.close()
 
     async def delete(self) -> None:
         if self.database != ":memory:":
@@ -259,6 +291,66 @@ class SQLiteStorage(BaseStorage):
             raise KeyError(f"Phone number not found: {phone_number}")
 
         return get_input_peer(*r)
+
+    async def get_update_states(self, ids: int | Iterable[int] | None = None) -> list[UpdateState]:
+        if not self.conn:
+            logging.warning("Database connection is not available.")
+            return []
+
+        query = "SELECT id, pts, qts, date, seq FROM update_state"
+        state_ids: tuple[int, ...] = ()
+
+        if ids is not None:
+            state_ids = (ids,) if isinstance(ids, int) else tuple(ids)
+
+            if not state_ids:
+                return []
+
+            placeholders = ", ".join("?" for _ in state_ids)
+            query += f" WHERE id IN ({placeholders})"
+
+        q = await self.conn.execute(f"{query} ORDER BY date ASC", state_ids)
+
+        return list(starmap(UpdateState, await q.fetchall()))
+
+    async def set_update_state(self, update_state: UpdateState | Iterable[UpdateState]) -> None:
+        if not self.conn:
+            logging.warning("Database connection is not available.")
+            return
+
+        states = [update_state] if isinstance(update_state, UpdateState) else list(update_state)
+
+        if not states:
+            return
+
+        # COALESCE, not a plain assignment: an update carries only the counters
+        # it advances, so writing its None fields over the stored ones would
+        # throw away the parts of the state it says nothing about.
+        await self.conn.executemany(
+            "INSERT INTO update_state (id, pts, qts, date, seq) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET "
+            "pts = COALESCE(excluded.pts, update_state.pts), "
+            "qts = COALESCE(excluded.qts, update_state.qts), "
+            "date = COALESCE(excluded.date, update_state.date), "
+            "seq = COALESCE(excluded.seq, update_state.seq)",
+            [(state.id, state.pts, state.qts, state.date, state.seq) for state in states],
+        )
+
+    async def delete_update_state(self, state_id: int | Iterable[int]) -> None:
+        if not self.conn:
+            logging.warning("Database connection is not available.")
+            return
+
+        state_ids = (state_id,) if isinstance(state_id, int) else tuple(state_id)
+
+        if not state_ids:
+            return
+
+        placeholders = ", ".join("?" for _ in state_ids)
+
+        await self.conn.execute(
+            f"DELETE FROM update_state WHERE id IN ({placeholders})", state_ids
+        )
 
     async def _get(self, attr: str) -> Any:
         if not self.conn:
