@@ -66,6 +66,9 @@ class Chat(Object):
         is_forum (``bool``, *optional*):
             True, if the supergroup chat is a forum
 
+        is_admin (``bool``, *optional*):
+            True, if you have administrator rights in this chat.
+
         title (``str``, *optional*):
             Title, for supergroups, channels and basic group chats.
 
@@ -168,6 +171,7 @@ class Chat(Object):
         is_fake: bool | None = None,
         is_support: bool | None = None,
         is_forum: bool | None = None,
+        is_admin: bool | None = None,
         title: str | None = None,
         username: str | None = None,
         active_usernames: str | None = None,
@@ -204,6 +208,7 @@ class Chat(Object):
         self.is_fake = is_fake
         self.is_support = is_support
         self.is_forum = is_forum
+        self.is_admin = is_admin
         self.title = title
         self.username = username
         self.active_usernames = active_usernames
@@ -275,6 +280,7 @@ class Chat(Object):
             type=enums.ChatType.GROUP,
             title=chat.title,
             is_creator=getattr(chat, "creator", None),
+            is_admin=True if getattr(chat, "admin_rights", None) else None,
             photo=types.ChatPhoto._parse(client, getattr(chat, "photo", None), peer_id, 0),
             permissions=types.ChatPermissions._parse(getattr(chat, "default_banned_rights", None)),
             members_count=getattr(chat, "participants_count", None),
@@ -305,6 +311,7 @@ class Chat(Object):
             is_scam=channel.scam,
             is_fake=channel.fake,
             is_forum=channel.forum,
+            is_admin=True if channel.admin_rights else None,
             title=channel.title,
             username=channel.username,
             photo=types.ChatPhoto._parse(client, channel.photo, peer_id, channel.access_hash),
