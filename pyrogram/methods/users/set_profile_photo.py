@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import BinaryIO
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, types
 
 
 class SetProfilePhoto:
@@ -71,6 +71,72 @@ class SetProfilePhoto:
             await self.invoke(
                 raw.functions.photos.UploadProfilePhoto(
                     file=await self.save_file(photo), video=await self.save_file(video)
+                )
+            )
+        )
+
+
+class SetBotProfilePhoto:
+    async def set_bot_profile_photo(
+        self: pyrogram.Client,
+        bot_user_id: int | str,
+        photo: types.InputChatPhoto | None = None,
+    ) -> bool:
+        """Set the profile photo of a bot you own.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Parameters:
+            bot_user_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target bot.
+
+            photo (:obj:`~pyrogram.types.InputChatPhoto`, *optional*):
+                Profile photo to set. Pass None to remove the current one.
+
+        Returns:
+            ``bool``: True on success.
+
+        Example:
+            .. code-block:: python
+
+                # Set a new bot profile photo
+                await app.set_bot_profile_photo(
+                    "@mybot", photo=types.InputChatPhotoStatic("new_photo.jpg")
+                )
+
+                # Set a new bot profile video
+                await app.set_bot_profile_photo(
+                    "@mybot", photo=types.InputChatPhotoAnimation("new_video.mp4")
+                )
+
+                # Remove the bot's profile photo
+                await app.set_bot_profile_photo("@mybot")
+        """
+        bot = await self.resolve_peer(bot_user_id)
+
+        # Promoting a photo the bot already has is a different request from
+        # uploading a new one, and the empty id is how a photo is removed.
+        if photo is None or isinstance(photo, types.InputChatPhotoPrevious):
+            return bool(
+                await self.invoke(
+                    raw.functions.photos.UpdateProfilePhoto(
+                        id=await photo.write(self) if photo else raw.types.InputPhotoEmpty(),
+                        bot=bot,
+                    )
+                )
+            )
+
+        return bool(
+            await self.invoke(
+                raw.functions.photos.UploadProfilePhoto(
+                    bot=bot,
+                    file=await photo.write(self)
+                    if isinstance(photo, types.InputChatPhotoStatic)
+                    else None,
+                    video=await photo.write(self)
+                    if isinstance(photo, types.InputChatPhotoAnimation)
+                    else None,
+                    video_start_ts=getattr(photo, "main_frame_timestamp", None),
                 )
             )
         )

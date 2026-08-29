@@ -505,15 +505,12 @@ class Story(Object, Update):
         link_preview_options: types.LinkPreviewOptions | None = None,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
         protect_content: bool | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
         | types.ForceReply
         | None = None,
-        disable_web_page_preview: bool | None = None,
     ) -> types.Message | None:
         """Bound method *reply_text* of :obj:`~pyrogram.types.Story`.
 
@@ -555,9 +552,6 @@ class Story(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
@@ -581,11 +575,8 @@ class Story(Object, Update):
             link_preview_options=link_preview_options,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
             protect_content=protect_content,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
-            disable_web_page_preview=disable_web_page_preview,
         )
 
     reply = reply_text
@@ -604,8 +595,6 @@ class Story(Object, Update):
         file_name: str | None = None,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -677,12 +666,6 @@ class Story(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -699,12 +682,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -731,8 +708,6 @@ class Story(Object, Update):
             file_name=file_name,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -751,8 +726,6 @@ class Story(Object, Update):
         file_name: str | None = None,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -821,12 +794,6 @@ class Story(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -843,12 +810,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -874,8 +835,6 @@ class Story(Object, Update):
             file_name=file_name,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -888,7 +847,6 @@ class Story(Object, Update):
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[types.MessageEntity] | None = None,
         disable_notification: bool | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -931,9 +889,6 @@ class Story(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -953,7 +908,6 @@ class Story(Object, Update):
             parse_mode=parse_mode,
             caption_entities=caption_entities,
             disable_notification=disable_notification,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
         )
 
@@ -965,7 +919,6 @@ class Story(Object, Update):
             | types.InputMediaAudio
             | types.InputMediaDocument
         ],
-        paid_message_star_count: int | None = None,
         disable_notification: bool | None = None,
     ) -> list[types.Message]:
         """Bound method *reply_media_group* of :obj:`~pyrogram.types.Story`.
@@ -991,9 +944,6 @@ class Story(Object, Update):
                 :obj:`~pyrogram.types.InputMediaVideo` objects
                 describing photos and videos to be sent, must include 2–10 items.
 
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
@@ -1010,7 +960,6 @@ class Story(Object, Update):
             reply_parameters=types.ReplyParameters(chat_id=self.chat.id, story_id=self.id),
             media=media,
             disable_notification=disable_notification,
-            paid_message_star_count=paid_message_star_count,
         )
 
     async def reply_photo(
@@ -1021,11 +970,8 @@ class Story(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         has_spoiler: bool | None = None,
         ttl_seconds: int | None = None,
-        view_once: bool | None = None,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1076,22 +1022,12 @@ class Story(Object, Update):
                 If you set a timer, the photo will self-destruct in *ttl_seconds*
                 seconds after it was viewed.
 
-            view_once (``bool``, *optional*):
-                Self-Destruct Timer.
-                If True, the photo will self-destruct after it was viewed.
-
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
-
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1109,12 +1045,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -1135,11 +1065,8 @@ class Story(Object, Update):
             caption_entities=caption_entities,
             has_spoiler=has_spoiler,
             ttl_seconds=ttl_seconds,
-            view_once=view_once,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -1149,9 +1076,7 @@ class Story(Object, Update):
         self,
         sticker: str | BinaryIO,
         disable_notification: bool | None = None,
-        paid_message_star_count: int | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1188,14 +1113,8 @@ class Story(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
-
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1213,12 +1132,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -1235,10 +1148,8 @@ class Story(Object, Update):
             reply_parameters=types.ReplyParameters(chat_id=self.chat.id, story_id=self.id),
             sticker=sticker,
             disable_notification=disable_notification,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
             progress=progress,
             progress_args=progress_args,
         )
@@ -1251,20 +1162,15 @@ class Story(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         has_spoiler: bool | None = None,
         ttl_seconds: int | None = None,
-        view_once: bool | None = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
-        video_start_timestamp: int | None = None,
-        video_cover: str | BinaryIO | None = None,
         thumb: str | BinaryIO | None = None,
         file_name: str | None = None,
         supports_streaming: bool = True,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
         no_sound: bool | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1315,10 +1221,6 @@ class Story(Object, Update):
                 If you set a timer, the video will self-destruct in *ttl_seconds*
                 seconds after it was viewed.
 
-            view_once (``bool``, *optional*):
-                Self-Destruct Timer.
-                If True, the photo will self-destruct after it was viewed.
-
             duration (``int``, *optional*):
                 Duration of sent video in seconds.
 
@@ -1327,16 +1229,6 @@ class Story(Object, Update):
 
             height (``int``, *optional*):
                 Video height.
-
-            video_start_timestamp (``int``, *optional*):
-                Video startpoint, in seconds.
-
-            video_cover (``str`` | ``BinaryIO``, *optional*):
-                Video cover.
-                Pass a file_id as string to attach a photo that exists on the Telegram servers,
-                pass an HTTP URL as a string for Telegram to get a photo from the Internet,
-                pass a file path as string to upload a new photo that exists on your local machine, or
-                pass a binary file-like object with its attribute ".name" set for in-memory uploads.
 
             thumb (``str`` | ``BinaryIO``, *optional*):
                 Thumbnail of the video sent.
@@ -1358,15 +1250,9 @@ class Story(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
             no_sound (``bool``, *optional*):
                 Pass True, if the uploaded video is a video message with no sound.
                 Doesn't work for external links.
-
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -1384,12 +1270,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -1410,20 +1290,15 @@ class Story(Object, Update):
             caption_entities=caption_entities,
             has_spoiler=has_spoiler,
             ttl_seconds=ttl_seconds,
-            view_once=view_once,
             duration=duration,
             width=width,
             height=height,
-            video_start_timestamp=video_start_timestamp,
-            video_cover=video_cover,
             thumb=thumb,
             file_name=file_name,
             supports_streaming=supports_streaming,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
             no_sound=no_sound,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -1437,9 +1312,6 @@ class Story(Object, Update):
         thumb: str | BinaryIO | None = None,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
-        view_once: bool | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1491,16 +1363,6 @@ class Story(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
-            view_once (``bool``, *optional*):
-                Self-Destruct Timer.
-                If True, the video note will self-destruct after it was viewed.
-
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -1517,12 +1379,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -1543,9 +1399,6 @@ class Story(Object, Update):
             thumb=thumb,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
-            view_once=view_once,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -1560,9 +1413,6 @@ class Story(Object, Update):
         duration: int = 0,
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
-        repeat_period: int | None = None,
-        view_once: bool | None = None,
-        paid_message_star_count: int | None = None,
         reply_markup: types.InlineKeyboardMarkup
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
@@ -1615,16 +1465,6 @@ class Story(Object, Update):
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
-            repeat_period (``int``, *optional*):
-                Period after which the message will be sent again in seconds.
-
-            view_once (``bool``, *optional*):
-                Self-Destruct Timer.
-                If True, the voice note will self-destruct after it was listened.
-
-            paid_message_star_count (``int``, *optional*):
-                The number of Telegram Stars the user agreed to pay to send the messages.
-
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -1641,12 +1481,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
@@ -1668,9 +1502,6 @@ class Story(Object, Update):
             duration=duration,
             disable_notification=disable_notification,
             schedule_date=schedule_date,
-            repeat_period=repeat_period,
-            view_once=view_once,
-            paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
@@ -2069,12 +1900,6 @@ class Story(Object, Update):
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Other Parameters:
-            current (``int``):
-                The amount of bytes transmitted so far.
-
-            total (``int``):
-                The total size of the file.
-
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
