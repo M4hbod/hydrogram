@@ -42,7 +42,9 @@ class FormattedText(Object):
     def __init__(
         self,
         *,
-        text: Str,
+        # `Str` is a `str` subclass the parser hands back, so annotating this as
+        # `Str` rejected the plain `str` every caller actually passes.
+        text: str,
         parse_mode: enums.ParseMode | None = None,
         entities: list[types.MessageEntity] | None = None,
     ):
