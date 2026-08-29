@@ -439,10 +439,44 @@ def datetime_to_timestamp(dt: datetime | None) -> int | None:
     return int(dt.timestamp()) if dt else None
 
 
+async def ephemeral_or(
+    client: pyrogram.Client,
+    rpc,
+    receiver_user_id: int | str | None = None,
+    callback_query_id: str | None = None,
+):
+    """Re-express a send request as an ephemeral one, or hand it back unchanged.
+
+    An ephemeral message is shown to a single user in answer to a callback query
+    and is never stored in the chat, so Telegram takes it through its own
+    request rather than a flag on the usual one. The fields that survive the
+    translation are the ones ``ephemeral.SendMessage`` has; scheduling, silence,
+    forwarding protection and the paid-broadcast options do not apply to a
+    message that is never really sent to the chat.
+    """
+    if receiver_user_id is None:
+        return rpc
+
+    return raw.functions.ephemeral.SendMessage(
+        peer=rpc.peer,
+        receiver_id=await client.resolve_peer(receiver_user_id),
+        query_id=int(callback_query_id) if callback_query_id is not None else None,
+        message=getattr(rpc, "message", None) or "",
+        entities=getattr(rpc, "entities", None),
+        media=getattr(rpc, "media", None),
+        reply_markup=getattr(rpc, "reply_markup", None),
+        reply_to=getattr(rpc, "reply_to", None),
+        random_id=rpc.random_id,
+        invert_media=getattr(rpc, "invert_media", None),
+        noforwards=getattr(rpc, "noforwards", None),
+    )
+
+
 async def get_reply_to(
     client: pyrogram.Client,
     reply_parameters: types.ReplyParameters | None = None,
     message_thread_id: int | None = None,
+    direct_messages_topic_id: int | None = None,
 ) -> raw.base.InputReplyTo | None:
     """Build the ``InputReplyTo`` for a send call.
 
@@ -451,7 +485,8 @@ async def get_reply_to(
     reply", which is what every send method passes when the user did not ask for one.
 
     ``message_thread_id`` alone still produces a reply header: replying to the topic's root
-    message is how Telegram scopes a message to a forum topic.
+    message is how Telegram scopes a message to a forum topic. ``direct_messages_topic_id``
+    scopes it to a monoforum topic the same way, and the two are separate headers.
     """
     if reply_parameters is not None:
         if reply_parameters.story_id is not None:
@@ -488,6 +523,11 @@ async def get_reply_to(
                 quote_text=quote_text,
                 quote_entities=quote_entities,
                 quote_offset=reply_parameters.quote_position,
+                monoforum_peer_id=(
+                    await client.resolve_peer(direct_messages_topic_id)
+                    if direct_messages_topic_id is not None
+                    else None
+                ),
                 todo_item_id=reply_parameters.checklist_task_id,
                 poll_option=(
                     reply_parameters.poll_option_id.encode()
@@ -502,6 +542,11 @@ async def get_reply_to(
     if message_thread_id:
         return raw.types.InputReplyToMessage(
             reply_to_msg_id=message_thread_id, top_msg_id=message_thread_id
+        )
+
+    if direct_messages_topic_id:
+        return raw.types.InputReplyToMonoForum(
+            monoforum_peer_id=await client.resolve_peer(direct_messages_topic_id)
         )
 
     return None

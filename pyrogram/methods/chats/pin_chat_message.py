@@ -30,6 +30,7 @@ class PinChatMessage:
         message_id: int,
         disable_notification: bool = False,
         both_sides: bool = False,
+        business_connection_id: str | None = None,
     ) -> types.Message:
         """Pin a message in a group, channel or your own chat.
         You must be an administrator in the chat for this to work and must have the "can_pin_messages" admin right in
@@ -52,6 +53,9 @@ class PinChatMessage:
                 Pass True to pin the message for both sides (you and recipient).
                 Applicable to private chats only. Defaults to False.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to act on behalf of.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the service message is returned.
 
@@ -70,7 +74,8 @@ class PinChatMessage:
                 id=message_id,
                 silent=disable_notification or None,
                 pm_oneside=not both_sides or None,
-            )
+            ),
+            business_connection_id=business_connection_id,
         )
 
         users = {u.id: u for u in r.users}

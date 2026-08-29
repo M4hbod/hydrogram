@@ -63,6 +63,15 @@ class SendVideo:
         | types.ForceReply = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        direct_messages_topic_id: int | None = None,
+        effect_id: int | None = None,
+        repeat_period: int | None = None,
+        allow_paid_broadcast: bool | None = None,
+        paid_message_star_count: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
+        business_connection_id: str | None = None,
+        receiver_user_id: int | str | None = None,
+        callback_query_id: str | None = None,
     ) -> types.Message | None:
         """Send video files.
 
@@ -146,6 +155,27 @@ class SendVideo:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            direct_messages_topic_id (``int``, *optional*):
+                Unique identifier of the direct messages topic to send the message to.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect to be added to the message.
+
+            repeat_period (``int``, *optional*):
+                Period in seconds for which a scheduled message should be repeated.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                Pass True to bypass the broadcast rate limit for a fee, charged to the bot's Telegram Star balance.
+
+            paid_message_star_count (``int``, *optional*):
+                Number of Telegram Stars the sender is willing to pay to send the message, when the chat charges for incoming messages.
+
+            suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
+                Parameters of the suggested post this message proposes. Channel direct messages only.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to send the message on behalf of.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
@@ -171,6 +201,13 @@ class SendVideo:
             *args (``tuple``, *optional*):
                 Extra custom arguments as defined in the ``progress_args`` parameter.
                 You can either keep ``*args`` or add every single extra argument in your function signature.
+
+            receiver_user_id (``int`` | ``str``, *optional*):
+                Send the message as an ephemeral message, visible only to this user.
+                Bots only, and only in answer to a callback query.
+
+            callback_query_id (``str``, *optional*):
+                Identifier of the callback query the ephemeral message answers.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent video message is returned, otherwise, in
@@ -253,25 +290,42 @@ class SendVideo:
                     ],
                 )
 
-            reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
+            reply_to = await utils.get_reply_to(
+                self, reply_parameters, message_thread_id, direct_messages_topic_id
+            )
 
             while True:
                 try:
                     r = await self.invoke(
-                        raw.functions.messages.SendMedia(
-                            peer=await self.resolve_peer(chat_id),
-                            media=media,
-                            silent=disable_notification or None,
-                            reply_to=reply_to,
-                            random_id=self.rnd_id(),
-                            schedule_date=utils.datetime_to_timestamp(schedule_date),
-                            noforwards=protect_content,
-                            invert_media=show_caption_above_media,
-                            reply_markup=await reply_markup.write(self) if reply_markup else None,
-                            **await utils.parse_text_entities(
-                                self, caption, parse_mode, caption_entities
+                        await utils.ephemeral_or(
+                            self,
+                            raw.functions.messages.SendMedia(
+                                peer=await self.resolve_peer(chat_id),
+                                media=media,
+                                silent=disable_notification or None,
+                                reply_to=reply_to,
+                                random_id=self.rnd_id(),
+                                suggested_post=suggested_post_parameters.write()
+                                if suggested_post_parameters
+                                else None,
+                                allow_paid_stars=paid_message_star_count,
+                                allow_paid_floodskip=allow_paid_broadcast,
+                                schedule_repeat_period=repeat_period,
+                                effect=effect_id,
+                                schedule_date=utils.datetime_to_timestamp(schedule_date),
+                                noforwards=protect_content,
+                                invert_media=show_caption_above_media,
+                                reply_markup=await reply_markup.write(self)
+                                if reply_markup
+                                else None,
+                                **await utils.parse_text_entities(
+                                    self, caption, parse_mode, caption_entities
+                                ),
                             ),
-                        )
+                            receiver_user_id,
+                            callback_query_id,
+                        ),
+                        business_connection_id=business_connection_id,
                     )
                 except FilePartMissing as e:
                     await self.save_file(video, file_id=file.id, file_part=e.value)

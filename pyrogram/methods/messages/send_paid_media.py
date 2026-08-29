@@ -139,7 +139,8 @@ class SendPaidMedia:
                                 media=raw.types.InputMediaUploadedPhoto(
                                     file=await self.save_file(i.media), spoiler=i.has_spoiler
                                 ),
-                            )
+                            ),
+                            business_connection_id=business_connection_id,
                         )
 
                         media = raw.types.InputMediaPhoto(
@@ -155,7 +156,8 @@ class SendPaidMedia:
                             raw.functions.messages.UploadMedia(
                                 peer=await self.resolve_peer(chat_id),
                                 media=raw.types.InputMediaPhotoExternal(url=i.media),
-                            )
+                            ),
+                            business_connection_id=business_connection_id,
                         )
                     else:
                         media = utils.get_input_media_from_file_id(
@@ -168,7 +170,8 @@ class SendPaidMedia:
                             media=raw.types.InputMediaUploadedPhoto(
                                 file=await self.save_file(i.media), spoiler=i.has_spoiler
                             ),
-                        )
+                        ),
+                        business_connection_id=business_connection_id,
                     )
 
                     media = raw.types.InputMediaPhoto(
@@ -192,14 +195,16 @@ class SendPaidMedia:
                                     media=raw.types.InputMediaUploadedPhoto(
                                         file=await self.save_file(i.video_cover)
                                     ),
-                                )
+                                ),
+                                business_connection_id=business_connection_id,
                             )
                         elif re.match(r"^https?://", i.video_cover):
                             vcover_media = await self.invoke(
                                 raw.functions.messages.UploadMedia(
                                     peer=peer,
                                     media=raw.types.InputMediaPhotoExternal(url=i.video_cover),
-                                )
+                                ),
+                                business_connection_id=business_connection_id,
                             )
                         else:
                             vcover_file = utils.get_input_media_from_file_id(
@@ -212,7 +217,8 @@ class SendPaidMedia:
                                 media=raw.types.InputMediaUploadedPhoto(
                                     file=await self.save_file(i.video_cover)
                                 ),
-                            )
+                            ),
+                            business_connection_id=business_connection_id,
                         )
 
                     if vcover_media:
@@ -247,7 +253,8 @@ class SendPaidMedia:
                                         ),
                                     ],
                                 ),
-                            )
+                            ),
+                            business_connection_id=business_connection_id,
                         )
 
                         media = raw.types.InputMediaDocument(
@@ -269,7 +276,8 @@ class SendPaidMedia:
                                     video_cover=vcover_file,
                                     video_timestamp=i.video_start_timestamp,
                                 ),
-                            )
+                            ),
+                            business_connection_id=business_connection_id,
                         )
                     else:
                         media = utils.get_input_media_from_file_id(
@@ -306,7 +314,8 @@ class SendPaidMedia:
                                     ),
                                 ],
                             ),
-                        )
+                        ),
+                        business_connection_id=business_connection_id,
                     )
 
                     media = raw.types.InputMediaDocument(
@@ -334,7 +343,9 @@ class SendPaidMedia:
                 ),
                 silent=disable_notification or None,
                 reply_to=await utils.get_reply_to(
-                    self, reply_parameters, direct_messages_topic_id
+                    self,
+                    reply_parameters,
+                    direct_messages_topic_id=direct_messages_topic_id,
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),

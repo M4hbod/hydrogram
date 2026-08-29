@@ -40,6 +40,11 @@ class CopyMediaGroup:
         disable_notification: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
+        direct_messages_topic_id: int | None = None,
+        effect_id: int | None = None,
+        allow_paid_broadcast: bool | None = None,
+        paid_message_star_count: int | None = None,
+        business_connection_id: str | None = None,
     ) -> list[types.Message]:
         """Copy a media group by providing one of the message ids.
 
@@ -132,12 +137,17 @@ class CopyMediaGroup:
                 )
             )
 
-        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
+        reply_to = await utils.get_reply_to(
+            self, reply_parameters, message_thread_id, direct_messages_topic_id
+        )
 
         r = await self.invoke(
             raw.functions.messages.SendMultiMedia(
                 peer=await self.resolve_peer(chat_id),
                 multi_media=multi_media,
+                effect=effect_id,
+                allow_paid_floodskip=allow_paid_broadcast,
+                allow_paid_stars=paid_message_star_count,
                 silent=disable_notification or None,
                 reply_to=reply_to,
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
@@ -166,4 +176,5 @@ class CopyMediaGroup:
                 users=r.users,
                 chats=r.chats,
             ),
+            business_connection_id=business_connection_id,
         )

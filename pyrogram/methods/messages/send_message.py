@@ -46,6 +46,15 @@ class SendMessage:
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
         | types.ForceReply = None,
+        direct_messages_topic_id: int | None = None,
+        effect_id: int | None = None,
+        repeat_period: int | None = None,
+        allow_paid_broadcast: bool | None = None,
+        paid_message_star_count: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
+        business_connection_id: str | None = None,
+        receiver_user_id: int | str | None = None,
+        callback_query_id: str | None = None,
     ) -> types.Message:
         """Send text messages.
 
@@ -89,9 +98,37 @@ class SendMessage:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            direct_messages_topic_id (``int``, *optional*):
+                Unique identifier of the direct messages topic to send the message to.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect to be added to the message.
+
+            repeat_period (``int``, *optional*):
+                Period in seconds for which a scheduled message should be repeated.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                Pass True to bypass the broadcast rate limit for a fee, charged to the bot's Telegram Star balance.
+
+            paid_message_star_count (``int``, *optional*):
+                Number of Telegram Stars the sender is willing to pay to send the message, when the chat charges for incoming messages.
+
+            suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
+                Parameters of the suggested post this message proposes. Channel direct messages only.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to send the message on behalf of.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
+
+            receiver_user_id (``int`` | ``str``, *optional*):
+                Send the message as an ephemeral message, visible only to this user.
+                Bots only, and only in answer to a callback query.
+
+            callback_query_id (``str``, *optional*):
+                Identifier of the callback query the ephemeral message answers.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent text message is returned.
@@ -146,7 +183,9 @@ class SendMessage:
             await utils.parse_text_entities(self, text, parse_mode, entities)
         ).values()
 
-        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
+        reply_to = await utils.get_reply_to(
+            self, reply_parameters, message_thread_id, direct_messages_topic_id
+        )
 
         # A preview whose URL or size is specified cannot be expressed by sendMessage's
         # no_webpage flag: it needs an explicit InputMediaWebPage, which means sendMedia.
@@ -161,6 +200,13 @@ class SendMessage:
             "silent": disable_notification or None,
             "reply_to": reply_to,
             "random_id": self.rnd_id(),
+            "suggested_post": suggested_post_parameters.write()
+            if suggested_post_parameters
+            else None,
+            "allow_paid_stars": paid_message_star_count,
+            "allow_paid_floodskip": allow_paid_broadcast,
+            "schedule_repeat_period": repeat_period,
+            "effect": effect_id,
             "schedule_date": utils.datetime_to_timestamp(schedule_date),
             "reply_markup": await reply_markup.write(self) if reply_markup else None,
             "message": message,
@@ -172,25 +218,35 @@ class SendMessage:
         }
 
         if wants_explicit_preview:
-            rpc = raw.functions.messages.SendMedia(
-                media=raw.types.InputMediaWebPage(
-                    url=link_preview_options.url,
-                    force_large_media=link_preview_options.prefer_large_media,
-                    force_small_media=link_preview_options.prefer_small_media,
-                    # The preview is a bonus, not the point of the message: without this the
-                    # send fails outright when Telegram cannot build one.
-                    optional=True,
+            rpc = await utils.ephemeral_or(
+                self,
+                raw.functions.messages.SendMedia(
+                    media=raw.types.InputMediaWebPage(
+                        url=link_preview_options.url,
+                        force_large_media=link_preview_options.prefer_large_media,
+                        force_small_media=link_preview_options.prefer_small_media,
+                        # The preview is a bonus, not the point of the message: without this the
+                        # send fails outright when Telegram cannot build one.
+                        optional=True,
+                    ),
+                    **common,
                 ),
-                **common,
+                receiver_user_id,
+                callback_query_id,
             )
         else:
-            rpc = raw.functions.messages.SendMessage(
-                no_webpage=(link_preview_options.is_disabled if link_preview_options else None)
-                or None,
-                **common,
+            rpc = await utils.ephemeral_or(
+                self,
+                raw.functions.messages.SendMessage(
+                    no_webpage=(link_preview_options.is_disabled if link_preview_options else None)
+                    or None,
+                    **common,
+                ),
+                receiver_user_id,
+                callback_query_id,
             )
 
-        r = await self.invoke(rpc)
+        r = await self.invoke(rpc, business_connection_id=business_connection_id)
 
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)

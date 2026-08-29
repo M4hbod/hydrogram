@@ -372,6 +372,11 @@ class Client(Methods):
 
         self.media_sessions = {}
         self.media_sessions_lock = asyncio.Lock()
+        self.sessions = {}
+        # A business connection lives on the DC of the account that granted it,
+        # which is not necessarily ours. Looking that up costs a round trip, so
+        # the answer is remembered per connection id.
+        self.business_connections: dict[str, int] = {}
 
         self.file_lock = asyncio.Lock()
         self.save_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
@@ -1010,6 +1015,77 @@ class Client(Methods):
                 shutil.move(temp_file_path, final_file_path)
 
             return final_file_path
+
+    async def get_session(self, dc_id: int | None = None, is_media: bool = False) -> Session:
+        """The session for a data centre, created and authorised on first use.
+
+        ``dc_id`` defaults to our own, whose session already exists. Any other
+        one needs its own auth key and an exported authorisation, which is what
+        makes this worth caching rather than repeating per call.
+        """
+        own_dc_id = await self.storage.dc_id()
+
+        if dc_id is None:
+            dc_id = own_dc_id
+
+        if dc_id == own_dc_id and not is_media:
+            return self.session
+
+        sessions = self.media_sessions if is_media else self.sessions
+        session = sessions.get(dc_id)
+
+        if session is not None:
+            return session
+
+        is_own_dc = dc_id == own_dc_id
+        test_mode = await self.storage.test_mode()
+
+        if (is_media and is_own_dc) or is_own_dc:
+            auth_key = await self.storage.auth_key()
+        else:
+            auth_key = await Auth(self, dc_id, test_mode).create()
+
+        session = sessions[dc_id] = Session(self, dc_id, auth_key, test_mode, is_media=is_media)
+        await session.start()
+
+        if not is_own_dc:
+            # The new DC has an auth key but does not know who we are until an
+            # authorisation exported from the home DC is imported into it.
+            for _ in range(3):
+                exported_auth = await self.invoke(
+                    raw.functions.auth.ExportAuthorization(dc_id=dc_id)
+                )
+
+                try:
+                    await session.invoke(
+                        raw.functions.auth.ImportAuthorization(
+                            id=exported_auth.id, bytes=exported_auth.bytes
+                        )
+                    )
+                except AuthBytesInvalid:
+                    continue
+                else:
+                    break
+            else:
+                raise AuthBytesInvalid
+
+        return session
+
+    async def business_connection_session(self, business_connection_id: str) -> Session:
+        """The session a business connection's requests have to go through."""
+        dc_id = self.business_connections.get(business_connection_id)
+
+        if dc_id is None:
+            connection = await self.session.invoke(
+                raw.functions.account.GetBotBusinessConnection(
+                    connection_id=business_connection_id
+                )
+            )
+            dc_id = self.business_connections[business_connection_id] = connection.updates[
+                0
+            ].connection.dc_id
+
+        return await self.get_session(dc_id)
 
     async def get_file(
         self,

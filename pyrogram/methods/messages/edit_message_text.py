@@ -19,8 +19,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pyrogram
 from pyrogram import enums, raw, types, utils
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class EditMessageText:
@@ -33,6 +38,8 @@ class EditMessageText:
         entities: list[types.MessageEntity] | None = None,
         link_preview_options: types.LinkPreviewOptions | None = None,
         reply_markup: types.InlineKeyboardMarkup = None,
+        business_connection_id: str | None = None,
+        schedule_date: datetime | None = None,
     ) -> types.Message:
         """Edit the text of messages.
 
@@ -64,6 +71,12 @@ class EditMessageText:
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to act on behalf of.
+
+            schedule_date (``datetime``, *optional*):
+                Date when the edit will be applied, for a scheduled message.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
 
@@ -86,6 +99,7 @@ class EditMessageText:
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
+                schedule_date=utils.datetime_to_timestamp(schedule_date),
                 no_webpage=(link_preview_options.is_disabled if link_preview_options else None)
                 or None,
                 invert_media=(
@@ -93,7 +107,8 @@ class EditMessageText:
                 ),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 **await utils.parse_text_entities(self, text, parse_mode, entities),
-            )
+            ),
+            business_connection_id=business_connection_id,
         )
 
         for i in r.updates:

@@ -19,8 +19,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class EditMessageReplyMarkup:
@@ -29,6 +34,7 @@ class EditMessageReplyMarkup:
         chat_id: int | str,
         message_id: int,
         reply_markup: types.InlineKeyboardMarkup = None,
+        schedule_date: datetime | None = None,
     ) -> types.Message:
         """Edit only the reply markup of messages sent by the bot.
 
@@ -45,6 +51,9 @@ class EditMessageReplyMarkup:
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
+
+            schedule_date (``datetime``, *optional*):
+                Date when the edit will be applied, for a scheduled message.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
@@ -67,6 +76,7 @@ class EditMessageReplyMarkup:
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
+                schedule_date=utils.datetime_to_timestamp(schedule_date),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
             )
         )

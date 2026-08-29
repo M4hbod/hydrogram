@@ -511,6 +511,13 @@ class Story(Object, Update):
         | types.ReplyKeyboardRemove
         | types.ForceReply
         | None = None,
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_text* of :obj:`~pyrogram.types.Story`.
 
@@ -577,6 +584,13 @@ class Story(Object, Update):
             schedule_date=schedule_date,
             protect_content=protect_content,
             reply_markup=reply_markup,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     reply = reply_text
@@ -602,6 +616,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_animation* :obj:`~pyrogram.types.Story`.
 
@@ -711,6 +732,13 @@ class Story(Object, Update):
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_audio(
@@ -733,6 +761,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_audio* of :obj:`~pyrogram.types.Story`.
 
@@ -838,6 +873,13 @@ class Story(Object, Update):
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_cached_media(
@@ -852,6 +894,13 @@ class Story(Object, Update):
         | types.ReplyKeyboardRemove
         | types.ForceReply
         | None = None,
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_cached_media* of :obj:`~pyrogram.types.Story`.
 
@@ -909,6 +958,13 @@ class Story(Object, Update):
             caption_entities=caption_entities,
             disable_notification=disable_notification,
             reply_markup=reply_markup,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_media_group(
@@ -920,6 +976,11 @@ class Story(Object, Update):
             | types.InputMediaDocument
         ],
         disable_notification: bool | None = None,
+        paid_message_star_count: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
     ) -> list[types.Message]:
         """Bound method *reply_media_group* of :obj:`~pyrogram.types.Story`.
 
@@ -960,6 +1021,11 @@ class Story(Object, Update):
             reply_parameters=types.ReplyParameters(chat_id=self.chat.id, story_id=self.id),
             media=media,
             disable_notification=disable_notification,
+            paid_message_star_count=paid_message_star_count,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
         )
 
     async def reply_photo(
@@ -979,6 +1045,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_photo* of :obj:`~pyrogram.types.Story`.
 
@@ -1070,6 +1143,13 @@ class Story(Object, Update):
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_sticker(
@@ -1084,6 +1164,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_sticker* of :obj:`~pyrogram.types.Story`.
 
@@ -1152,6 +1239,13 @@ class Story(Object, Update):
             schedule_date=schedule_date,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_video(
@@ -1178,6 +1272,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_video* of :obj:`~pyrogram.types.Story`.
 
@@ -1302,6 +1403,13 @@ class Story(Object, Update):
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_video_note(
@@ -1319,6 +1427,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_video_note* of :obj:`~pyrogram.types.Story`.
 
@@ -1402,6 +1517,13 @@ class Story(Object, Update):
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_voice(
@@ -1420,6 +1542,13 @@ class Story(Object, Update):
         | None = None,
         progress: Callable | None = None,
         progress_args: tuple = (),
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> types.Message | None:
         """Bound method *reply_voice* of :obj:`~pyrogram.types.Story`.
 
@@ -1505,6 +1634,13 @@ class Story(Object, Update):
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def copy(

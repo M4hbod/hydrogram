@@ -37,6 +37,10 @@ class SendGame:
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
         | types.ForceReply = None,
+        effect_id: int | None = None,
+        allow_paid_broadcast: bool | None = None,
+        business_connection_id: str | None = None,
+        direct_messages_topic_id: int | None = None,
     ) -> types.Message:
         """Send a game.
 
@@ -65,6 +69,18 @@ class SendGame:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect to be added to the message.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                Pass True to bypass the broadcast rate limit for a fee, charged to the bot's Telegram Star balance.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to send the message on behalf of.
+
+            direct_messages_topic_id (``int``, *optional*):
+                Unique identifier of the direct messages topic to send the message to.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An object for an inline keyboard. If empty, one ‘Play game_title’ button will be shown automatically.
                 If not empty, the first button must launch the game.
@@ -77,7 +93,9 @@ class SendGame:
 
                 await app.send_game(chat_id, "gamename")
         """
-        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
+        reply_to = await utils.get_reply_to(
+            self, reply_parameters, message_thread_id, direct_messages_topic_id
+        )
 
         r = await self.invoke(
             raw.functions.messages.SendMedia(
@@ -91,9 +109,12 @@ class SendGame:
                 silent=disable_notification or None,
                 reply_to=reply_to,
                 random_id=self.rnd_id(),
+                allow_paid_floodskip=allow_paid_broadcast,
+                effect=effect_id,
                 noforwards=protect_content,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
-            )
+            ),
+            business_connection_id=business_connection_id,
         )
 
         for i in r.updates:

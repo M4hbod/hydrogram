@@ -46,7 +46,7 @@ class PinForumTopic:
         """
         await self.invoke(
             raw.functions.messages.UpdatePinnedForumTopic(
-                channel=await self.resolve_peer(chat_id), topic_id=topic_id, pinned=True
+                peer=await self.resolve_peer(chat_id), topic_id=topic_id, pinned=True
             )
         )
 

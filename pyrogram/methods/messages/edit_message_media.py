@@ -22,10 +22,14 @@ from __future__ import annotations
 import io
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw, types, utils
 from pyrogram.file_id import FileType
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class EditMessageMedia:
@@ -36,6 +40,9 @@ class EditMessageMedia:
         media: types.InputMedia,
         reply_markup: types.InlineKeyboardMarkup = None,
         file_name: str | None = None,
+        business_connection_id: str | None = None,
+        schedule_date: datetime | None = None,
+        show_caption_above_media: bool | None = None,
     ) -> types.Message:
         """Edit animation, audio, document, photo or video messages.
 
@@ -62,6 +69,15 @@ class EditMessageMedia:
             file_name (``str``, *optional*):
                 File name of the media to be sent. Not applicable to photos.
                 Defaults to file's path basename.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to act on behalf of.
+
+            schedule_date (``datetime``, *optional*):
+                Date when the edit will be applied, for a scheduled message.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True if the caption must be shown above the message media.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
@@ -272,11 +288,14 @@ class EditMessageMedia:
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
+                invert_media=show_caption_above_media,
+                schedule_date=utils.datetime_to_timestamp(schedule_date),
                 media=media,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,
                 entities=entities,
-            )
+            ),
+            business_connection_id=business_connection_id,
         )
 
         for i in r.updates:

@@ -51,6 +51,11 @@ class SendMediaGroup:
         reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
+        direct_messages_topic_id: int | None = None,
+        effect_id: int | None = None,
+        allow_paid_broadcast: bool | None = None,
+        paid_message_star_count: int | None = None,
+        business_connection_id: str | None = None,
     ) -> list[types.Message]:
         """Send a group of photos or videos as an album.
 
@@ -416,18 +421,24 @@ class SendMediaGroup:
                 )
             )
 
-        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
+        reply_to = await utils.get_reply_to(
+            self, reply_parameters, message_thread_id, direct_messages_topic_id
+        )
 
         r = await self.invoke(
             raw.functions.messages.SendMultiMedia(
                 peer=await self.resolve_peer(chat_id),
                 multi_media=multi_media,
+                effect=effect_id,
+                allow_paid_floodskip=allow_paid_broadcast,
+                allow_paid_stars=paid_message_star_count,
                 silent=disable_notification or None,
                 reply_to=reply_to,
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
             ),
             sleep_threshold=60,
+            business_connection_id=business_connection_id,
         )
 
         return await utils.parse_messages(

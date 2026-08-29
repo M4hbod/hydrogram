@@ -40,6 +40,13 @@ class ForwardMessages:
         disable_notification: bool | None = None,
         schedule_date: datetime | None = None,
         protect_content: bool | None = None,
+        direct_messages_topic_id: int | None = None,
+        effect_id: int | None = None,
+        repeat_period: int | None = None,
+        allow_paid_broadcast: bool | None = None,
+        paid_message_star_count: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
+        business_connection_id: str | None = None,
     ) -> types.Message | list[types.Message]:
         """Forward messages of any kind.
 
@@ -96,11 +103,24 @@ class ForwardMessages:
                 from_peer=await self.resolve_peer(from_chat_id),
                 id=message_ids,
                 top_msg_id=message_thread_id,
+                reply_to=await utils.get_reply_to(
+                    self,
+                    message_thread_id=message_thread_id,
+                    direct_messages_topic_id=direct_messages_topic_id,
+                ),
                 silent=disable_notification or None,
                 random_id=[self.rnd_id() for _ in message_ids],
+                effect=effect_id,
+                schedule_repeat_period=repeat_period,
+                allow_paid_floodskip=allow_paid_broadcast,
+                allow_paid_stars=paid_message_star_count,
+                suggested_post=suggested_post_parameters.write()
+                if suggested_post_parameters
+                else None,
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,
-            )
+            ),
+            business_connection_id=business_connection_id,
         )
 
         forwarded_messages = []

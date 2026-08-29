@@ -25,7 +25,10 @@ from pyrogram import raw
 
 class UnpinChatMessage:
     async def unpin_chat_message(
-        self: pyrogram.Client, chat_id: int | str, message_id: int = 0
+        self: pyrogram.Client,
+        chat_id: int | str,
+        message_id: int = 0,
+        business_connection_id: str | None = None,
     ) -> bool:
         """Unpin a message in a group, channel or your own chat.
         You must be an administrator in the chat for this to work and must have the "can_pin_messages" admin
@@ -41,6 +44,9 @@ class UnpinChatMessage:
                 Identifier of a message to unpin.
                 If not specified, the most recent pinned message (by sending date) will be unpinned.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to act on behalf of.
+
         Returns:
             ``bool``: True on success.
 
@@ -52,7 +58,8 @@ class UnpinChatMessage:
         await self.invoke(
             raw.functions.messages.UpdatePinnedMessage(
                 peer=await self.resolve_peer(chat_id), id=message_id, unpin=True
-            )
+            ),
+            business_connection_id=business_connection_id,
         )
 
         return True

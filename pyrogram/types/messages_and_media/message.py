@@ -4713,6 +4713,7 @@ class Message(Object, Update):
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
         | types.ForceReply = object,
+        business_connection_id: str | None = None,
     ) -> types.Message | list[types.Message]:
         """Bound method *copy* of :obj:`~pyrogram.types.Message`.
 
@@ -4799,6 +4800,7 @@ class Message(Object, Update):
         if self.text:
             return await self._client.send_message(
                 chat_id,
+                business_connection_id=business_connection_id,
                 text=self.text,
                 entities=self.entities,
                 parse_mode=enums.ParseMode.DISABLED,
@@ -4841,6 +4843,7 @@ class Message(Object, Update):
             elif self.contact:
                 return await self._client.send_contact(
                     chat_id,
+                    business_connection_id=business_connection_id,
                     phone_number=self.contact.phone_number,
                     first_name=self.contact.first_name,
                     last_name=self.contact.last_name,
@@ -4852,6 +4855,7 @@ class Message(Object, Update):
             elif self.location:
                 return await self._client.send_location(
                     chat_id,
+                    business_connection_id=business_connection_id,
                     latitude=self.location.latitude,
                     longitude=self.location.longitude,
                     disable_notification=disable_notification,
@@ -4861,6 +4865,7 @@ class Message(Object, Update):
             elif self.venue:
                 return await self._client.send_venue(
                     chat_id,
+                    business_connection_id=business_connection_id,
                     latitude=self.venue.location.latitude,
                     longitude=self.venue.location.longitude,
                     title=self.venue.title,
@@ -4874,6 +4879,7 @@ class Message(Object, Update):
             elif self.poll:
                 return await self._client.send_poll(
                     chat_id,
+                    business_connection_id=business_connection_id,
                     question=self.poll.question,
                     options=[opt.text for opt in self.poll.options],
                     disable_notification=disable_notification,
@@ -4883,6 +4889,7 @@ class Message(Object, Update):
             elif self.game:
                 return await self._client.send_game(
                     chat_id,
+                    business_connection_id=business_connection_id,
                     game_short_name=self.game.short_name,
                     disable_notification=disable_notification,
                     message_thread_id=message_thread_id,
@@ -5512,6 +5519,13 @@ class Message(Object, Update):
         | types.ReplyKeyboardRemove
         | types.ForceReply
         | None = None,
+        paid_message_star_count: int | None = None,
+        repeat_period: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
+        suggested_post_parameters: types.SuggestedPostParameters | None = None,
     ) -> Message | None:
         """Shortcut for method :obj:`~pyrogram.Client.send_dice` will automatically fill method attributes:
 
@@ -5569,6 +5583,13 @@ class Message(Object, Update):
             schedule_date=schedule_date,
             protect_content=protect_content,
             reply_markup=reply_markup,
+            paid_message_star_count=paid_message_star_count,
+            repeat_period=repeat_period,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
+            suggested_post_parameters=suggested_post_parameters,
         )
 
     async def reply_paid_media(
@@ -5965,6 +5986,11 @@ class Message(Object, Update):
         message_thread_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         schedule_date: datetime | None = None,
+        paid_message_star_count: int | None = None,
+        business_connection_id: str | None = None,
+        allow_paid_broadcast: bool | None = None,
+        effect_id: int | None = None,
+        direct_messages_topic_id: int | None = None,
     ) -> list[types.Message]:
         """Shortcut for method :obj:`~pyrogram.Client.copy_media_group` will automatically fill method attributes:
 
@@ -6012,6 +6038,11 @@ class Message(Object, Update):
             message_thread_id=message_thread_id,
             reply_parameters=reply_parameters,
             schedule_date=schedule_date,
+            paid_message_star_count=paid_message_star_count,
+            business_connection_id=business_connection_id,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            direct_messages_topic_id=direct_messages_topic_id,
         )
 
     async def read(self) -> bool:

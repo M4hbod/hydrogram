@@ -51,6 +51,7 @@ class CopyMessage:
         | types.ReplyKeyboardMarkup
         | types.ReplyKeyboardRemove
         | types.ForceReply = None,
+        business_connection_id: str | None = None,
     ) -> types.Message:
         """Copy messages of any kind.
 
@@ -109,6 +110,9 @@ class CopyMessage:
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection to act on behalf of.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the copied message is returned.
 
@@ -133,4 +137,5 @@ class CopyMessage:
             schedule_date=schedule_date,
             protect_content=protect_content,
             reply_markup=reply_markup,
+            business_connection_id=business_connection_id,
         )
