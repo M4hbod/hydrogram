@@ -65,6 +65,7 @@ class SendPhoto:
         business_connection_id: str | None = None,
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
+        view_once: bool | None = None,
     ) -> types.Message | None:
         """Send photos.
 
@@ -175,6 +176,9 @@ class SendPhoto:
             callback_query_id (``str``, *optional*):
                 Identifier of the callback query the ephemeral message answers.
 
+            view_once (``bool``, *optional*):
+                Pass True to send a photo that can be viewed only once.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent photo message is returned, otherwise, in
             case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
@@ -201,7 +205,7 @@ class SendPhoto:
                 file = await self.save_file(photo, progress=progress, progress_args=progress_args)
                 media = raw.types.InputMediaUploadedPhoto(
                     file=file,
-                    ttl_seconds=ttl_seconds,
+                    ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                     spoiler=has_spoiler,
                 )
             elif (
@@ -210,11 +214,13 @@ class SendPhoto:
                 and re.match(r"^https?://", photo)
             ):
                 media = raw.types.InputMediaPhotoExternal(
-                    url=photo, ttl_seconds=ttl_seconds, spoiler=has_spoiler
+                    url=photo,
+                    ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
+                    spoiler=has_spoiler,
                 )
             else:
                 media = utils.get_input_media_from_file_id(
-                    photo, FileType.PHOTO, ttl_seconds=ttl_seconds
+                    photo, FileType.PHOTO, ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds
                 )
 
             reply_to = await utils.get_reply_to(

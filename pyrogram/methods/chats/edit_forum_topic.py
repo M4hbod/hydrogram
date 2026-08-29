@@ -29,6 +29,8 @@ class EditForumTopic:
         topic_id: int,
         title: str | None = None,
         icon_emoji_id: int | None = None,
+        closed: bool | None = None,
+        hidden: bool | None = None,
     ) -> bool:
         """Edit a forum topic.
 
@@ -47,6 +49,12 @@ class EditForumTopic:
             icon_emoji_id (``int``, *optional*):
                 Unique identifier of the custom emoji shown as the topic icon
 
+            closed (``bool``, *optional*):
+                Pass True to close the topic, False to reopen it.
+
+            hidden (``bool``, *optional*):
+                Pass True to hide the topic, False to show it. The General topic only.
+
         Returns:
             `bool`: On success, a Boolean is returned.
 
@@ -61,6 +69,8 @@ class EditForumTopic:
                 topic_id=topic_id,
                 title=title,
                 icon_emoji_id=icon_emoji_id,
+                closed=closed,
+                hidden=hidden,
             )
         )
         return True

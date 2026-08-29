@@ -24,7 +24,11 @@ from pyrogram import raw, types
 
 
 class GetSendAsChats:
-    async def get_send_as_chats(self: pyrogram.Client, chat_id: int | str) -> list[types.Chat]:
+    async def get_send_as_chats(
+        self: pyrogram.Client,
+        chat_id: int | str,
+        for_paid_reactions: bool | None = None,
+    ) -> list[types.Chat]:
         """Get the list of "send_as" chats available.
 
         .. include:: /_includes/usable-by/users.rst
@@ -32,6 +36,9 @@ class GetSendAsChats:
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
+
+            for_paid_reactions (``bool``, *optional*):
+                Pass True to list the chats that can be used for paid reactions instead.
 
         Returns:
             List[:obj:`~pyrogram.types.Chat`]: The list of chats.
@@ -43,7 +50,10 @@ class GetSendAsChats:
                 print(chats)
         """
         r = await self.invoke(
-            raw.functions.channels.GetSendAs(peer=await self.resolve_peer(chat_id))
+            raw.functions.channels.GetSendAs(
+                peer=await self.resolve_peer(chat_id),
+                for_paid_reactions=for_paid_reactions,
+            )
         )
 
         users = {u.id: u for u in r.users}

@@ -45,6 +45,8 @@ class CopyMediaGroup:
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
         business_connection_id: str | None = None,
+        has_spoilers: list[bool] | bool | None = None,
+        protect_content: bool | None = None,
     ) -> list[types.Message]:
         """Copy a media group by providing one of the message ids.
 
@@ -87,6 +89,12 @@ class CopyMediaGroup:
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
+            has_spoilers (``bool``, *optional*):
+                Pass True to cover the copied media with a spoiler animation.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the copied messages from forwarding and saving.
+
         Returns:
             List of :obj:`~pyrogram.types.Message`: On success, a list of copied messages is returned.
 
@@ -118,7 +126,17 @@ class CopyMediaGroup:
             else:
                 raise ValueError("Message with this type can't be copied.")
 
-            media = utils.get_input_media_from_file_id(file_id=file_id)
+            media = utils.get_input_media_from_file_id(
+                file_id=file_id,
+                # One flag covers the whole group, or one per item.
+                has_spoiler=(
+                    has_spoilers[i]
+                    if isinstance(has_spoilers, list) and i < len(has_spoilers)
+                    else has_spoilers
+                    if not isinstance(has_spoilers, list)
+                    else None
+                ),
+            )
             multi_media.append(
                 raw.types.InputSingleMedia(
                     media=media,
@@ -145,6 +163,7 @@ class CopyMediaGroup:
             raw.functions.messages.SendMultiMedia(
                 peer=await self.resolve_peer(chat_id),
                 multi_media=multi_media,
+                noforwards=protect_content,
                 effect=effect_id,
                 allow_paid_floodskip=allow_paid_broadcast,
                 allow_paid_stars=paid_message_star_count,

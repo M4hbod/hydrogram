@@ -17,14 +17,21 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 import pyrogram
 from pyrogram import raw, types
 
 
 class CreateSupergroup:
     async def create_supergroup(
-        self: "pyrogram.Client", title: str, description: str = ""
-    ) -> "types.Chat":
+        self: pyrogram.Client,
+        title: str,
+        description: str = "",
+        is_forum: bool | None = None,
+        for_import: bool | None = None,
+        message_auto_delete_time: int | None = None,
+    ) -> types.Chat:
         """Create a new supergroup.
 
         .. note::
@@ -40,6 +47,15 @@ class CreateSupergroup:
             description (``str``, *optional*):
                 The supergroup description.
 
+            is_forum (``bool``, *optional*):
+                Pass True to create the supergroup with topics enabled.
+
+            for_import (``bool``, *optional*):
+                Pass True to create the supergroup for importing messages from another app.
+
+            message_auto_delete_time (``int``, *optional*):
+                Time in seconds after which messages are deleted automatically.
+
         Returns:
             :obj:`~pyrogram.types.Chat`: On success, a chat object is returned.
 
@@ -49,7 +65,14 @@ class CreateSupergroup:
                 await app.create_supergroup("Supergroup Title", "Supergroup Description")
         """
         r = await self.invoke(
-            raw.functions.channels.CreateChannel(title=title, about=description, megagroup=True)
+            raw.functions.channels.CreateChannel(
+                title=title,
+                about=description,
+                megagroup=True,
+                forum=is_forum,
+                for_import=for_import,
+                ttl_period=message_auto_delete_time,
+            )
         )
 
         return types.Chat._parse_chat(self, r.chats[0])

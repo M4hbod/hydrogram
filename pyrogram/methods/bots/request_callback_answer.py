@@ -30,6 +30,7 @@ class RequestCallbackAnswer:
         message_id: int,
         callback_data: str | bytes,
         timeout: int = 10,
+        password: str | None = None,
     ):
         """Request a callback answer from bots.
         This is the equivalent of clicking an inline button containing callback data.
@@ -47,6 +48,9 @@ class RequestCallbackAnswer:
 
             callback_data (``str`` | ``bytes``):
                 Callback data associated with the inline button you want to get the answer from.
+
+            password (``str``, *optional*):
+                Your two-step verification password, for a button that asks for it.
 
             timeout (``int``, *optional*):
                 Timeout in seconds.
@@ -69,7 +73,10 @@ class RequestCallbackAnswer:
 
         return await self.invoke(
             raw.functions.messages.GetBotCallbackAnswer(
-                peer=await self.resolve_peer(chat_id), msg_id=message_id, data=data
+                password=await self.check_password(password) if password else None,
+                peer=await self.resolve_peer(chat_id),
+                msg_id=message_id,
+                data=data,
             ),
             retries=0,
             timeout=timeout,

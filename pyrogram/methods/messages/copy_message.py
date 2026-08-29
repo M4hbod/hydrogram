@@ -52,6 +52,9 @@ class CopyMessage:
         | types.ReplyKeyboardRemove
         | types.ForceReply = None,
         business_connection_id: str | None = None,
+        has_spoiler: bool | None = None,
+        allow_paid_broadcast: bool | None = None,
+        paid_message_star_count: int | None = None,
     ) -> types.Message:
         """Copy messages of any kind.
 
@@ -113,6 +116,15 @@ class CopyMessage:
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection to act on behalf of.
 
+            has_spoiler (``bool``, *optional*):
+                Pass True to cover the copied media with a spoiler animation.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                Pass True to bypass the broadcast rate limit for a fee.
+
+            paid_message_star_count (``int``, *optional*):
+                Number of Telegram Stars the sender is willing to pay to send the message.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the copied message is returned.
 
@@ -138,4 +150,7 @@ class CopyMessage:
             protect_content=protect_content,
             reply_markup=reply_markup,
             business_connection_id=business_connection_id,
+            has_spoiler=has_spoiler,
+            allow_paid_broadcast=allow_paid_broadcast,
+            paid_message_star_count=paid_message_star_count,
         )

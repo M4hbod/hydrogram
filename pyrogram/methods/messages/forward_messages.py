@@ -47,6 +47,9 @@ class ForwardMessages:
         paid_message_star_count: int | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
         business_connection_id: str | None = None,
+        hide_sender_name: bool | None = None,
+        hide_captions: bool | None = None,
+        video_start_timestamp: int | None = None,
     ) -> types.Message | list[types.Message]:
         """Forward messages of any kind.
 
@@ -80,6 +83,15 @@ class ForwardMessages:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            hide_sender_name (``bool``, *optional*):
+                Pass True to forward without naming the original sender.
+
+            hide_captions (``bool``, *optional*):
+                Pass True to forward media without their captions.
+
+            video_start_timestamp (``int``, *optional*):
+                Timestamp in seconds from which the forwarded video will play.
+
         Returns:
             :obj:`~pyrogram.types.Message` | List of :obj:`~pyrogram.types.Message`: In case *message_ids* was not
             a list, a single message is returned, otherwise a list of messages is returned.
@@ -112,6 +124,9 @@ class ForwardMessages:
                 random_id=[self.rnd_id() for _ in message_ids],
                 effect=effect_id,
                 schedule_repeat_period=repeat_period,
+                drop_author=hide_sender_name,
+                drop_media_captions=hide_captions,
+                video_timestamp=video_start_timestamp,
                 allow_paid_floodskip=allow_paid_broadcast,
                 allow_paid_stars=paid_message_star_count,
                 suggested_post=suggested_post_parameters.write()

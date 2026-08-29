@@ -26,6 +26,7 @@ from pyrogram import enums, raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
+    from datetime import datetime
 
 
 async def get_chunk(
@@ -36,19 +37,25 @@ async def get_chunk(
     offset: int = 0,
     limit: int = 100,
     from_user: int | str | None = None,
+    max_id: int | None = None,
+    min_id: int | None = None,
+    message_thread_id: int | None = None,
+    min_date: datetime | None = None,
+    max_date: datetime | None = None,
 ) -> list[types.Message]:
     r = await client.invoke(
         raw.functions.messages.Search(
             peer=await client.resolve_peer(chat_id),
             q=query,
             filter=filter.value(),
-            min_date=0,
-            max_date=0,
+            min_date=utils.datetime_to_timestamp(min_date) or 0,
+            max_date=utils.datetime_to_timestamp(max_date) or 0,
             offset_id=0,
             add_offset=offset,
             limit=limit,
-            min_id=0,
-            max_id=0,
+            max_id=max_id or 0,
+            min_id=min_id or 0,
+            top_msg_id=message_thread_id,
             from_id=(await client.resolve_peer(from_user) if from_user else None),
             hash=0,
         ),
@@ -67,6 +74,11 @@ class SearchMessages:
         filter: enums.MessagesFilter = enums.MessagesFilter.EMPTY,
         limit: int = 0,
         from_user: int | str | None = None,
+        max_id: int | None = None,
+        min_id: int | None = None,
+        message_thread_id: int | None = None,
+        min_date: datetime | None = None,
+        max_date: datetime | None = None,
     ) -> AsyncGenerator[types.Message, None] | None:
         """Search for text and media messages inside a specific chat.
 
@@ -100,6 +112,21 @@ class SearchMessages:
 
             from_user (``int`` | ``str``, *optional*):
                 Unique identifier (int) or username (str) of the target user you want to search for messages from.
+
+            max_id (``int``, *optional*):
+                Only return messages with an id lower than this one.
+
+            min_id (``int``, *optional*):
+                Only return messages with an id higher than this one.
+
+            message_thread_id (``int``, *optional*):
+                Only return messages from this forum topic.
+
+            min_date (:py:obj:`~datetime.datetime`, *optional*):
+                Only return messages sent on or after this date.
+
+            max_date (:py:obj:`~datetime.datetime`, *optional*):
+                Only return messages sent on or before this date.
 
         Returns:
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
@@ -137,6 +164,11 @@ class SearchMessages:
                 offset=offset,
                 limit=limit,
                 from_user=from_user,
+                max_id=max_id,
+                min_id=min_id,
+                message_thread_id=message_thread_id,
+                min_date=min_date,
+                max_date=max_date,
             )
 
             if not messages:

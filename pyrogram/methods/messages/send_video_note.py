@@ -61,6 +61,7 @@ class SendVideoNote:
         business_connection_id: str | None = None,
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
+        view_once: bool | None = None,
     ) -> types.Message | None:
         """Send video messages.
 
@@ -162,6 +163,9 @@ class SendVideoNote:
             callback_query_id (``str``, *optional*):
                 Identifier of the callback query the ephemeral message answers.
 
+            view_once (``bool``, *optional*):
+                Pass True to send a video note that can be viewed only once.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent video note message is returned, otherwise,
             in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is
@@ -188,6 +192,7 @@ class SendVideoNote:
                     media = raw.types.InputMediaUploadedDocument(
                         mime_type=self.guess_mime_type(video_note) or "video/mp4",
                         file=file,
+                        ttl_seconds=(1 << 31) - 1 if view_once else None,
                         thumb=thumb,
                         attributes=[
                             raw.types.DocumentAttributeVideo(
@@ -208,6 +213,7 @@ class SendVideoNote:
                 media = raw.types.InputMediaUploadedDocument(
                     mime_type=self.guess_mime_type(video_note.name) or "video/mp4",
                     file=file,
+                    ttl_seconds=(1 << 31) - 1 if view_once else None,
                     thumb=thumb,
                     attributes=[
                         raw.types.DocumentAttributeVideo(

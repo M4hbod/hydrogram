@@ -30,6 +30,7 @@ class SearchMessagesCount:
         query: str = "",
         filter: enums.MessagesFilter = enums.MessagesFilter.EMPTY,
         from_user: int | str | None = None,
+        message_thread_id: int | None = None,
     ) -> int:
         """Get the count of messages resulting from a search inside a chat.
 
@@ -55,6 +56,9 @@ class SearchMessagesCount:
             from_user (``int`` | ``str``, *optional*):
                 Unique identifier (int) or username (str) of the target user you want to search for messages from.
 
+            message_thread_id (``int``, *optional*):
+                Only count messages from this forum topic.
+
         Returns:
             ``int``: On success, the messages count is returned.
         """
@@ -70,6 +74,7 @@ class SearchMessagesCount:
                 limit=1,
                 min_id=0,
                 max_id=0,
+                top_msg_id=message_thread_id,
                 from_id=(await self.resolve_peer(from_user) if from_user else None),
                 hash=0,
             )

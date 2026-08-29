@@ -19,8 +19,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pyrogram
 from pyrogram import raw, types, utils
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class SendInlineBotResult:
@@ -33,6 +38,9 @@ class SendInlineBotResult:
         message_thread_id: int | None = None,
         disable_notification: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
+        direct_messages_topic_id: int | None = None,
+        paid_message_star_count: int | None = None,
+        schedule_date: datetime | None = None,
     ) -> raw.base.Updates:
         """Send an inline bot result.
         Bot results can be retrieved using :meth:`~pyrogram.Client.get_inline_bot_results`
@@ -62,6 +70,15 @@ class SendInlineBotResult:
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Description of the message to reply to.
 
+            direct_messages_topic_id (``int``, *optional*):
+                Unique identifier of the direct messages topic to send to.
+
+            paid_message_star_count (``int``, *optional*):
+                Number of Telegram Stars the sender is willing to pay to send the message.
+
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
         Returns:
             :obj:`~pyrogram.raw.base.Updates`: Currently, on success, a raw result is returned.
 
@@ -71,7 +88,9 @@ class SendInlineBotResult:
                 await app.send_inline_bot_result(chat_id, query_id, result_id)
         """
 
-        reply_to = await utils.get_reply_to(self, reply_parameters, message_thread_id)
+        reply_to = await utils.get_reply_to(
+            self, reply_parameters, message_thread_id, direct_messages_topic_id
+        )
 
         return await self.invoke(
             raw.functions.messages.SendInlineBotResult(
@@ -81,5 +100,7 @@ class SendInlineBotResult:
                 random_id=self.rnd_id(),
                 silent=disable_notification or None,
                 reply_to=reply_to,
+                schedule_date=utils.datetime_to_timestamp(schedule_date),
+                allow_paid_stars=paid_message_star_count,
             )
         )

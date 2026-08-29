@@ -54,6 +54,9 @@ class SendLocation:
         business_connection_id: str | None = None,
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
+        live_period: int | None = None,
+        heading: int | None = None,
+        proximity_alert_radius: int | None = None,
     ) -> types.Message:
         """Send points on the map.
 
@@ -123,6 +126,15 @@ class SendLocation:
             callback_query_id (``str``, *optional*):
                 Identifier of the callback query the ephemeral message answers.
 
+            live_period (``int``, *optional*):
+                Period in seconds for which the location will be updated, 60-86400. Sends a live location.
+
+            heading (``int``, *optional*):
+                The direction in which the user is moving, 1-360. Live locations only.
+
+            proximity_alert_radius (``int``, *optional*):
+                Maximum distance in metres for proximity alerts about another chat member. Live locations only.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent location message is returned.
 
@@ -141,9 +153,26 @@ class SendLocation:
                 self,
                 raw.functions.messages.SendMedia(
                     peer=await self.resolve_peer(chat_id),
-                    media=raw.types.InputMediaGeoPoint(
-                        geo_point=raw.types.InputGeoPoint(
-                            lat=latitude, long=longitude, accuracy_radius=horizontal_accuracy
+                    # A live location is a different media type, not a flag on
+                    # the static one: it has a lifetime and can be updated.
+                    media=(
+                        raw.types.InputMediaGeoLive(
+                            geo_point=raw.types.InputGeoPoint(
+                                lat=latitude,
+                                long=longitude,
+                                accuracy_radius=horizontal_accuracy,
+                            ),
+                            period=live_period,
+                            heading=heading,
+                            proximity_notification_radius=proximity_alert_radius,
+                        )
+                        if live_period is not None
+                        else raw.types.InputMediaGeoPoint(
+                            geo_point=raw.types.InputGeoPoint(
+                                lat=latitude,
+                                long=longitude,
+                                accuracy_radius=horizontal_accuracy,
+                            )
                         )
                     ),
                     message="",

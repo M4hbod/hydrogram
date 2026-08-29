@@ -37,6 +37,8 @@ async def get_chunk(
     offset: int = 0,
     from_message_id: int = 0,
     from_date: datetime = utils.zero_datetime(),
+    max_id: int | None = None,
+    min_id: int | None = None,
 ):
     messages = await client.invoke(
         raw.functions.messages.GetHistory(
@@ -45,8 +47,8 @@ async def get_chunk(
             offset_date=utils.datetime_to_timestamp(from_date),
             add_offset=offset,
             limit=limit,
-            max_id=0,
-            min_id=0,
+            max_id=max_id or 0,
+            min_id=min_id or 0,
             hash=0,
         ),
         sleep_threshold=60,
@@ -63,6 +65,9 @@ class GetChatHistory:
         offset: int = 0,
         offset_id: int = 0,
         offset_date: datetime = utils.zero_datetime(),
+        max_id: int | None = None,
+        min_id: int | None = None,
+        reverse: bool = False,
     ) -> AsyncGenerator[types.Message, None] | None:
         """Get messages from a chat history.
 
@@ -90,6 +95,15 @@ class GetChatHistory:
             offset_date (:py:obj:`~datetime.datetime`, *optional*):
                 Pass a date as offset to retrieve only older messages starting from that date.
 
+            max_id (``int``, *optional*):
+                Only return messages with an id lower than this one.
+
+            min_id (``int``, *optional*):
+                Only return messages with an id higher than this one.
+
+            reverse (``bool``, *optional*):
+                Pass True to read the history oldest-first instead of newest-first.
+
         Returns:
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
 
@@ -111,7 +125,12 @@ class GetChatHistory:
                 offset=offset,
                 from_message_id=offset_id,
                 from_date=offset_date,
+                max_id=max_id,
+                min_id=min_id,
             )
+
+            if reverse:
+                messages.reverse()
 
             if not messages:
                 return

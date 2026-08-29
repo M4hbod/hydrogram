@@ -63,6 +63,13 @@ class SendPoll:
         paid_message_star_count: int | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
         business_connection_id: str | None = None,
+        allows_revoting: bool | None = None,
+        shuffle_options: bool | None = None,
+        hide_results_until_closes: bool | None = None,
+        members_only: bool | None = None,
+        allow_adding_options: bool | None = None,
+        country_codes: list[str] | None = None,
+        correct_option_ids: list[int] | None = None,
     ) -> types.Message:
         """Send a new poll.
 
@@ -169,6 +176,27 @@ class SendPoll:
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
 
+            allows_revoting (``bool``, *optional*):
+                Pass False to stop voters from changing their answer. Defaults to True.
+
+            shuffle_options (``bool``, *optional*):
+                Pass True to show the options in a different order to each voter.
+
+            hide_results_until_closes (``bool``, *optional*):
+                Pass True to keep the results hidden until the poll closes.
+
+            members_only (``bool``, *optional*):
+                Pass True to let only members of the chat vote.
+
+            allow_adding_options (``bool``, *optional*):
+                Pass True to let voters add options of their own.
+
+            country_codes (List of ``str``, *optional*):
+                Two-letter ISO 3166-1 country codes the poll is restricted to.
+
+            correct_option_ids (List of ``int``, *optional*):
+                Identifiers of the correct options, for a quiz with more than one answer.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent poll message is returned.
 
@@ -223,6 +251,8 @@ class SendPoll:
                 media=raw.types.InputMediaPoll(
                     poll=raw.types.Poll(
                         id=self.rnd_id(),
+                        # Client-side; the server does not read it on a send.
+                        hash=0,
                         question=raw.types.TextWithEntities(
                             text=question, entities=question_entities
                         ),
@@ -233,10 +263,24 @@ class SendPoll:
                         quiz=type == enums.PollType.QUIZ or False,
                         close_period=open_period,
                         close_date=utils.datetime_to_timestamp(close_date),
+                        revoting_disabled=(
+                            not allows_revoting if allows_revoting is not None else None
+                        ),
+                        shuffle_answers=shuffle_options,
+                        hide_results_until_close=hide_results_until_closes,
+                        subscribers_only=members_only,
+                        open_answers=allow_adding_options,
+                        countries_iso2=country_codes,
                     ),
-                    correct_answers=[bytes([correct_option_id])]
-                    if correct_option_id is not None
-                    else None,
+                    # A quiz can have more than one right answer, so the single
+                    # correct_option_id is the one-answer spelling of the list.
+                    correct_answers=(
+                        [bytes([option]) for option in correct_option_ids]
+                        if correct_option_ids is not None
+                        else [bytes([correct_option_id])]
+                        if correct_option_id is not None
+                        else None
+                    ),
                     solution=solution,
                     solution_entities=None if solution is None else (solution_entities or []),
                 ),

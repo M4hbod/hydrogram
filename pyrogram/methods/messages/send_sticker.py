@@ -59,6 +59,7 @@ class SendSticker:
         business_connection_id: str | None = None,
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
+        emoji: str | None = None,
     ) -> types.Message | None:
         """Send static .webp or animated .tgs stickers.
 
@@ -148,6 +149,9 @@ class SendSticker:
             callback_query_id (``str``, *optional*):
                 Identifier of the callback query the ephemeral message answers.
 
+            emoji (``str``, *optional*):
+                Emoji associated with the sticker.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent sticker message is returned, otherwise,
             in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is
@@ -174,7 +178,11 @@ class SendSticker:
                         mime_type=self.guess_mime_type(sticker) or "image/webp",
                         file=file,
                         attributes=[
-                            raw.types.DocumentAttributeFilename(file_name=Path(sticker).name)
+                            raw.types.DocumentAttributeFilename(file_name=Path(sticker).name),
+                            raw.types.DocumentAttributeSticker(
+                                alt=emoji or "",
+                                stickerset=raw.types.InputStickerSetEmpty(),
+                            ),
                         ],
                     )
                 elif re.match(r"^https?://", sticker):
@@ -188,7 +196,12 @@ class SendSticker:
                 media = raw.types.InputMediaUploadedDocument(
                     mime_type=self.guess_mime_type(sticker.name) or "image/webp",
                     file=file,
-                    attributes=[raw.types.DocumentAttributeFilename(file_name=sticker.name)],
+                    attributes=[
+                        raw.types.DocumentAttributeFilename(file_name=sticker.name),
+                        raw.types.DocumentAttributeSticker(
+                            alt=emoji or "", stickerset=raw.types.InputStickerSetEmpty()
+                        ),
+                    ],
                 )
 
             reply_to = await utils.get_reply_to(

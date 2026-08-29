@@ -34,6 +34,7 @@ class DeleteMessages:
         chat_id: int | str,
         message_ids: int | Iterable[int],
         revoke: bool = True,
+        is_scheduled: bool | None = None,
     ) -> int:
         """Delete messages, including service messages.
 
@@ -53,6 +54,9 @@ class DeleteMessages:
                 This is only for private cloud chats and normal groups, messages on
                 channels and supergroups are always revoked (i.e.: deleted for everyone).
                 Defaults to True.
+
+            is_scheduled (``bool``, *optional*):
+                Pass True to delete scheduled messages rather than sent ones.
 
         Returns:
             ``int``: Amount of affected messages
@@ -75,10 +79,14 @@ class DeleteMessages:
         if isinstance(peer, raw.types.InputPeerChannel):
             r = await self.invoke(
                 raw.functions.channels.DeleteMessages(channel=peer, id=message_ids)
+                if not is_scheduled
+                else raw.functions.messages.DeleteScheduledMessages(peer=peer, id=message_ids)
             )
         else:
             r = await self.invoke(
-                raw.functions.messages.DeleteMessages(id=message_ids, revoke=revoke)
+                raw.functions.messages.DeleteScheduledMessages(peer=peer, id=message_ids)
+                if is_scheduled
+                else raw.functions.messages.DeleteMessages(id=message_ids, revoke=revoke)
             )
 
         return r.pts_count

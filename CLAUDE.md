@@ -78,9 +78,9 @@ make check-api-schema          # diff local TL against Telegram's published sche
 - Branch `dev`, package `pyrogram`, `__version__` `3.0.0`.
 - TL layer **229**. Stages 0-5 of `docs/dev/UPGRADE-PLAN.md` are done; stage 6 is partial.
 - Surface: **443 public `Client` methods**, **502 types**, 43 enums, 30 handlers,
-  **121 filters**, 55 `Message` members. The method, type, enum and filter gaps with Kurigram
-  are closed; the **parameter** gap is not (see below).
-- Test suite: **3623 tests** across `tests/{unit,contract,integration}/`; coverage of the
+  **121 filters**, 55 `Message` members. The method, type, enum, filter and parameter gaps with
+  Kurigram are closed bar the 39 noted below, 25 of which are deliberate.
+- Test suite: **5066 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
@@ -113,21 +113,30 @@ These encode the porting hazards that actually bit, and they are cheap to run:
   `TypeError` on every call.
 - `test_filter_update_shapes.py` — the filters name the update types that carry each field they
   read. A filter that reads a field off an update without it dies inside the handler worker.
+- `test_raw_keywords.py` — every keyword handed to a `raw.*` constructor is one it has, and every
+  required field is passed. It found `pin_forum_topic` sending `channel=` where the field is
+  `peer`, and `send_poll` omitting `Poll.hash`, both of which raised on every call.
+- `test_parameters_are_used.py` — a method may not declare a parameter its own body never reads.
+  A parameter accepted and dropped is worse than a missing one: the call succeeds and the caller
+  believes the option took effect.
 
 ### Not done
 
-- **The `Client` parameter gap: 250 parameters across 56 methods.** Our `send_*` signatures lag
-  Kurigram's. Most common: `business_connection_id` (25 methods), `allow_paid_broadcast` and
-  `paid_message_star_count` (20 each), `effect_id` (17), `direct_messages_topic_id` (16),
-  `suggested_post_parameters` (14), `callback_query_id` / `receiver_user_id` (12 each),
-  `repeat_period` (11). The plumbing is known and mostly shared:
-  `invoke(rpc, business_connection_id=...)` wrapping in `InvokeWithBusinessConnection`;
-  `utils.get_reply_to(..., direct_messages_topic_id)`; the `raw.functions.ephemeral.*` path for
-  `receiver_user_id`/`callback_query_id`; and the `allow_paid_floodskip` / `allow_paid_stars` /
-  `suggested_post` / `effect` / `schedule_repeat_period` fields on `SendMessage` and `SendMedia`.
-  Do **not** re-add `reply_to_message_id`, `quote_text`, `quote_entities`, `quote_offset`,
-  `reply_to_chat_id`, `reply_to_story_id` or `disable_web_page_preview`; Kurigram still carries
-  them as deprecated shims and they are removed here on purpose.
+- **The `Client` parameter gap is down to 39 across 25 methods, and 25 of those are
+  deliberate.** `parse_mode` on `send_contact`/`send_dice`/`send_location`/`send_venue`/
+  `send_video_note`/`send_sticker`/`send_media_group`/`send_inline_bot_result` exists in Kurigram
+  to parse `quote_text`, which is removed here; `show_caption_above_media` on `send_message`,
+  `edit_message_text`, `send_media_group` and `copy_media_group` is expressed through
+  `link_preview_options.show_above_text`, which is the same wire field. The rest are client
+  lifecycle differences (`run`/`start`/`stop`/`restart`/`terminate`/`on_error`/`on_raw_update`)
+  and two session extras on `invoke`. Genuinely missing: `add_contact.note`,
+  `edit_inline_text.entities`/`rich_message`, `edit_message_text.rich_message`,
+  `forward_messages.reply_parameters`, `get_messages.pinned`/`reply`,
+  `search_messages.offset_id`, `send_poll.description`/`description_media`/`explanation_media`,
+  `send_sticker.caption`/`caption_entities`.
+  Never re-add `reply_to_message_id`, `quote_text`, `quote_entities`, `quote_offset`,
+  `reply_to_chat_id`, `reply_to_story_id` or `disable_web_page_preview`; Kurigram carries them as
+  deprecated shims and they are removed here on purpose.
 - **Generated API docs are stale** — `docs/source/api/**` has 175 pages against 443 methods and
   502 types. `make docs` has not been re-run since the surface grew.
 

@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import pyrogram
 from pyrogram import raw
 from pyrogram.types.object import Object
 
@@ -52,6 +53,7 @@ class Location(Object):
     def __init__(
         self,
         *,
+        client: pyrogram.Client | None = None,
         longitude: float | None = None,
         latitude: float | None = None,
         accuracy_radius: int | None = None,
@@ -60,7 +62,7 @@ class Location(Object):
         heading: int | None = None,
         proximity_alert_radius: int | None = None,
     ):
-        super().__init__()
+        super().__init__(client)
 
         self.longitude = longitude
         self.latitude = latitude

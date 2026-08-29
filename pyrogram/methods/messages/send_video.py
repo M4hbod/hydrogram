@@ -72,6 +72,9 @@ class SendVideo:
         business_connection_id: str | None = None,
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
+        view_once: bool | None = None,
+        video_start_timestamp: int | None = None,
+        video_cover: str | None = None,
     ) -> types.Message | None:
         """Send video files.
 
@@ -209,6 +212,15 @@ class SendVideo:
             callback_query_id (``str``, *optional*):
                 Identifier of the callback query the ephemeral message answers.
 
+            view_once (``bool``, *optional*):
+                Pass True to send a video that can be viewed only once.
+
+            video_start_timestamp (``int``, *optional*):
+                Timestamp in seconds from which the video will play in the message preview.
+
+            video_cover (``str``, *optional*):
+                File id of a photo to use as the video's cover.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent video message is returned, otherwise, in
             case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
@@ -245,16 +257,22 @@ class SendVideo:
                     media = raw.types.InputMediaUploadedDocument(
                         mime_type=self.guess_mime_type(video) or "video/mp4",
                         file=file,
-                        ttl_seconds=ttl_seconds,
+                        ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                         spoiler=has_spoiler,
                         thumb=thumb,
                         nosound_video=no_sound,
+                        video_cover=(
+                            utils.get_input_media_from_file_id(video_cover).id
+                            if video_cover
+                            else None
+                        ),
                         attributes=[
                             raw.types.DocumentAttributeVideo(
                                 supports_streaming=supports_streaming or None,
                                 duration=duration,
                                 w=width,
                                 h=height,
+                                video_start_ts=video_start_timestamp,
                             ),
                             raw.types.DocumentAttributeFilename(
                                 file_name=file_name or Path(video).name
@@ -263,11 +281,15 @@ class SendVideo:
                     )
                 elif re.match(r"^https?://", video):
                     media = raw.types.InputMediaDocumentExternal(
-                        url=video, ttl_seconds=ttl_seconds, spoiler=has_spoiler
+                        url=video,
+                        ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
+                        spoiler=has_spoiler,
                     )
                 else:
                     media = utils.get_input_media_from_file_id(
-                        video, FileType.VIDEO, ttl_seconds=ttl_seconds
+                        video,
+                        FileType.VIDEO,
+                        ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                     )
             else:
                 thumb = await self.save_file(thumb)
@@ -275,7 +297,7 @@ class SendVideo:
                 media = raw.types.InputMediaUploadedDocument(
                     mime_type=self.guess_mime_type(file_name or video.name) or "video/mp4",
                     file=file,
-                    ttl_seconds=ttl_seconds,
+                    ttl_seconds=(1 << 31) - 1 if view_once else ttl_seconds,
                     spoiler=has_spoiler,
                     thumb=thumb,
                     nosound_video=no_sound,

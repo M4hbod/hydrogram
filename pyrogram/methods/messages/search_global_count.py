@@ -16,6 +16,7 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 import pyrogram
 from pyrogram import enums, raw
@@ -23,9 +24,12 @@ from pyrogram import enums, raw
 
 class SearchGlobalCount:
     async def search_global_count(
-        self: "pyrogram.Client",
+        self: pyrogram.Client,
         query: str = "",
-        filter: "enums.MessagesFilter" = enums.MessagesFilter.EMPTY,
+        filter: enums.MessagesFilter = enums.MessagesFilter.EMPTY,
+        users_only: bool | None = None,
+        groups_only: bool | None = None,
+        channels_only: bool | None = None,
     ) -> int:
         """Get the count of messages resulting from a global search.
 
@@ -41,6 +45,15 @@ class SearchGlobalCount:
             filter (:obj:`~pyrogram.enums.MessagesFilter`, *optional*):
                 Pass a filter in order to search for specific kind of messages only:
 
+            users_only (``bool``, *optional*):
+                Pass True to search only in private chats.
+
+            groups_only (``bool``, *optional*):
+                Pass True to search only in groups.
+
+            channels_only (``bool``, *optional*):
+                Pass True to search only in channels.
+
         Returns:
             ``int``: On success, the messages count is returned.
         """
@@ -54,6 +67,9 @@ class SearchGlobalCount:
                 offset_peer=raw.types.InputPeerEmpty(),
                 offset_id=0,
                 limit=1,
+                broadcasts_only=channels_only,
+                groups_only=groups_only,
+                users_only=users_only,
             )
         )
 

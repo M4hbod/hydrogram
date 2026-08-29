@@ -34,6 +34,8 @@ class BanChatMember:
         chat_id: int | str,
         user_id: int | str,
         until_date: datetime = utils.zero_datetime(),
+        revoke_messages: bool | None = None,
+        revoke_reactions: bool | None = None,
     ) -> types.Message | bool:
         """Ban a user from a group, a supergroup or a channel.
         In the case of supergroups and channels, the user will not be able to return to the group on their own using
@@ -59,6 +61,12 @@ class BanChatMember:
                 Date when the user will be unbanned.
                 If user is banned for more than 366 days or less than 30 seconds from the current time they are
                 considered to be banned forever. Defaults to epoch (ban forever).
+
+            revoke_messages (``bool``, *optional*):
+                Pass True to delete all the messages this member sent in the chat.
+
+            revoke_reactions (``bool``, *optional*):
+                Pass True to delete all the reactions this member left in the chat.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``bool``: On success, a service message will be returned (when applicable),
@@ -100,7 +108,25 @@ class BanChatMember:
             )
         else:
             r = await self.invoke(
-                raw.functions.messages.DeleteChatUser(chat_id=abs(chat_id), user_id=user_peer)
+                raw.functions.messages.DeleteChatUser(
+                    chat_id=abs(chat_id), user_id=user_peer, revoke_history=revoke_messages
+                )
+            )
+
+        # Banning does not remove what the member left behind, and messages and
+        # reactions are cleared by two different requests.
+        if revoke_messages:
+            await self.invoke(
+                raw.functions.channels.DeleteParticipantHistory(
+                    channel=chat_peer, participant=user_peer
+                )
+            )
+
+        if revoke_reactions:
+            await self.invoke(
+                raw.functions.messages.DeleteParticipantReactions(
+                    peer=chat_peer, participant=user_peer
+                )
             )
 
         for i in r.updates:

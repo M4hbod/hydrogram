@@ -34,6 +34,9 @@ class SearchGlobal:
         query: str = "",
         filter: enums.MessagesFilter = enums.MessagesFilter.EMPTY,
         limit: int = 0,
+        users_only: bool | None = None,
+        groups_only: bool | None = None,
+        channels_only: bool | None = None,
     ) -> AsyncGenerator[types.Message, None] | None:
         """Search messages globally from all of your chats.
 
@@ -58,6 +61,15 @@ class SearchGlobal:
             limit (``int``, *optional*):
                 Limits the number of messages to be retrieved.
                 By default, no limit is applied and all messages are returned.
+
+            users_only (``bool``, *optional*):
+                Pass True to search only in private chats.
+
+            groups_only (``bool``, *optional*):
+                Pass True to search only in groups.
+
+            channels_only (``bool``, *optional*):
+                Pass True to search only in channels.
 
         Returns:
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
@@ -99,6 +111,9 @@ class SearchGlobal:
                         offset_peer=offset_peer,
                         offset_id=offset_id,
                         limit=limit,
+                        broadcasts_only=channels_only,
+                        groups_only=groups_only,
+                        users_only=users_only,
                     ),
                     sleep_threshold=60,
                 ),

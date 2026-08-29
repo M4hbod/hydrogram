@@ -30,6 +30,8 @@ types were in that state: ``PreCheckoutQuery``, ``ShippingQuery``,
 
 from __future__ import annotations
 
+import ast
+import inspect
 import pathlib
 import re
 
@@ -81,5 +83,77 @@ def test_every_referenced_type_resolves():
         for path, line, name in REFERENCES
         if not hasattr(types, name)
     ]
+
+    assert not offenders, "\n".join(offenders)
+
+
+def constructor_calls():
+    """Every ``types.X(...)`` call, with the keywords it passes."""
+    for path in source_files():
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+
+            name = dotted(node.func)
+
+            if name is None:
+                continue
+
+            keywords = tuple(sorted({kw.arg for kw in node.keywords if kw.arg is not None}))
+
+            if keywords:
+                yield str(path.relative_to(PACKAGE.parent)), node.lineno, name, keywords
+
+
+def dotted(node: ast.AST) -> str | None:
+    """The class name of a ``types.X`` / ``pyrogram.types.X`` call, else None."""
+    if not isinstance(node, ast.Attribute) or not node.attr[:1].isupper():
+        return None
+
+    parent = node.value
+
+    if isinstance(parent, ast.Name) and parent.id == "types":
+        return node.attr
+
+    if (
+        isinstance(parent, ast.Attribute)
+        and parent.attr == "types"
+        and isinstance(parent.value, ast.Name)
+        and parent.value.id == "pyrogram"
+    ):
+        return node.attr
+
+    return None
+
+
+CONSTRUCTIONS = sorted(set(constructor_calls()))
+
+
+def test_every_constructor_keyword_is_accepted():
+    """A type built with a field it does not have raises only when that line runs.
+
+    ``Poll._parse`` was building ``PollOption`` with seven fields it did not
+    have, so every poll that reached the parser raised ``TypeError`` inside the
+    handler worker.
+    """
+    offenders = []
+
+    for path, line, name, keywords in CONSTRUCTIONS:
+        cls = getattr(types, name, None)
+
+        if cls is None or not inspect.isclass(cls):
+            continue
+
+        parameters = inspect.signature(cls.__init__).parameters
+
+        if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values()):
+            continue
+
+        unexpected = [kw for kw in keywords if kw not in parameters]
+
+        if unexpected:
+            offenders.append(f"{path}:{line} passes {unexpected} to types.{name}")
 
     assert not offenders, "\n".join(offenders)

@@ -63,6 +63,8 @@ class SendVoice:
         business_connection_id: str | None = None,
         receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
+        view_once: bool | None = None,
+        waveform: bytes | None = None,
     ) -> types.Message | None:
         """Send audio files.
 
@@ -165,6 +167,12 @@ class SendVoice:
             callback_query_id (``str``, *optional*):
                 Identifier of the callback query the ephemeral message answers.
 
+            view_once (``bool``, *optional*):
+                Pass True to send a voice message that can be listened to only once.
+
+            waveform (``bytes``, *optional*):
+                A 5-bit byte string describing the waveform to draw for the voice message.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent voice message is returned, otherwise, in
             case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
@@ -192,8 +200,11 @@ class SendVoice:
                     media = raw.types.InputMediaUploadedDocument(
                         mime_type=self.guess_mime_type(voice) or "audio/mpeg",
                         file=file,
+                        ttl_seconds=(1 << 31) - 1 if view_once else None,
                         attributes=[
-                            raw.types.DocumentAttributeAudio(voice=True, duration=duration)
+                            raw.types.DocumentAttributeAudio(
+                                voice=True, duration=duration, waveform=waveform
+                            )
                         ],
                     )
                 elif re.match(r"^https?://", voice):
@@ -205,7 +216,12 @@ class SendVoice:
                 media = raw.types.InputMediaUploadedDocument(
                     mime_type=self.guess_mime_type(voice.name) or "audio/mpeg",
                     file=file,
-                    attributes=[raw.types.DocumentAttributeAudio(voice=True, duration=duration)],
+                    ttl_seconds=(1 << 31) - 1 if view_once else None,
+                    attributes=[
+                        raw.types.DocumentAttributeAudio(
+                            voice=True, duration=duration, waveform=waveform
+                        )
+                    ],
                 )
 
             reply_to = await utils.get_reply_to(

@@ -54,6 +54,7 @@ class SendCachedMedia:
         paid_message_star_count: int | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
         business_connection_id: str | None = None,
+        has_spoiler: bool | None = None,
     ) -> types.Message | None:
         """Send any media stored on the Telegram servers using a file_id.
 
@@ -128,6 +129,9 @@ class SendCachedMedia:
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
 
+            has_spoiler (``bool``, *optional*):
+                Pass True if the media should be covered with a spoiler animation.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent media message is returned.
 
@@ -144,7 +148,7 @@ class SendCachedMedia:
         r = await self.invoke(
             raw.functions.messages.SendMedia(
                 peer=await self.resolve_peer(chat_id),
-                media=utils.get_input_media_from_file_id(file_id),
+                media=utils.get_input_media_from_file_id(file_id, has_spoiler=has_spoiler),
                 silent=disable_notification or None,
                 reply_to=reply_to,
                 random_id=self.rnd_id(),

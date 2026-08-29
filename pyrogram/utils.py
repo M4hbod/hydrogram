@@ -52,7 +52,10 @@ async def ainput(prompt: str = "", *, hide: bool = False):
 
 
 def get_input_media_from_file_id(
-    file_id: str, expected_file_type: FileType = None, ttl_seconds: int | None = None
+    file_id: str,
+    expected_file_type: FileType = None,
+    ttl_seconds: int | None = None,
+    has_spoiler: bool | None = None,
 ) -> raw.types.InputMediaPhoto | raw.types.InputMediaDocument:
     try:
         decoded = FileId.decode(file_id)
@@ -80,6 +83,7 @@ def get_input_media_from_file_id(
                 file_reference=decoded.file_reference,
             ),
             ttl_seconds=ttl_seconds,
+            spoiler=has_spoiler,
         )
 
     if file_type in DOCUMENT_TYPES:
@@ -90,6 +94,7 @@ def get_input_media_from_file_id(
                 file_reference=decoded.file_reference,
             ),
             ttl_seconds=ttl_seconds,
+            spoiler=has_spoiler,
         )
 
     raise ValueError(f"Unknown file id: {file_id}")
