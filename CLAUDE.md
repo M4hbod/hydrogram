@@ -77,9 +77,10 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 - Branch `dev`, package `pyrogram`, `__version__` `3.0.0`.
 - TL layer **229**. Stages 0-5 of `docs/dev/UPGRADE-PLAN.md` are done; stage 6 is partial.
-- Surface: **441 public `Client` methods**, 431 method modules, 222 type modules, 43 enums,
-  30 handlers. The method gap with Kurigram is closed.
-- Test suite: **3048 tests** across `tests/{unit,contract,integration}/`; coverage of the
+- Surface: **443 public `Client` methods**, **502 types**, 43 enums, 30 handlers,
+  **121 filters**, 55 `Message` members. The method, type, enum and filter gaps with Kurigram
+  are closed; the **parameter** gap is not (see below).
+- Test suite: **3623 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
@@ -104,8 +105,31 @@ These encode the porting hazards that actually bit, and they are cheap to run:
 - `test_handlers_and_decorators.py` — ties each `on_x` decorator to its `Handler` and to the
   dispatcher's routing table. A parser that raises is logged and swallowed by the handler worker,
   so a broken one shows up as "that update type never arrives", never as an error.
+- `test_type_references.py` — the sibling of `test_raw_references.py` for `types.*`. It found
+  eight update types the dispatcher routed into classes that did not exist, which is why
+  `@on_pre_checkout_query` and seven others silently never fired.
+- `test_bound_method_delegation.py` — walks every `self._client.X(...)` in the type tree and
+  fails when a keyword is not in `Client.X`'s signature. It found 13 bound methods that raised
+  `TypeError` on every call.
+- `test_filter_update_shapes.py` — the filters name the update types that carry each field they
+  read. A filter that reads a field off an update without it dies inside the handler worker.
 
 ### Not done
+
+- **The `Client` parameter gap: 250 parameters across 56 methods.** Our `send_*` signatures lag
+  Kurigram's. Most common: `business_connection_id` (25 methods), `allow_paid_broadcast` and
+  `paid_message_star_count` (20 each), `effect_id` (17), `direct_messages_topic_id` (16),
+  `suggested_post_parameters` (14), `callback_query_id` / `receiver_user_id` (12 each),
+  `repeat_period` (11). The plumbing is known and mostly shared:
+  `invoke(rpc, business_connection_id=...)` wrapping in `InvokeWithBusinessConnection`;
+  `utils.get_reply_to(..., direct_messages_topic_id)`; the `raw.functions.ephemeral.*` path for
+  `receiver_user_id`/`callback_query_id`; and the `allow_paid_floodskip` / `allow_paid_stars` /
+  `suggested_post` / `effect` / `schedule_repeat_period` fields on `SendMessage` and `SendMedia`.
+  Do **not** re-add `reply_to_message_id`, `quote_text`, `quote_entities`, `quote_offset`,
+  `reply_to_chat_id`, `reply_to_story_id` or `disable_web_page_preview`; Kurigram still carries
+  them as deprecated shims and they are removed here on purpose.
+- **Generated API docs are stale** — `docs/source/api/**` has 175 pages against 443 methods and
+  502 types. `make docs` has not been re-run since the surface grew.
 
 - **Fake-TLS (`ee`) MTProxy has never been run against a live proxy** — only against the stand-in
   in `tests/unit/connection/test_fake_tls.py`, which answers the greeting the way a real proxy
