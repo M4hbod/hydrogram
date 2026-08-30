@@ -227,6 +227,10 @@ class Client(Methods):
             Pass False to receive updates that arrived while the client was offline.
             Defaults to True.
 
+        client_platform (:obj:`~pyrogram.enums.ClientPlatform`, *optional*):
+            The platform reported when opening a web app.
+            Defaults to :obj:`~pyrogram.enums.ClientPlatform.OTHER`.
+
         fetch_replies (``bool``, *optional*):
             Whether to fetch the message a reply points at when it is not already cached.
             Defaults to True.
@@ -255,6 +259,12 @@ class Client(Methods):
 
     INVITE_LINK_RE = re.compile(
         r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:joinchat/|\+))([\w-]+)$"
+    )
+    UPGRADED_GIFT_RE = re.compile(
+        r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:nft/|\+))([\w-]+)$"
+    )
+    CHATLIST_INVITE_RE = re.compile(
+        r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:addlist/|\+))([\w-]+)$"
     )
     WORKERS = min(32, (os.cpu_count() or 0) + 4)  # os.cpu_count() can be None
     WORKDIR = PARENT_DIR
@@ -300,6 +310,7 @@ class Client(Methods):
         message_cache_size: int = 1000,
         topic_cache_size: int = 1000,
         skip_updates: bool = True,
+        client_platform: enums.ClientPlatform = enums.ClientPlatform.OTHER,
         fetch_replies: bool = True,
         fetch_topics: bool = False,
         fetch_stories: bool = False,
@@ -338,6 +349,7 @@ class Client(Methods):
         # Drop updates that queued while the client was offline, rather than
         # replaying them on connect.
         self.skip_updates = skip_updates
+        self.client_platform = client_platform
         self.fetch_replies = fetch_replies
         # Off until the chats and stories method groups land: the parse paths they gate call
         # get_direct_messages_topics_by_id() and get_stories(), which do not exist yet.

@@ -15,6 +15,46 @@ Changelog
 
 .. towncrier release notes start
 
+3.2.1 (2026-08-30)
+===================
+
+Features
+--------
+
+- ``Client`` takes ``client_platform``, an :obj:`~pyrogram.enums.ClientPlatform`
+  reported when opening a web app. Defaults to ``OTHER``.
+
+
+
+Bugfixes
+--------
+
+- Nine methods raised ``AttributeError`` or ``TypeError`` on every call.
+  ``get_main_web_app``, ``open_web_app``, ``get_web_app_url`` and
+  ``get_web_app_link_url`` read ``Client.client_platform``, which did not exist;
+  ``get_upgraded_gift``, ``get_upgraded_gift_value_info`` and
+  ``send_gift_purchase_offer`` read ``Client.UPGRADED_GIFT_RE``, and
+  ``check_chat_folder_invite_link`` read ``Client.CHATLIST_INVITE_RE`` -- neither
+  constant was defined. ``send_web_page`` forwarded ``quote_text``,
+  ``quote_entities``, ``quote_offset``, ``reply_to_chat_id`` and
+  ``reply_to_story_id`` to ``send_message``, which removed them in the Bot API 7
+  migration.
+
+
+
+Misc
+----
+
+- ``tests/contract/test_every_method_builds_a_request.py`` calls 211 client
+  methods and asserts each reaches a request without raising. The harness before
+  it returned a plausible reply and so had to parse one, which is why 75 methods
+  skipped with "needs more client than the stub provides" -- and a method that
+  skips is a method nobody has ever run. This one stops at the request instead,
+  and uses a real ``Client`` with only ``invoke`` overridden, so nothing but the
+  wire is stubbed. It found all nine dead methods above.
+
+
+
 3.2.0 (2026-08-30)
 ===================
 

@@ -59,11 +59,6 @@ class SendWebPage:
         | types.ReplyKeyboardRemove
         | types.ForceReply
         | None = None,
-        reply_to_chat_id: int | str | None = None,
-        reply_to_story_id: int | None = None,
-        quote_text: str | None = None,
-        quote_entities: list[types.MessageEntity] | None = None,
-        quote_offset: int | None = None,
     ) -> types.Message | None:
         """Send Web Page Preview.
 
@@ -148,9 +143,6 @@ class SendWebPage:
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
 
-            quote_offset (``int``, *optional*):
-                Offset for quote in original message.
-
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
             server answered with no message, None is returned.
@@ -197,9 +189,6 @@ class SendWebPage:
             direct_messages_topic_id=direct_messages_topic_id,
             effect_id=effect_id,
             reply_parameters=reply_parameters,
-            quote_text=quote_text,
-            quote_entities=quote_entities,
-            quote_offset=quote_offset,
             schedule_date=schedule_date,
             repeat_period=repeat_period,
             protect_content=protect_content,
@@ -207,6 +196,4 @@ class SendWebPage:
             allow_paid_broadcast=allow_paid_broadcast,
             paid_message_star_count=paid_message_star_count,
             reply_markup=reply_markup,
-            reply_to_chat_id=reply_to_chat_id,
-            reply_to_story_id=reply_to_story_id,
         )

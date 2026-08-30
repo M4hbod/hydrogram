@@ -18,7 +18,7 @@ packages import it by name. Three commits exist solely to keep those working:
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
 - `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
   `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
-  not a ceiling**, so the version is now `3.2.0` and no longer pinned. Keep it `>=1.2.20`.
+  not a ceiling**, so the version is now `3.2.1` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -75,12 +75,12 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 ## Current state (2026-08-30)
 
-- Branch `dev`, package `pyrogram`, `__version__` `3.2.0`.
+- Branch `dev`, package `pyrogram`, `__version__` `3.2.1`.
 - TL layer **229**. Every stage of `docs/dev/UPGRADE-PLAN.md` is done.
 - Surface: **445 public `Client` methods**, **397 types**, 43 enums, 30 handlers,
   **121 filters**, 55 `Message` members. Every gap with Kurigram — methods, types, enums,
   filters, bound methods and parameters — is closed except what is deliberate (see below).
-- Test suite: **5496 tests** across `tests/{unit,contract,integration}/`; coverage of the
+- Test suite: **5707 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
@@ -130,6 +130,10 @@ These encode the porting hazards that actually bit, and they are cheap to run:
 - `test_parameters_are_used.py` — a method may not declare a parameter its own body never reads.
   A parameter accepted and dropped is worse than a missing one: the call succeeds and the caller
   believes the option took effect.
+- `test_every_method_builds_a_request.py` — calls 211 client methods and asserts each reaches a
+  request. It stops at `invoke` rather than parsing a reply, which is what the older harness could
+  not do: 75 methods skipped there as "needs more client than the stub provides", and a method
+  that skips is one nobody has run. It found nine that raised on every call.
 - `test_type_fields.py` — every type's fields against a Kurigram checkout (`KURIGRAM_PATH`).
   The parity checks before it compared **names**, so `Chat` counted as closed while missing 118
   fields and `User` 76. A name being present is not the same as it being right.
