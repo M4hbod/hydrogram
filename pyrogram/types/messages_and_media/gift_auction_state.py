@@ -53,7 +53,8 @@ class GiftAuctionState(Object):
 
     @staticmethod
     async def _parse(
-        client: pyrogram.Client, gift_auction_state: raw.base.StarGiftAuctionState
+        client: pyrogram.Client,
+        gift_auction_state: raw.types.payments.StarGiftAuctionState,
     ) -> GiftAuctionState:
         state = None
 

@@ -17,7 +17,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-"""A parser may not iterate a raw field the schema marks optional.
+"""A parser must only read raw fields its input actually has.
+
+Two checks, both against the generated schema, both for defects that raise
+inside a parser rather than at import time.
 
 An optional ``Vector`` field arrives as ``None``, not ``[]``. Kurigram's parsers
 are written as though it were ``[]``, so ported code iterates it bare and raises
@@ -33,6 +36,13 @@ ternary, an enclosing ``if``, a ``getattr`` default, or an early return.
 It found ``Thumbnail._parse`` iterating ``Document.thumbs`` (every document
 without a thumbnail) and ``ChatPreview._parse`` iterating
 ``ChatInvite.participants`` (every invite without a member preview).
+
+The second check is for reading a field no constructor the annotated input can
+hold declares at all, narrowing through ``isinstance`` on both arms. That is the
+shape of ``CallbackQuery._parse`` reading ``game_short_name`` off a business
+callback query, which killed every business button press. A wrong annotation
+hides this check as effectively as a wrong read causes the crash, so both count
+as findings.
 """
 
 from __future__ import annotations
@@ -51,7 +61,9 @@ PACKAGE = pathlib.Path(__file__).resolve().parents[2] / "pyrogram"
 #: Generated trees. They are written by the compiler, not ported by hand.
 SKIP = ("raw", "errors")
 
-RAW_RE = re.compile(r"raw\.(?:types|base)\.(\w+)")
+#: ``raw.types.messages.ChatFull`` is a different class from ``raw.types.ChatFull``,
+#: so the namespace has to come along with the name.
+RAW_RE = re.compile(r"raw\.(?:types|base)\.((?:\w+\.)?\w+)")
 
 #: Builtins that iterate their first argument.
 ITERATING_BUILTINS = frozenset({
@@ -74,9 +86,33 @@ ITERATING_BUILTINS = frozenset({
 })
 
 
+#: A parameter annotated as a container of raw objects is not itself one.
+#: ``users: dict[int, raw.types.User]`` is the common shape, and reading it as a
+#: ``User`` turns every ``users.get(...)`` into a finding.
+CONTAINER_RE = re.compile(r"\b(?:dict|list|set|tuple|Dict|List|Set|Tuple|Mapping|Sequence)\s*\[")
+
+
 def raw_names(annotation: object) -> set[str]:
     """Every ``raw.types.X`` / ``raw.base.X`` name mentioned in an annotation."""
     return set(RAW_RE.findall(str(annotation)))
+
+
+def parameter_holders(annotation: ast.AST) -> set[type]:
+    """The raw constructors a parameter can hold, or nothing for a container."""
+    text = ast.unparse(annotation)
+    if CONTAINER_RE.search(text):
+        return set()
+    return resolve(raw_names(text))
+
+
+def walk(root: object, dotted: str) -> object:
+    """``walk(raw.types, "messages.ChatFull")`` -> the class, or ``None``."""
+    node = root
+    for part in dotted.split("."):
+        node = getattr(node, part, None)
+        if node is None:
+            return None
+    return node
 
 
 def resolve(names: set[str], _seen: frozenset[str] = frozenset()) -> set[type]:
@@ -91,12 +127,12 @@ def resolve(names: set[str], _seen: frozenset[str] = frozenset()) -> set[type]:
             continue
         seen = _seen | {name}
 
-        concrete = getattr(raw.types, name, None)
+        concrete = walk(raw.types, name)
         if isinstance(concrete, type):
             out.add(concrete)
             continue
 
-        base = getattr(raw.base, name, None)
+        base = walk(raw.base, name)
         if base is None or isinstance(base, pytypes.ModuleType):
             continue
 
@@ -203,6 +239,24 @@ def negated_names(test: ast.AST) -> set[str]:
     return out
 
 
+def isinstance_narrow(test: ast.AST) -> dict[str, set[type]]:
+    """``isinstance(x, raw.types.A)`` -> ``{"x": {A}}``, tuples included."""
+    out: dict[str, set[type]] = {}
+    for node in ast.walk(test):
+        if not (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "isinstance"
+            and len(node.args) == 2
+            and isinstance(node.args[0], ast.Name)
+        ):
+            continue
+        narrowed = resolve(raw_names(ast.unparse(node.args[1])))
+        if narrowed:
+            out.setdefault(node.args[0].id, set()).update(narrowed)
+    return out
+
+
 class Scan(ast.NodeVisitor):
     """Resolve raw attribute chains inside one function and flag bare iteration."""
 
@@ -212,6 +266,8 @@ class Scan(ast.NodeVisitor):
         self.aliases: dict[str, tuple[str, bool]] = {}
         self.guards: list[set[str]] = []
         self.hits: list[tuple[int, str]] = []
+        # reads of a field no constructor in the narrowed union declares
+        self.missing: list[tuple[int, str]] = []
 
     # -- resolution ----------------------------------------------------------
 
@@ -240,33 +296,74 @@ class Scan(ast.NodeVisitor):
     def body(self, statements: list[ast.stmt]) -> None:
         """Visit a block, honouring early returns as guards for what follows."""
         pushed = 0
+        restore: list[tuple[str, set[type] | None]] = []
+
         for statement in statements:
             self.visit(statement)
-            if (
+            if not (
                 isinstance(statement, ast.If)
                 and not statement.orelse
                 and terminates(statement.body)
             ):
-                proven = negated_names(statement.test)
-                if proven:
-                    self.guards.append(proven)
-                    pushed += 1
+                continue
+
+            proven = negated_names(statement.test)
+            if proven:
+                self.guards.append(proven)
+                pushed += 1
+
+            # `if not isinstance(x, A): return` proves x is an A afterwards,
+            # and `if isinstance(x, A): return` proves it is not.
+            negated = any(
+                isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.Not)
+                for n in ast.walk(statement.test)
+            )
+            for name, narrowed in isinstance_narrow(statement.test).items():
+                before = self.env.get(name)
+                restore.append((name, before))
+                if negated:
+                    self.env[name] = narrowed
+                else:
+                    self.env[name] = (before - narrowed) if before else set()
+
+        for name, previous in reversed(restore):
+            if previous is None:
+                self.env.pop(name, None)
+            else:
+                self.env[name] = previous
         for _ in range(pushed):
             self.guards.pop()
 
-    def visit_If(self, node: ast.If) -> None:
-        self.visit(node.test)
-        self.guards.append(names_in(node.test))
-        self.body(node.body)
+    def branch(self, test: ast.AST, then: object, otherwise: object, block: bool) -> None:
+        """Visit both arms of an if, narrowing each by the isinstance test."""
+        self.visit(test)
+        narrowed = isinstance_narrow(test)
+        previous = {name: self.env.get(name) for name in narrowed}
+
+        self.env.update(narrowed)
+        self.guards.append(names_in(test))
+        self.body(then) if block else self.visit(then)
         self.guards.pop()
-        self.body(node.orelse)
+
+        # The else arm proves the opposite, which is what makes an
+        # `if isinstance(x, A): ... else: x.b` read correctly.
+        for name, narrowed_to in narrowed.items():
+            before = previous[name]
+            self.env[name] = (before - narrowed_to) if before else set()
+
+        self.body(otherwise) if block else self.visit(otherwise)
+
+        for name, before in previous.items():
+            if before is None:
+                self.env.pop(name, None)
+            else:
+                self.env[name] = before
+
+    def visit_If(self, node: ast.If) -> None:
+        self.branch(node.test, node.body, node.orelse, block=True)
 
     def visit_IfExp(self, node: ast.IfExp) -> None:
-        self.visit(node.test)
-        self.guards.append(names_in(node.test))
-        self.visit(node.body)
-        self.guards.pop()
-        self.visit(node.orelse)
+        self.branch(node.test, node.body, node.orelse, block=False)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         self.generic_visit(node)
@@ -312,6 +409,21 @@ class Scan(ast.NodeVisitor):
             if optional and text and not self.guarded(text):
                 self.hits.append((node.lineno, text))
 
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        self.generic_visit(node)
+
+        if not isinstance(node.value, ast.Name):
+            return
+        holders = self.env.get(node.value.id)
+        if not holders:
+            return
+
+        text = f"{node.value.id}.{node.attr}"
+        if self.guarded(text):
+            return
+        if all(node.attr not in fields_of(h) and not hasattr(h, node.attr) for h in holders):
+            self.missing.append((node.lineno, text))
+
     def visit_For(self, node: ast.For) -> None:
         self.flag(node.iter)
         self.visit(node.iter)
@@ -350,9 +462,10 @@ class Scan(ast.NodeVisitor):
                 self.visit(value)
 
 
-def unguarded_iterations() -> tuple[list[str], int]:
-    """``(findings, number of functions actually analysed)``."""
+def scan_package() -> tuple[list[str], list[str], int]:
+    """``(bare iterations, reads of absent fields, functions analysed)``."""
     findings: list[str] = []
+    missing: list[str] = []
     analysed = 0
 
     for path in sorted(PACKAGE.rglob("*.py")):
@@ -369,7 +482,7 @@ def unguarded_iterations() -> tuple[list[str], int]:
             for argument in arguments:
                 if argument.annotation is None:
                     continue
-                resolved = resolve(raw_names(ast.unparse(argument.annotation)))
+                resolved = parameter_holders(argument.annotation)
                 if resolved:
                     env[argument.arg] = resolved
 
@@ -385,8 +498,13 @@ def unguarded_iterations() -> tuple[list[str], int]:
                     f"{path.name}:{lineno}: {function.name}() iterates `{text}`, "
                     f"which the schema marks optional"
                 )
+            for lineno, text in scan.missing:
+                missing.append(
+                    f"{path.name}:{lineno}: {function.name}() reads `{text}`, "
+                    f"which no constructor it can hold declares"
+                )
 
-    return findings, analysed
+    return findings, missing, analysed
 
 
 #: Functions analysed when this check was written. A resolver that stopped
@@ -395,7 +513,7 @@ ANALYSED_FLOOR = 200
 
 
 def test_no_parser_iterates_an_optional_raw_field_bare():
-    findings, analysed = unguarded_iterations()
+    findings, _, analysed = scan_package()
     assert not findings, (
         "These iterate a raw field that arrives as None when the server omits it. "
         "Guard with `or []`.\n  " + "\n  ".join(findings)
@@ -403,6 +521,21 @@ def test_no_parser_iterates_an_optional_raw_field_bare():
     assert analysed >= ANALYSED_FLOOR, (
         f"only {analysed} functions resolved a raw parameter, was {ANALYSED_FLOOR}+. "
         "The check is passing because it stopped looking, not because the tree is clean."
+    )
+
+
+def test_no_parser_reads_a_field_its_input_cannot_have():
+    """``CallbackQuery._parse`` read ``game_short_name`` off a business query.
+
+    Business callback queries do not carry that field, so every one of them
+    raised ``AttributeError`` inside the parser. Either the annotation is wrong
+    or the read is; both are worth failing on.
+    """
+    _, missing, _ = scan_package()
+    assert not missing, (
+        "These read a field the annotated input does not declare. Fix the "
+        "annotation if it is wrong, or use getattr if the field is conditional."
+        "\n  " + "\n  ".join(missing)
     )
 
 
@@ -438,3 +571,38 @@ def test_the_scanner_flags_a_known_bad_shape():
     scan = Scan({"media": resolve({"Document"})})
     scan.body(function.body)
     assert not scan.hits, "`or []` should not be flagged"
+
+
+def test_the_scanner_flags_the_callback_query_shape():
+    """The bug this second check exists for, reduced to its shape."""
+    holders = resolve({"UpdateBusinessBotCallbackQuery"})
+    assert holders, "raw.types.UpdateBusinessBotCallbackQuery did not resolve"
+
+    source = "def _parse(client, q):\n    return q.game_short_name\n"
+    function = ast.parse(source).body[0]
+    scan = Scan({"q": holders})
+    scan.body(function.body)
+    assert scan.missing, "a read of a field the update does not carry was not flagged"
+
+    fine = "def _parse(client, q):\n    return q.chat_instance\n"
+    function = ast.parse(fine).body[0]
+    scan = Scan({"q": holders})
+    scan.body(function.body)
+    assert not scan.missing, "a field the update does carry was flagged"
+
+
+def test_isinstance_narrows_both_arms():
+    """`else: x.b` after `if isinstance(x, A)` must read as the other branch."""
+    source = (
+        "def _parse(msg_id):\n"
+        "    if isinstance(msg_id, raw.types.InputBotInlineMessageID):\n"
+        "        return msg_id.id\n"
+        "    return msg_id.owner_id\n"
+    )
+    function = ast.parse(source).body[0]
+    union = resolve({"InputBotInlineMessageID"}) | resolve({"InputBotInlineMessageID64"})
+    scan = Scan({"msg_id": union})
+    scan.body(function.body)
+    assert not scan.missing, (
+        "owner_id lives on InputBotInlineMessageID64, which the else arm narrows to"
+    )

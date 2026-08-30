@@ -1014,7 +1014,7 @@ class Chat(Object):
     @staticmethod
     async def _parse_full(
         client: pyrogram.Client,
-        chat_full: raw.types.UserFull | raw.types.ChatFull | raw.types.ChannelFull,
+        chat_full: raw.types.users.UserFull | raw.types.messages.ChatFull,
     ) -> Chat | None:
         users = {u.id: u for u in chat_full.users}
         chats = {c.id: c for c in chat_full.chats}

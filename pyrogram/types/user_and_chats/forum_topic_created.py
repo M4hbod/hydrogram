@@ -57,11 +57,14 @@ class ForumTopicCreated(Object):
 
     @staticmethod
     def _parse(message: raw.base.Message) -> ForumTopicCreated:
-        custom_emoji_id = getattr(message.action, "icon_emoji_id", None)
+        # Only MessageService carries an action; the base union also covers
+        # Message and MessageEmpty, which do not.
+        action = getattr(message, "action", None)
+        custom_emoji_id = getattr(action, "icon_emoji_id", None)
 
         return ForumTopicCreated(
             id=getattr(message, "id", None),
-            title=getattr(message.action, "title", None),
-            icon_color=getattr(message.action, "icon_color", None),
+            title=getattr(action, "title", None),
+            icon_color=getattr(action, "icon_color", None),
             custom_emoji_id=str(custom_emoji_id) if custom_emoji_id else None,
         )
