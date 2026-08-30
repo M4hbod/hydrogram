@@ -15,6 +15,44 @@ Changelog
 
 .. towncrier release notes start
 
+3.2.3 (2026-08-30)
+===================
+
+Bugfixes
+--------
+
+- Fixed five dispatcher update parsers that raised on every update they were
+  routed. ``callback_query_parser`` passed four arguments to a three-argument
+  ``CallbackQuery._parse``, killing every inline-keyboard button press;
+  ``CallbackQuery._parse`` read ``game_short_name`` off business callback queries,
+  which do not carry it; ``parse_deleted_messages`` read ``messages`` off
+  ``UpdateDeleteEphemeralMessages``, which names the field ``ids``;
+  ``deleted_business_messages_parser`` awaited a synchronous parser; and the
+  ``Poll`` and ``Story`` parsers iterated raw fields that are optional in the
+  schema and arrive as ``None``. Every one of these was swallowed by the handler
+  worker, so the symptom was an update type that silently never fired.
+  `#dispatcher-dead-parsers <https://github.com/M4hbod/hydrogram/issues/dispatcher-dead-parsers>`_
+- Fixed two parsers that crashed on ordinary traffic by iterating a raw field the
+  schema marks optional. ``Thumbnail._parse`` iterated ``Document.thumbs``, so
+  every document without a thumbnail raised ``TypeError``, and
+  ``ChatPreview._parse`` iterated ``ChatInvite.participants``, so every invite
+  without a member preview did the same. A new contract test,
+  ``test_optional_raw_fields_are_guarded``, resolves raw attribute chains against
+  the generated schema across the whole package and fails on any unguarded
+  iteration of an optional field.
+  `#optional-raw-fields-guarded <https://github.com/M4hbod/hydrogram/issues/optional-raw-fields-guarded>`_
+- ``ForumTopicCreated._parse`` read ``action`` off the raw message directly, which
+  raises ``AttributeError`` for anything but a service message. Two ``_parse``
+  annotations were also wrong in a way that hid the same class of defect:
+  ``Chat._parse_full`` declared the un-namespaced full types while its body
+  handles ``raw.types.users.UserFull`` and ``raw.types.messages.ChatFull``, and
+  ``GiftAuctionState._parse`` declared ``raw.base.StarGiftAuctionState`` where the
+  RPC returns ``raw.types.payments.StarGiftAuctionState``. A second check in
+  ``test_optional_raw_fields_are_guarded`` now fails on any read of a field no
+  constructor the annotated input can hold declares.
+  `#raw-field-reads-checked <https://github.com/M4hbod/hydrogram/issues/raw-field-reads-checked>`_
+
+
 3.2.2 (2026-08-30)
 ===================
 

@@ -14,7 +14,7 @@ omit =
 # stage adds tests. Never lower it to make a build pass -- that is the one thing
 # it exists to prevent. Most of pyrogram/methods/ needs a live client, so the
 # realistic ceiling for offline tests is well under 100%.
-fail_under = 58
+fail_under = 60
 show_missing = True
 skip_covered = True
 exclude_also =
