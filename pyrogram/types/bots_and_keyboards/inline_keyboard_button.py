@@ -19,8 +19,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pyrogram
 from pyrogram import enums, raw, types
 from pyrogram.types.object import Object
@@ -106,39 +104,41 @@ class InlineKeyboardButton(Object):
 
     def __init__(
         self,
-        text: str | Any,
-        callback_data: str | bytes | None = None,
+        text: str,
+        icon_custom_emoji_id: str | None = None,
+        style: enums.ButtonStyle = enums.ButtonStyle.DEFAULT,
         url: str | None = None,
-        web_app: types.WebAppInfo = None,
-        login_url: types.LoginUrl = None,
+        callback_data: str | bytes | None = None,
+        requires_password: bool | None = None,
+        web_app: types.WebAppInfo | None = None,
+        login_url: types.LoginUrl | None = None,
         user_id: int | None = None,
         switch_inline_query: str | None = None,
         switch_inline_query_current_chat: str | None = None,
-        callback_game: types.CallbackGame = None,
-        copy_text: str | None = None,
+        switch_inline_query_chosen_chat: types.SwitchInlineQueryChosenChat | None = None,
+        copy_text: types.CopyTextButton | None = None,
+        callback_game: types.CallbackGame | None = None,
         pay: bool | None = None,
         disabled: bool | None = None,
-        requires_password: bool | None = None,
-        style: enums.ButtonStyle = enums.ButtonStyle.DEFAULT,
-        icon_custom_emoji_id: str | None = None,
     ):
         super().__init__()
 
-        self.text = text if isinstance(text, str) else str(text)
-        self.callback_data = callback_data
+        self.text = str(text)
+        self.icon_custom_emoji_id = icon_custom_emoji_id
+        self.style = style
         self.url = url
+        self.callback_data = callback_data
+        self.requires_password = requires_password
         self.web_app = web_app
         self.login_url = login_url
         self.user_id = user_id
         self.switch_inline_query = switch_inline_query
         self.switch_inline_query_current_chat = switch_inline_query_current_chat
-        self.callback_game = callback_game
+        self.switch_inline_query_chosen_chat = switch_inline_query_chosen_chat
         self.copy_text = copy_text
+        self.callback_game = callback_game
         self.pay = pay
         self.disabled = disabled
-        self.requires_password = requires_password
-        self.style = style or enums.ButtonStyle.DEFAULT
-        self.icon_custom_emoji_id = icon_custom_emoji_id
 
     def _raw_style(self):
         """Build the raw KeyboardButtonStyle, or None when nothing is set (default + no icon)."""

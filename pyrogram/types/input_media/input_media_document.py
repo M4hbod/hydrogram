@@ -68,7 +68,9 @@ class InputMediaDocument(InputMedia):
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[MessageEntity] | None = None,
         show_caption_above_media: bool | None = None,
+        file_name: str | None = None,
     ):
         super().__init__(media, caption, parse_mode, caption_entities, show_caption_above_media)
 
         self.thumb = thumb
+        self.file_name = file_name

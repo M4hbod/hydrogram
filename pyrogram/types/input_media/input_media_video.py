@@ -83,24 +83,31 @@ class InputMediaVideo(InputMedia):
     def __init__(
         self,
         media: str | BinaryIO,
-        thumb: str | BinaryIO | None = None,
+        thumb: str | None = None,
         caption: str = "",
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[MessageEntity] | None = None,
-        show_caption_above_media: bool | None = None,
         width: int = 0,
         height: int = 0,
         duration: int = 0,
+        file_name: str | None = None,
         supports_streaming: bool = True,
         has_spoiler: bool | None = None,
         no_sound: bool | None = None,
+        video_start_timestamp: int | None = None,
+        video_cover: str | BinaryIO | None = None,
+        show_caption_above_media: bool | None = None,
     ):
-        super().__init__(media, caption, parse_mode, caption_entities, show_caption_above_media)
+        super().__init__(media, caption, parse_mode, caption_entities)
 
         self.thumb = thumb
         self.width = width
         self.height = height
         self.duration = duration
+        self.file_name = file_name
         self.supports_streaming = supports_streaming
         self.has_spoiler = has_spoiler
         self.no_sound = no_sound
+        self.video_start_timestamp = video_start_timestamp
+        self.video_cover = video_cover
+        self.show_caption_above_media = show_caption_above_media

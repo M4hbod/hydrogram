@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 from pyrogram.types.object import Object
 
 if TYPE_CHECKING:
-    import pyrogram
+    from pyrogram import enums, types
 
 
 class InputPollOption(Object):
@@ -46,12 +46,14 @@ class InputPollOption(Object):
     def __init__(
         self,
         *,
-        text: str,
-        text_parse_mode: pyrogram.enums.ParseMode = None,
-        text_entities: list[pyrogram.types.MessageEntity] | None = None,
+        text: str | types.FormattedText,
+        media: types.InputPollOptionMedia | None = None,
+        text_entities: list[types.MessageEntity] | None = None,
+        text_parse_mode: enums.ParseMode | None = None,
     ):
         super().__init__()
 
         self.text = text
-        self.text_parse_mode = text_parse_mode
+        self.media = media
         self.text_entities = text_entities
+        self.text_parse_mode = text_parse_mode

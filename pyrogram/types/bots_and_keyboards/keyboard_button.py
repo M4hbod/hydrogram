@@ -19,8 +19,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from pyrogram import enums, raw, types
 from pyrogram.types.object import Object
 
@@ -52,21 +50,29 @@ class KeyboardButton(Object):
 
     def __init__(
         self,
-        text: str | Any,
+        text: str,
+        icon_custom_emoji_id: str | None = None,
+        style: enums.ButtonStyle = enums.ButtonStyle.DEFAULT,
         request_contact: bool | None = None,
         request_location: bool | None = None,
-        web_app: types.WebAppInfo = None,
-        style: enums.ButtonStyle = enums.ButtonStyle.DEFAULT,
-        icon_custom_emoji_id: str | None = None,
+        request_poll: types.KeyboardButtonPollType | None = None,
+        request_users: types.KeyboardButtonRequestUsers | None = None,
+        request_chat: types.KeyboardButtonRequestChat | None = None,
+        request_managed_bot: types.KeyboardButtonRequestManagedBot | None = None,
+        web_app: types.WebAppInfo | None = None,
     ):
         super().__init__()
 
-        self.text = text if isinstance(text, str) else str(text)
+        self.text = str(text)
+        self.icon_custom_emoji_id = icon_custom_emoji_id
+        self.style = style
         self.request_contact = request_contact
         self.request_location = request_location
+        self.request_poll = request_poll
+        self.request_users = request_users
+        self.request_chat = request_chat
+        self.request_managed_bot = request_managed_bot
         self.web_app = web_app
-        self.style = style or enums.ButtonStyle.DEFAULT
-        self.icon_custom_emoji_id = icon_custom_emoji_id
 
     def _raw_style(self):
         if self.style == enums.ButtonStyle.DEFAULT and self.icon_custom_emoji_id is None:

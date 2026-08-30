@@ -17,10 +17,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, types
 from pyrogram.file_id import (
     FileId,
     FileType,
@@ -29,6 +31,9 @@ from pyrogram.file_id import (
     ThumbnailSource,
 )
 from pyrogram.types.object import Object
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class ChatPhoto(Object):
@@ -55,11 +60,14 @@ class ChatPhoto(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: pyrogram.Client | None = None,
         small_file_id: str,
         small_photo_unique_id: str,
         big_file_id: str,
         big_photo_unique_id: str,
+        added_date: datetime | None = None,
+        animation: types.AnimatedChatPhoto | None = None,
+        sticker: types.ChatPhotoSticker | None = None,
     ):
         super().__init__(client)
 
@@ -67,11 +75,14 @@ class ChatPhoto(Object):
         self.small_photo_unique_id = small_photo_unique_id
         self.big_file_id = big_file_id
         self.big_photo_unique_id = big_photo_unique_id
+        self.added_date = added_date
+        self.animation = animation
+        self.sticker = sticker
 
     @staticmethod
     def _parse(
         client,
-        chat_photo: Union["raw.types.UserProfilePhoto", "raw.types.ChatPhoto"],
+        chat_photo: raw.types.UserProfilePhoto | raw.types.ChatPhoto,
         peer_id: int,
         peer_access_hash: int,
     ):

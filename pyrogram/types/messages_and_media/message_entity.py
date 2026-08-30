@@ -56,14 +56,17 @@ class MessageEntity(Object):
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         type: enums.MessageEntityType,
         offset: int,
         length: int,
         url: str | None = None,
-        user: types.User = None,
+        user: types.User | None = None,
         language: str | None = None,
-        custom_emoji_id: int | None = None,
+        custom_emoji_id: str | None = None,
+        expandable: bool | None = None,
+        unix_time: int | None = None,
+        date_time_format: str | None = None,
     ):
         super().__init__(client)
 
@@ -74,6 +77,9 @@ class MessageEntity(Object):
         self.user = user
         self.language = language
         self.custom_emoji_id = custom_emoji_id
+        self.expandable = expandable
+        self.unix_time = unix_time
+        self.date_time_format = date_time_format
 
     @staticmethod
     def _parse(client, entity: raw.base.MessageEntity, users: dict) -> MessageEntity | None:

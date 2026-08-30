@@ -75,20 +75,23 @@ class InputMediaAnimation(InputMedia):
     def __init__(
         self,
         media: str | BinaryIO,
-        thumb: str | BinaryIO | None = None,
+        thumb: str | None = None,
         caption: str = "",
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[MessageEntity] | None = None,
-        show_caption_above_media: bool | None = None,
         width: int = 0,
         height: int = 0,
         duration: int = 0,
         has_spoiler: bool | None = None,
+        file_name: str | None = None,
+        show_caption_above_media: bool | None = None,
     ):
-        super().__init__(media, caption, parse_mode, caption_entities, show_caption_above_media)
+        super().__init__(media, caption, parse_mode, caption_entities)
 
         self.thumb = thumb
         self.width = width
         self.height = height
         self.duration = duration
         self.has_spoiler = has_spoiler
+        self.file_name = file_name
+        self.show_caption_above_media = show_caption_above_media

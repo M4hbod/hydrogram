@@ -66,27 +66,44 @@ class ChatPermissions(Object):
         self,
         *,
         can_send_messages: bool | None = None,  # Text, contacts, locations and venues
-        can_send_media_messages: bool
-        | None = None,  # Audio files, documents, photos, videos, video notes and voice notes
-        can_send_other_messages: bool | None = None,  # Stickers, animations, games, inline bots
+        can_send_audios: bool | None = None,
+        can_send_documents: bool | None = None,
+        can_send_photos: bool | None = None,
+        can_send_videos: bool | None = None,
+        can_send_video_notes: bool | None = None,
+        can_send_voice_notes: bool | None = None,
         can_send_polls: bool | None = None,
+        can_send_other_messages: bool | None = None,  # Stickers, animations, games, inline bots
         can_add_web_page_previews: bool | None = None,
+        can_react_to_messages: bool | None = None,
+        can_edit_tag: bool | None = None,
         can_change_info: bool | None = None,
         can_invite_users: bool | None = None,
         can_pin_messages: bool | None = None,
         can_manage_topics: bool | None = None,
+        can_send_media_messages: bool
+        | None = None,  # Audio files, documents, photos, videos, video notes and voice notes. Deprecated
     ):
         super().__init__(None)
 
         self.can_send_messages = can_send_messages
-        self.can_send_media_messages = can_send_media_messages
-        self.can_send_other_messages = can_send_other_messages
+        self.can_send_audios = can_send_audios
+        self.can_send_documents = can_send_documents
+        self.can_send_photos = can_send_photos
+        self.can_send_videos = can_send_videos
+        self.can_send_video_notes = can_send_video_notes
+        self.can_send_voice_notes = can_send_voice_notes
         self.can_send_polls = can_send_polls
+        self.can_send_other_messages = can_send_other_messages
         self.can_add_web_page_previews = can_add_web_page_previews
+        self.can_react_to_messages = can_react_to_messages
+        self.can_edit_tag = can_edit_tag
         self.can_change_info = can_change_info
         self.can_invite_users = can_invite_users
         self.can_pin_messages = can_pin_messages
         self.can_manage_topics = can_manage_topics
+
+        self.can_send_media_messages = can_send_media_messages
 
     @staticmethod
     def _parse(denied_permissions: raw.base.ChatBannedRights) -> ChatPermissions:

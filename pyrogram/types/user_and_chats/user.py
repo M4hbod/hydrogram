@@ -161,33 +161,110 @@ class User(Object, Update):
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         id: int,
         is_self: bool | None = None,
         is_contact: bool | None = None,
         is_mutual_contact: bool | None = None,
         is_deleted: bool | None = None,
         is_bot: bool | None = None,
-        is_verified: bool | None = None,
         is_restricted: bool | None = None,
-        is_scam: bool | None = None,
-        is_fake: bool | None = None,
         is_support: bool | None = None,
         is_premium: bool | None = None,
+        is_contact_require_premium: bool | None = None,
+        is_close_friend: bool | None = None,
+        is_stories_hidden: bool | None = None,
+        is_stories_unavailable: bool | None = None,
+        is_min: bool | None = None,
+        verification_status: types.VerificationStatus | None = None,
         first_name: str | None = None,
         last_name: str | None = None,
-        status: enums.UserStatus = None,
+        status: enums.UserStatus | None = None,
         last_online_date: datetime | None = None,
         next_offline_date: datetime | None = None,
         username: str | None = None,
-        active_usernames: str | None = None,
         usernames: list[types.Username] | None = None,
         language_code: str | None = None,
         emoji_status: types.EmojiStatus | None = None,
         dc_id: int | None = None,
         phone_number: str | None = None,
-        photo: types.ChatPhoto = None,
+        personal_photo: types.ChatPhoto | None = None,
+        photo: types.ChatPhoto | None = None,
+        public_photo: types.ChatPhoto | None = None,
         restrictions: list[types.Restriction] | None = None,
+        accent_color_id: int | None = None,
+        background_custom_emoji_id: str | None = None,
+        profile_accent_color_id: int | None = None,
+        profile_background_custom_emoji_id: str | None = None,
+        added_to_attachment_menu: bool | None = None,
+        active_users_count: int | None = None,
+        inline_need_location: bool | None = None,
+        inline_query_placeholder: str | None = None,
+        can_be_edited: bool | None = None,
+        can_be_added_to_attachment_menu: bool | None = None,
+        can_join_groups: bool | None = None,
+        can_read_all_group_messages: bool | None = None,
+        can_connect_to_business: bool | None = None,
+        can_manage_bots: bool | None = None,
+        has_main_web_app: bool | None = None,
+        has_topics: bool | None = None,
+        allows_users_to_create_topics: bool | None = None,
+        paid_message_star_count: int | None = None,
+        settings: types.ChatSettings | None = None,
+        common_chats: int | None = None,
+        is_blocked: bool | None = None,
+        is_phone_calls_available: bool | None = None,
+        is_phone_calls_private: bool | None = None,
+        is_video_calls_available: bool | None = None,
+        is_wallpaper_overridden: bool | None = None,
+        is_translations_disabled: bool | None = None,
+        is_pinned_stories_available: bool | None = None,
+        is_blocked_my_stories_from: bool | None = None,
+        is_read_dates_available: bool | None = None,
+        is_ads_enabled: bool | None = None,
+        can_pin_message: bool | None = None,
+        can_schedule_messages: bool | None = None,
+        can_send_voice_messages: bool | None = None,
+        can_view_revenue: bool | None = None,
+        bot_can_manage_emoji_status: bool | None = None,
+        display_gifts_button: bool | None = None,
+        uses_unofficial_app: bool | None = None,
+        bio: str | None = None,
+        pinned_message: types.Message | None = None,
+        folder_id: int | None = None,
+        message_auto_delete_time: int | None = None,
+        theme: str | None = None,
+        private_forward_name: str | None = None,
+        chat_admin_rights: types.ChatAdministratorRights | None = None,
+        channel_admin_rights: types.ChatAdministratorRights | None = None,
+        chat_background: types.ChatBackground | None = None,
+        stories: list[types.Story] | None = None,
+        business_away_message: types.BusinessMessage | None = None,
+        business_greeting_message: types.BusinessMessage | None = None,
+        business_work_hours: types.BusinessMessage | None = None,
+        business_location: types.Location | None = None,
+        business_intro: types.BusinessIntro | None = None,
+        birthday: types.Birthday | None = None,
+        personal_channel: types.Chat | None = None,
+        personal_channel_message: types.Message | None = None,
+        gift_count: int | None = None,
+        bot_verification: types.BotVerification | None = None,
+        main_profile_tab: enums.ProfileTab | None = None,
+        first_profile_audio: types.Audio | None = None,
+        rating: types.UserRating | None = None,
+        pending_rating: types.UserRating | None = None,
+        pending_rating_date: datetime | None = None,
+        accepted_gift_types: types.AcceptedGiftTypes | None = None,
+        note: types.FormattedText | None = None,
+        supports_guest_queries: bool | None = None,
+        supports_join_request_queries: bool | None = None,
+        community_id: int | None = None,
+        community: types.Community | None = None,
+        raw: raw.base.User | raw.base.UserStatus | None = None,
+        active_usernames: list[str] | None = None,
+        is_fake: bool | None = None,
+        is_scam: bool | None = None,
+        is_verified: bool | None = None,
     ):
         super().__init__(client)
 
@@ -197,26 +274,103 @@ class User(Object, Update):
         self.is_mutual_contact = is_mutual_contact
         self.is_deleted = is_deleted
         self.is_bot = is_bot
-        self.is_verified = is_verified
         self.is_restricted = is_restricted
-        self.is_scam = is_scam
-        self.is_fake = is_fake
         self.is_support = is_support
         self.is_premium = is_premium
+        self.is_contact_require_premium = is_contact_require_premium
+        self.is_close_friend = is_close_friend
+        self.is_stories_hidden = is_stories_hidden
+        self.is_stories_unavailable = is_stories_unavailable
+        self.verification_status = verification_status
+        self.is_min = is_min
         self.first_name = first_name
         self.last_name = last_name
         self.status = status
         self.last_online_date = last_online_date
         self.next_offline_date = next_offline_date
         self.username = username
-        self.active_usernames = active_usernames
         self.usernames = usernames
         self.language_code = language_code
         self.emoji_status = emoji_status
         self.dc_id = dc_id
         self.phone_number = phone_number
+        self.personal_photo = personal_photo
         self.photo = photo
+        self.public_photo = public_photo
         self.restrictions = restrictions
+        self.accent_color_id = accent_color_id
+        self.background_custom_emoji_id = background_custom_emoji_id
+        self.profile_accent_color_id = profile_accent_color_id
+        self.profile_background_custom_emoji_id = profile_background_custom_emoji_id
+        self.added_to_attachment_menu = added_to_attachment_menu
+        self.active_users_count = active_users_count
+        self.inline_need_location = inline_need_location
+        self.inline_query_placeholder = inline_query_placeholder
+        self.can_be_edited = can_be_edited
+        self.can_be_added_to_attachment_menu = can_be_added_to_attachment_menu
+        self.can_join_groups = can_join_groups
+        self.can_read_all_group_messages = can_read_all_group_messages
+        self.can_connect_to_business = can_connect_to_business
+        self.can_manage_bots = can_manage_bots
+        self.has_main_web_app = has_main_web_app
+        self.has_topics = has_topics
+        self.allows_users_to_create_topics = allows_users_to_create_topics
+        self.paid_message_star_count = paid_message_star_count
+        self.settings = settings
+        self.common_chats = common_chats
+        self.is_blocked = is_blocked
+        self.is_phone_calls_available = is_phone_calls_available
+        self.is_phone_calls_private = is_phone_calls_private
+        self.is_video_calls_available = is_video_calls_available
+        self.is_wallpaper_overridden = is_wallpaper_overridden
+        self.is_translations_disabled = is_translations_disabled
+        self.is_pinned_stories_available = is_pinned_stories_available
+        self.is_blocked_my_stories_from = is_blocked_my_stories_from
+        self.is_read_dates_available = is_read_dates_available
+        self.is_ads_enabled = is_ads_enabled
+        self.can_pin_message = can_pin_message
+        self.can_schedule_messages = can_schedule_messages
+        self.can_send_voice_messages = can_send_voice_messages
+        self.can_view_revenue = can_view_revenue
+        self.bot_can_manage_emoji_status = bot_can_manage_emoji_status
+        self.display_gifts_button = display_gifts_button
+        self.uses_unofficial_app = uses_unofficial_app
+        self.bio = bio
+        self.pinned_message = pinned_message
+        self.folder_id = folder_id
+        self.message_auto_delete_time = message_auto_delete_time
+        self.theme = theme
+        self.private_forward_name = private_forward_name
+        self.chat_admin_rights = chat_admin_rights
+        self.channel_admin_rights = channel_admin_rights
+        self.chat_background = chat_background
+        self.stories = stories
+        self.business_away_message = business_away_message
+        self.business_greeting_message = business_greeting_message
+        self.business_work_hours = business_work_hours
+        self.business_location = business_location
+        self.business_intro = business_intro
+        self.birthday = birthday
+        self.personal_channel = personal_channel
+        self.personal_channel_message = personal_channel_message
+        self.gift_count = gift_count
+        self.bot_verification = bot_verification
+        self.main_profile_tab = main_profile_tab
+        self.first_profile_audio = first_profile_audio
+        self.rating = rating
+        self.pending_rating = pending_rating
+        self.pending_rating_date = pending_rating_date
+        self.accepted_gift_types = accepted_gift_types
+        self.note = note
+        self.supports_guest_queries = supports_guest_queries
+        self.supports_join_request_queries = supports_join_request_queries
+        self.community_id = community_id
+        self.community = community
+        self.raw = raw
+        self.active_usernames = active_usernames
+        self.is_fake = is_fake
+        self.is_scam = is_scam
+        self.is_verified = is_verified
 
     @property
     def full_name(self) -> str:
@@ -232,8 +386,29 @@ class User(Object, Update):
 
     @staticmethod
     def _parse(client, user: raw.base.User) -> User | None:
-        if user is None or isinstance(user, raw.types.UserEmpty):
+        if not isinstance(user, raw.types.User):
             return None
+
+        accent_color_id = None
+        background_custom_emoji_id = None
+        profile_accent_color_id = None
+        profile_background_custom_emoji_id = None
+
+        if isinstance(user.color, raw.types.PeerColor):
+            accent_color_id = user.color.color
+            background_custom_emoji_id = str(user.color.background_emoji_id)
+
+        elif isinstance(user.color, raw.types.PeerColorCollectible):
+            accent_color_id = user.color.accent_color
+            background_custom_emoji_id = str(user.color.background_emoji_id)
+
+        if isinstance(user.profile_color, raw.types.PeerColor):
+            profile_accent_color_id = user.profile_color.color
+            profile_background_custom_emoji_id = str(user.profile_color.background_emoji_id)
+
+        elif isinstance(user.profile_color, raw.types.PeerColorCollectible):
+            profile_accent_color_id = user.profile_color.accent_color
+            profile_background_custom_emoji_id = str(user.profile_color.background_emoji_id)
 
         return User(
             id=user.id,
@@ -242,33 +417,51 @@ class User(Object, Update):
             is_mutual_contact=user.mutual_contact,
             is_deleted=user.deleted,
             is_bot=user.bot,
-            is_verified=user.verified,
             is_restricted=user.restricted,
-            is_scam=user.scam,
-            is_fake=user.fake,
             is_support=user.support,
             is_premium=user.premium,
+            is_contact_require_premium=user.contact_require_premium,
+            is_close_friend=user.close_friend,
+            is_stories_hidden=user.stories_hidden,
+            is_stories_unavailable=user.stories_unavailable,
+            is_min=user.min,
+            verification_status=types.VerificationStatus._parse(user),
             first_name=user.first_name,
             last_name=user.last_name,
             **User._parse_status(user.status, user.bot),
-            username=user.usernames[0].username if user.usernames else user.username,
-            # `usernames` is flags2.0?Vector<Username>, so it is absent rather than empty for the
-            # many users who have none -- the line above already guards, these two did not.
-            active_usernames=types.List([
-                username.username for username in (user.usernames or []) if username.active
-            ])
-            or None,
-            usernames=types.List([types.Username._parse(r) for r in (user.usernames or [])])
-            or None,
+            username=user.username or (user.usernames[0].username if user.usernames else None),
+            usernames=types.List([types.Username._parse(r) for r in user.usernames or []]) or None,
             language_code=user.lang_code,
             emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
             dc_id=getattr(user.photo, "dc_id", None),
             phone_number=user.phone,
             photo=types.ChatPhoto._parse(client, user.photo, user.id, user.access_hash),
             restrictions=types.List([
-                types.Restriction._parse(r) for r in (user.restriction_reason or [])
+                types.Restriction._parse(r) for r in user.restriction_reason or []
             ])
             or None,
+            accent_color_id=accent_color_id,
+            background_custom_emoji_id=background_custom_emoji_id,
+            profile_accent_color_id=profile_accent_color_id,
+            profile_background_custom_emoji_id=profile_background_custom_emoji_id,
+            added_to_attachment_menu=user.attach_menu_enabled,
+            active_users_count=user.bot_active_users,
+            inline_need_location=user.bot_inline_geo,
+            inline_query_placeholder=user.bot_inline_placeholder,
+            can_be_edited=user.bot_can_edit,
+            can_be_added_to_attachment_menu=user.bot_attach_menu,
+            can_join_groups=user.bot_nochats,
+            can_read_all_group_messages=user.bot_chat_history,
+            can_connect_to_business=user.bot_business,
+            can_manage_bots=user.bot_can_manage_bots,
+            has_main_web_app=user.bot_has_main_app,
+            has_topics=user.bot_forum_view,
+            allows_users_to_create_topics=user.bot_forum_can_manage_topics,
+            paid_message_star_count=user.send_paid_messages_stars,
+            supports_guest_queries=user.bot_guestchat,
+            supports_join_request_queries=user.bot_guard,
+            community_id=user.linked_community_id,
+            raw=user,
             client=client,
         )
 
@@ -310,6 +503,7 @@ class User(Object, Update):
         return User(
             id=user_status.user_id,
             **User._parse_status(user_status.status),
+            raw=user_status,
             client=client,
         )
 

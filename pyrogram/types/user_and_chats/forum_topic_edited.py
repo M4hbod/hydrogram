@@ -47,12 +47,18 @@ class ForumTopicEdited(Object):
         title: str | None = None,
         icon_color: int | None = None,
         icon_emoji_id: str | None = None,
+        custom_emoji_id: str | None = None,
+        is_closed: bool | None = None,
+        is_hidden: bool | None = None,
     ):
         super().__init__()
 
         self.title = title
         self.icon_color = icon_color
         self.icon_emoji_id = icon_emoji_id
+        self.custom_emoji_id = custom_emoji_id
+        self.is_closed = is_closed
+        self.is_hidden = is_hidden
 
     @staticmethod
     def _parse(action: raw.types.MessageActionTopicEdit) -> ForumTopicEdited:

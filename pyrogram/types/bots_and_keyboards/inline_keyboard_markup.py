@@ -18,6 +18,8 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import annotations
+
 import pyrogram
 from pyrogram import raw, types
 from pyrogram.types.object import Object
@@ -31,10 +33,15 @@ class InlineKeyboardMarkup(Object):
             List of button rows, each represented by a List of InlineKeyboardButton objects.
     """
 
-    def __init__(self, inline_keyboard: list[list["types.InlineKeyboardButton"]]):
+    def __init__(
+        self,
+        inline_keyboard: list[list[types.InlineKeyboardButton]],
+        force_reply: bool | None = None,
+    ):
         super().__init__()
 
         self.inline_keyboard = inline_keyboard
+        self.force_reply = force_reply
 
     @staticmethod
     def read(o):
@@ -46,7 +53,7 @@ class InlineKeyboardMarkup(Object):
 
         return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
-    async def write(self, client: "pyrogram.Client"):
+    async def write(self, client: pyrogram.Client):
         rows = []
 
         for r in self.inline_keyboard:

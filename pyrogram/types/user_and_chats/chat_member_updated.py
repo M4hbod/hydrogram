@@ -17,13 +17,17 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
-from typing import Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw, types, utils
 from pyrogram.types.object import Object
 from pyrogram.types.update import Update
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class ChatMemberUpdated(Object, Update):
@@ -52,13 +56,14 @@ class ChatMemberUpdated(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
-        chat: "types.Chat",
-        from_user: "types.User",
+        client: pyrogram.Client | None = None,
+        chat: types.Chat,
+        from_user: types.User,
         date: datetime,
-        old_chat_member: "types.ChatMember",
-        new_chat_member: "types.ChatMember",
-        invite_link: "types.ChatInviteLink" = None,
+        old_chat_member: types.ChatMember | None = None,
+        new_chat_member: types.ChatMember | None = None,
+        invite_link: types.ChatInviteLink | None = None,
+        via_join_request: bool | None = None,
     ):
         super().__init__(client)
 
@@ -68,14 +73,15 @@ class ChatMemberUpdated(Object, Update):
         self.old_chat_member = old_chat_member
         self.new_chat_member = new_chat_member
         self.invite_link = invite_link
+        self.via_join_request = via_join_request
 
     @staticmethod
     def _parse(
-        client: "pyrogram.Client",
-        update: Union["raw.types.UpdateChatParticipant", "raw.types.UpdateChannelParticipant"],
-        users: dict[int, "raw.types.User"],
-        chats: dict[int, "raw.types.Chat"],
-    ) -> "ChatMemberUpdated":
+        client: pyrogram.Client,
+        update: raw.types.UpdateChatParticipant | raw.types.UpdateChannelParticipant,
+        users: dict[int, raw.types.User],
+        chats: dict[int, raw.types.Chat],
+    ) -> ChatMemberUpdated:
         chat_id = getattr(update, "chat_id", None) or update.channel_id
 
         old_chat_member = None

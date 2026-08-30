@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 import pyrogram
 from pyrogram import raw, types, utils
 from pyrogram.types.object import Object
@@ -48,25 +50,39 @@ class Dialog(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
-        chat: "types.Chat",
-        top_message: "types.Message",
+        client: pyrogram.Client | None = None,
+        chat: types.Chat,
+        top_message: types.Message,
+        last_read_inbox_message_id: int,
+        last_read_outbox_message_id: int,
         unread_messages_count: int,
         unread_mentions_count: int,
+        unread_reactions_count: int,
+        unread_poll_vote_count: int,
         unread_mark: bool,
         is_pinned: bool,
+        folder_id: int | None = None,
+        ttl_period: int | None = None,
+        raw: raw.types.Dialog | None = None,
     ):
         super().__init__(client)
 
         self.chat = chat
         self.top_message = top_message
+        self.last_read_inbox_message_id = last_read_inbox_message_id
+        self.last_read_outbox_message_id = last_read_outbox_message_id
         self.unread_messages_count = unread_messages_count
         self.unread_mentions_count = unread_mentions_count
+        self.unread_reactions_count = unread_reactions_count
+        self.unread_poll_vote_count = unread_poll_vote_count
         self.unread_mark = unread_mark
         self.is_pinned = is_pinned
+        self.folder_id = folder_id
+        self.ttl_period = ttl_period
+        self.raw = raw
 
     @staticmethod
-    def _parse(client, dialog: "raw.types.Dialog", messages, users, chats) -> "Dialog":
+    def _parse(client, dialog: raw.types.Dialog, messages, users, chats) -> Dialog:
         return Dialog(
             chat=types.Chat._parse_dialog(client, dialog.peer, users, chats),
             top_message=messages.get(utils.get_peer_id(dialog.peer)),

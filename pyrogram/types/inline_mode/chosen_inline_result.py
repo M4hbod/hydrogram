@@ -21,11 +21,15 @@ from __future__ import annotations
 
 from base64 import b64encode
 from struct import pack
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw, types
 from pyrogram.types.object import Object
 from pyrogram.types.update import Update
+
+if TYPE_CHECKING:
+    from re import Match
 
 
 class ChosenInlineResult(Object, Update):
@@ -58,12 +62,13 @@ class ChosenInlineResult(Object, Update):
     def __init__(
         self,
         *,
-        client: pyrogram.Client = None,
+        client: pyrogram.Client | None = None,
         result_id: str,
         from_user: types.User,
         query: str,
-        location: types.Location = None,
+        location: types.Location | None = None,
         inline_message_id: str | None = None,
+        matches: list[Match] | None = None,
     ):
         super().__init__(client)
 
@@ -72,6 +77,7 @@ class ChosenInlineResult(Object, Update):
         self.query = query
         self.location = location
         self.inline_message_id = inline_message_id
+        self.matches = matches
 
     @staticmethod
     def _parse(

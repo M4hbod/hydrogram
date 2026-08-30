@@ -15,6 +15,35 @@ Changelog
 
 .. towncrier release notes start
 
+3.2.0 (2026-08-30)
+===================
+
+Features
+--------
+
+- 243 fields were missing from 22 types, ``Chat`` short by 118 and ``User`` by 76.
+  Both now carry Kurigram's full field set and parse it: ``Chat`` gains
+  ``emoji_status``, ``linked_chat_id``, ``slow_mode_delay``, ``level``,
+  ``is_blocked``, ``folder_id``, ``message_auto_delete_time``, ``reactions_limit``,
+  the ``business_*`` block and 100 more; ``User`` gains ``bio``, ``birthday``,
+  ``personal_channel``, ``can_*`` rights and the rest. ``Sticker`` gains ``type``,
+  ``mask_position``, ``custom_emoji_id``, ``needs_repainting`` and
+  ``premium_animation``; ``ChatPermissions`` the eight per-media rights;
+  ``KeyboardButton`` the ``request_users``/``request_chat`` buttons.
+
+
+
+Misc
+----
+
+- ``tests/contract/test_type_fields.py`` compares every type's fields against a
+  Kurigram checkout. The parity checks before it compared *names*, so ``Chat``
+  counted as closed while missing 118 fields. Point ``KURIGRAM_PATH`` at a
+  checkout to run it; without one it skips rather than reporting a gap it did not
+  measure.
+
+
+
 3.1.1 (2026-08-30)
 ===================
 

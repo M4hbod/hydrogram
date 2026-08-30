@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import enums, raw, types, utils
 from pyrogram.errors import StickersetInvalid
 from pyrogram.file_id import FileId, FileType, FileUniqueId, FileUniqueType
 from pyrogram.types.object import Object
@@ -95,11 +95,23 @@ class Sticker(Object):
         emoji: str | None = None,
         set_name: str | None = None,
         thumbs: list[types.Thumbnail] | None = None,
+        type: enums.StickerType | None = None,
+        custom_emoji_id: int | None = None,
+        mask_position: types.MaskPosition | None = None,
+        needs_repainting: bool | None = None,
+        premium_animation: types.Document | None = None,
+        raw: raw.types.Document | None = None,
     ):
         super().__init__(client)
 
         self.file_id = file_id
         self.file_unique_id = file_unique_id
+        self.type = type
+        self.custom_emoji_id = custom_emoji_id
+        self.mask_position = mask_position
+        self.needs_repainting = needs_repainting
+        self.premium_animation = premium_animation
+        self.raw = raw
         self.file_name = file_name
         self.mime_type = mime_type
         self.file_size = file_size
