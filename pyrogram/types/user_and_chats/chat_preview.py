@@ -75,7 +75,10 @@ class ChatPreview(Object):
             ),
             members_count=chat_invite.participants_count,
             photo=types.Photo._parse(client, chat_invite.photo),
-            members=[types.User._parse(client, user) for user in chat_invite.participants] or None,
+            # participants is flags.4?Vector<User>: an invite with no member
+            # preview arrives as None, not [].
+            members=[types.User._parse(client, user) for user in chat_invite.participants or []]
+            or None,
             client=client,
         )
 

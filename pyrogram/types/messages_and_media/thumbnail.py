@@ -79,7 +79,9 @@ class Thumbnail(Object):
 
             file_type = FileType.PHOTO
         elif isinstance(media, raw.types.Document):
-            raw_thumbs = media.thumbs
+            # thumbs is flags.0?Vector<PhotoSize>: a document with no thumbnail
+            # arrives as None, not [].
+            raw_thumbs = media.thumbs or []
             file_type = FileType.THUMBNAIL
         else:
             return None
