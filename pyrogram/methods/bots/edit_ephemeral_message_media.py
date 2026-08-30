@@ -116,6 +116,6 @@ class EditEphemeralMessageMedia:
             )
         )
 
-        messages = await utils.parse_messages(client=self, messages=r)
+        messages = await utils.parse_messages_from_updates(client=self, updates=r)
 
         return messages[0] if messages else None

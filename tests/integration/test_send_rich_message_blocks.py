@@ -25,9 +25,16 @@ test can go: it cannot tell whether the *server* accepts the vector. Nothing in
 the rich-message send path has ever been run against Telegram, so until this
 passes once, treat block sending as unverified.
 
-Set ``PYROGRAM_TEST_SESSION_STRING`` and ``PYROGRAM_TEST_CHAT_ID`` to run it.
-The session string is read from the environment and never written to disk; the
-client is in-memory and the message it sends is deleted again.
+There are two tests because the reply shape differs by account type. A user
+sending to their own private chat gets the ``UpdateShortSentMessage`` shortcut;
+a bot gets a full ``Updates``. Only the bot exercises the branch that was
+broken, so the user test alone would have passed while every bot send raised.
+
+Set ``PYROGRAM_TEST_SESSION_STRING`` and ``PYROGRAM_TEST_CHAT_ID`` for the user
+test, and ``PYROGRAM_TEST_BOT_TOKEN``, ``PYROGRAM_TEST_API_ID``,
+``PYROGRAM_TEST_API_HASH`` and ``PYROGRAM_TEST_BOT_CHAT_ID`` for the bot one.
+Credentials are read from the environment and never written to disk; both
+clients are in-memory and every message they send is deleted again.
 """
 
 from __future__ import annotations
@@ -41,13 +48,29 @@ from pyrogram import Client, types
 SESSION_STRING = os.environ.get("PYROGRAM_TEST_SESSION_STRING")
 CHAT_ID = os.environ.get("PYROGRAM_TEST_CHAT_ID")
 
-pytestmark = [
-    pytest.mark.integration,
-    pytest.mark.skipif(
-        not (SESSION_STRING and CHAT_ID),
-        reason="PYROGRAM_TEST_SESSION_STRING and PYROGRAM_TEST_CHAT_ID are not set",
+# A bot is not an optional extra here. messages.SendMessage answers a user
+# sending to their own private chat with the UpdateShortSentMessage shortcut,
+# and a bot with a full Updates. Only the second shape reaches the parsing
+# branch that was broken, so a user-session-only test can pass while every bot
+# send raises.
+BOT_TOKEN = os.environ.get("PYROGRAM_TEST_BOT_TOKEN")
+API_ID = os.environ.get("PYROGRAM_TEST_API_ID")
+API_HASH = os.environ.get("PYROGRAM_TEST_API_HASH")
+BOT_CHAT_ID = os.environ.get("PYROGRAM_TEST_BOT_CHAT_ID")
+
+pytestmark = pytest.mark.integration
+
+needs_user = pytest.mark.skipif(
+    not (SESSION_STRING and CHAT_ID),
+    reason="PYROGRAM_TEST_SESSION_STRING and PYROGRAM_TEST_CHAT_ID are not set",
+)
+needs_bot = pytest.mark.skipif(
+    not (BOT_TOKEN and API_ID and API_HASH and BOT_CHAT_ID),
+    reason=(
+        "PYROGRAM_TEST_BOT_TOKEN, PYROGRAM_TEST_API_ID, PYROGRAM_TEST_API_HASH and "
+        "PYROGRAM_TEST_BOT_CHAT_ID are not set"
     ),
-]
+)
 
 
 def panel() -> list[types.RichBlock]:
@@ -102,19 +125,15 @@ def panel() -> list[types.RichBlock]:
     ]
 
 
-@pytest.mark.asyncio
-async def test_a_block_rich_message_is_accepted_by_the_server():
-    client = Client("rich-blocks", session_string=SESSION_STRING, in_memory=True)
-
-    await client.start()
+async def send_and_check(client, chat_id: int):
+    """Send the panel, assert the reply parses, then clean up."""
     message = None
     try:
         message = await client.send_rich_message(
-            chat_id=int(CHAT_ID),
-            rich_message=types.InputRichMessage(blocks=panel()),
+            chat_id=chat_id, rich_message=types.InputRichMessage(blocks=panel())
         )
 
-        assert message is not None, "the server accepted the send but returned no message"
+        assert message is not None, "the server accepted the send but the reply parsed to None"
         assert message.rich_message is not None, (
             "the message came back without a rich_message, so the blocks were dropped"
         )
@@ -124,7 +143,38 @@ async def test_a_block_rich_message_is_accepted_by_the_server():
         assert not any(isinstance(b, types.RichBlockUnsupported) for b in blocks), (
             "the server echoed a block this library cannot parse"
         )
+        return message
     finally:
         if message is not None:
-            await client.delete_messages(int(CHAT_ID), message.id)
+            await client.delete_messages(chat_id, message.id)
+
+
+@needs_bot
+@pytest.mark.asyncio
+async def test_a_bot_can_send_a_block_rich_message():
+    """The shape that caught the bug: a bot gets Updates, not the shortcut."""
+    client = Client(
+        "rich-blocks-bot",
+        api_id=int(API_ID),
+        api_hash=API_HASH,
+        bot_token=BOT_TOKEN,
+        in_memory=True,
+    )
+
+    await client.start()
+    try:
+        await send_and_check(client, int(BOT_CHAT_ID))
+    finally:
+        await client.stop()
+
+
+@needs_user
+@pytest.mark.asyncio
+async def test_a_block_rich_message_is_accepted_by_the_server():
+    client = Client("rich-blocks", session_string=SESSION_STRING, in_memory=True)
+
+    await client.start()
+    try:
+        await send_and_check(client, int(CHAT_ID))
+    finally:
         await client.stop()

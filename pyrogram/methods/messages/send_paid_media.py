@@ -360,4 +360,4 @@ class SendPaidMedia:
             business_connection_id=business_connection_id,
         )
 
-        return await utils.parse_messages(client=self, messages=r)
+        return await utils.parse_messages_from_updates(client=self, updates=r)

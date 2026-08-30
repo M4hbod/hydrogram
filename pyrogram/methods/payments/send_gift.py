@@ -97,6 +97,13 @@ class SendGift:
             )
         )
 
-        messages = await utils.parse_messages(self, r.updates)
+        # payments.SendStarsForm returns payments.PaymentResult, whose `updates`
+        # is an Updates object, not a vector. paymentVerificationNeeded carries
+        # no updates at all.
+        updates = getattr(r, "updates", None)
+        if updates is None:
+            return None
+
+        messages = await utils.parse_messages_from_updates(client=self, updates=updates)
 
         return messages[0] if messages else None

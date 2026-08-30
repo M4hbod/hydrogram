@@ -100,6 +100,47 @@ def get_input_media_from_file_id(
     raise ValueError(f"Unknown file id: {file_id}")
 
 
+async def parse_messages_from_updates(
+    client, updates: raw.base.Updates, replies: int = 0
+) -> list[types.Message]:
+    """Every new message carried by an ``Updates``, in order.
+
+    An RPC that returns ``Updates`` -- which is most of the send and edit family
+    -- carries no ``messages`` vector, so :func:`parse_messages` cannot read it
+    and raises ``AttributeError`` on the first real call. A user sending to
+    their own private chat often gets the ``UpdateShortSentMessage`` shortcut
+    instead, so the difference only shows up for bots and in groups.
+    """
+    # updateShort carries a single update and no peer vectors at all.
+    carried = getattr(updates, "updates", None)
+    if carried is None:
+        single = getattr(updates, "update", None)
+        carried = [single] if single is not None else []
+
+    users = {i.id: i for i in getattr(updates, "users", None) or []}
+    chats = {i.id: i for i in getattr(updates, "chats", None) or []}
+
+    return types.List([
+        await types.Message._parse(
+            client=client,
+            message=update.message,
+            users=users,
+            chats=chats,
+            is_scheduled=isinstance(update, raw.types.UpdateNewScheduledMessage),
+            replies=replies,
+        )
+        for update in carried
+        if isinstance(
+            update,
+            (
+                raw.types.UpdateNewMessage,
+                raw.types.UpdateNewChannelMessage,
+                raw.types.UpdateNewScheduledMessage,
+            ),
+        )
+    ])
+
+
 async def parse_messages(
     client, messages: raw.types.messages.Messages, replies: int = 1
 ) -> list[types.Message]:

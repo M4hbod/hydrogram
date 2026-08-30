@@ -230,4 +230,8 @@ class SendRichMessage:
                 client=self,
             )
 
-        return next(iter(await utils.parse_messages(client=self, messages=r)), None)
+        # Both messages.sendMessage and ephemeral.sendMessage return Updates, which
+        # has no `messages` attribute for parse_messages to read. A user sending to
+        # their own private chat gets the UpdateShortSentMessage shortcut above; a
+        # bot gets the full Updates, so this is the branch bots always take.
+        return next(iter(await utils.parse_messages_from_updates(client=self, updates=r)), None)

@@ -55,4 +55,4 @@ class ProcessChatHasProtectedContentDisableRequest:
             )
         )
 
-        return next(iter(await utils.parse_messages(client=self, messages=r)), True)
+        return next(iter(await utils.parse_messages_from_updates(client=self, updates=r)), True)
