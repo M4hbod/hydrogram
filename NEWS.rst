@@ -15,6 +15,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.1 (2026-08-30)
+===================
+
+Bugfixes
+--------
+
+- Two documentation references named things that do not exist:
+  ``enums.ChatEvenAction`` (a missing ``t``) in ``ChatEvent``, and
+  ``MessageServiceType.VIDEO_CHAT_PARTICIPANTS_INVITED``, whose member is
+  ``VIDEO_CHAT_MEMBERS_INVITED``. Both are the same typo class as the
+  ``raw.pyrogram.ClientDHInnerData`` that broke fresh logins, found by the sweep
+  added to catch it.
+
+- ``Auth.create()`` referenced ``raw.pyrogram.ClientDHInnerData``, which does not exist (the
+  constructor lives at ``raw.types.ClientDHInnerData``) -- a leftover from the whole-tree
+  ``hydrogram`` -> ``pyrogram`` rename. Every DH key exchange failed, so no session could ever
+  authenticate for the first time; a pre-existing session file masked it. Fixed, and
+  ``tests/contract/test_raw_references.py`` now flags any ``raw.<namespace>.*`` reference whose
+  namespace isn't one of ``types``/``functions``/``base``/``core``, which this typo did not trip
+  before (its fixed namespace list only checked references it already recognized).
+
+
+
+Misc
+----
+
+- ``Auth.create()`` is exercised for the first time.
+  ``tests/integration/test_fresh_authorization.py`` logs in with no session file
+  and asserts the DH exchange yields a 256-byte key. Every other test starts from
+  a session string or file, both of which skip authorization entirely -- which is
+  why a broken key exchange shipped in two releases without failing anything.
+
+
+
 3.1.0 (2026-08-30)
 ===================
 

@@ -18,7 +18,7 @@ packages import it by name. Three commits exist solely to keep those working:
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
 - `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
   `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
-  not a ceiling**, so the version is now `3.1.0` and no longer pinned. Keep it `>=1.2.20`.
+  not a ceiling**, so the version is now `3.1.1` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -75,12 +75,12 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 ## Current state (2026-08-30)
 
-- Branch `dev`, package `pyrogram`, `__version__` `3.1.0`.
+- Branch `dev`, package `pyrogram`, `__version__` `3.1.1`.
 - TL layer **229**. Every stage of `docs/dev/UPGRADE-PLAN.md` is done.
 - Surface: **445 public `Client` methods**, **397 types**, 43 enums, 30 handlers,
   **121 filters**, 55 `Message` members. Every gap with Kurigram — methods, types, enums,
   filters, bound methods and parameters — is closed except what is deliberate (see below).
-- Test suite: **5484 tests** across `tests/{unit,contract,integration}/`; coverage of the
+- Test suite: **5490 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
@@ -130,6 +130,10 @@ These encode the porting hazards that actually bit, and they are cheap to run:
 - `test_parameters_are_used.py` — a method may not declare a parameter its own body never reads.
   A parameter accepted and dropped is worse than a missing one: the call succeeds and the caller
   believes the option took effect.
+- `test_attribute_references.py` — every `raw.*`, `types.*`, `enums.*` chain resolves, at any
+  depth, including enum members. `test_raw_references.py` only resolved the namespaces it knew,
+  so `raw.pyrogram.ClientDHInnerData` never entered the checked set and broke every fresh login
+  across 3.0.0 and 3.1.0. Docstrings count; `#` comments do not.
 
 ### Not done
 

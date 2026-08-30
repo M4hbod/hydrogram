@@ -28,7 +28,7 @@ class InviteGroupCallMembers:
         chat_id: int | str,
         user_ids: int | str | list[int | str],
     ) -> types.Message:
-        """Invites users to an active group call. Sends a service message of type :obj:`~pyrogram.enums.MessageServiceType.VIDEO_CHAT_PARTICIPANTS_INVITED` for video chats.
+        """Invites users to an active group call. Sends a service message of type :obj:`~pyrogram.enums.MessageServiceType.VIDEO_CHAT_MEMBERS_INVITED` for video chats.
 
         .. include:: /_includes/usable-by/users.rst
 
