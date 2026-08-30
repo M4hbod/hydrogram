@@ -145,7 +145,9 @@ async def parse_messages(
 
 
 def parse_deleted_messages(client, update) -> list[types.Message]:
-    messages = update.messages
+    # UpdateDeleteEphemeralMessages calls them `ids`; every other delete update
+    # calls them `messages`.
+    messages = getattr(update, "messages", None) or getattr(update, "ids", None) or []
     channel_id = getattr(update, "channel_id", None)
 
     parsed_messages = [

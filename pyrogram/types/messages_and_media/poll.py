@@ -282,7 +282,7 @@ class Poll(Object, Update):
             if update.poll is not None:
                 return await Poll._parse(client, update, users=users, chats=chats)
 
-            results = update.results.results
+            results = update.results.results or []
             chosen_option_ids = []
             correct_option_ids = []
             options = []

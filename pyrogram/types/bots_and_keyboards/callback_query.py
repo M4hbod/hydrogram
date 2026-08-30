@@ -120,7 +120,7 @@ class CallbackQuery(Object, Update):
             inline_message_id=inline_message_id,
             chat_instance=str(callback_query.chat_instance),
             data=data,
-            game_short_name=callback_query.game_short_name,
+            game_short_name=getattr(callback_query, "game_short_name", None),
             client=client,
         )
 

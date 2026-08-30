@@ -422,7 +422,7 @@ class Story(Object, Update):
             raw.types.PrivacyValueDisallowAll: enums.StoriesPrivacyRules.SELECTED_USERS,
         }
 
-        for priv in story.privacy:
+        for priv in story.privacy or []:
             privacy = privacy_map.get(type(priv))
 
             if isinstance(priv, raw.types.PrivacyValueAllowUsers):
@@ -446,7 +446,9 @@ class Story(Object, Update):
 
         entities = [
             e
-            for e in [types.MessageEntity._parse(client, entity, {}) for entity in story.entities]
+            for e in [
+                types.MessageEntity._parse(client, entity, {}) for entity in story.entities or []
+            ]
             if e
         ]
 

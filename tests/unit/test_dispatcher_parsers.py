@@ -27,6 +27,7 @@ handler. That is why these are asserted here rather than noticed in production.
 from __future__ import annotations
 
 import inspect
+import pathlib
 
 import pytest
 
@@ -35,6 +36,7 @@ from pyrogram import enums, raw
 from pyrogram.dispatcher import Dispatcher
 from pyrogram.handlers import (
     BusinessConnectionHandler,
+    CallbackQueryHandler,
     ChatBoostHandler,
     ChatMemberUpdatedHandler,
     DeletedMessagesHandler,
@@ -50,7 +52,21 @@ from pyrogram.handlers import (
 
 @pytest.fixture
 def dispatcher():
-    return Dispatcher(pyrogram.Client("test", api_id=1, api_hash="x", in_memory=True))
+    client = pyrogram.Client("test", api_id=1, api_hash="x", in_memory=True)
+
+    # A callback query resolves the message its button sits under. That is a
+    # round trip, and these tests are offline, so it is stubbed out -- the
+    # subject here is the parse, not the fetch.
+    async def get_messages(*args, **kwargs):
+        return None
+
+    async def resolve_peer(*args, **kwargs):
+        return raw.types.InputPeerUser(user_id=7, access_hash=0)
+
+    client.get_messages = get_messages
+    client.resolve_peer = resolve_peer
+
+    return Dispatcher(client)
 
 
 async def dispatch(dispatcher: Dispatcher, update, users=None, chats=None):
@@ -267,3 +283,190 @@ async def test_business_connection_update_is_parsed(dispatcher):
     assert handler is BusinessConnectionHandler
     assert parsed.id == "c1"
     assert parsed.is_enabled is True
+
+
+# --- callback queries -------------------------------------------------------
+#
+# The one update kind this file did not cover, because callback queries predate
+# the layer-229 port every other test here was written for. The dispatcher was
+# calling CallbackQuery._parse with a fourth `chats` argument it does not take,
+# so every button press raised TypeError inside the handler worker -- logged,
+# swallowed, and invisible except that the buttons did nothing.
+
+
+async def test_a_callback_query_is_parsed(dispatcher):
+    update = raw.types.UpdateBotCallbackQuery(
+        query_id=1,
+        user_id=7,
+        peer=raw.types.PeerUser(user_id=7),
+        msg_id=5,
+        chat_instance=99,
+        data=b"pressed",
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is CallbackQueryHandler
+    assert parsed.id == "1"
+    assert parsed.data == "pressed"
+    assert parsed.from_user.id == 7
+
+
+async def test_an_inline_callback_query_is_parsed(dispatcher):
+    update = raw.types.UpdateInlineBotCallbackQuery(
+        query_id=2,
+        user_id=7,
+        msg_id=raw.types.InputBotInlineMessageID(dc_id=2, id=1, access_hash=0),
+        chat_instance=99,
+        data=b"inline",
+    )
+
+    parsed, handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert handler is CallbackQueryHandler
+    assert parsed.data == "inline"
+    assert parsed.inline_message_id is not None
+
+
+async def test_callback_data_that_is_not_text_stays_bytes(dispatcher):
+    # Decoding with errors="ignore" would corrupt binary payloads, and the
+    # answer has to match what the button carried.
+    update = raw.types.UpdateBotCallbackQuery(
+        query_id=3,
+        user_id=7,
+        peer=raw.types.PeerUser(user_id=7),
+        msg_id=5,
+        chat_instance=99,
+        data=b"\xff\xfe",
+    )
+
+    parsed, _handler = await dispatch(dispatcher, update, users={7: USER})
+
+    assert parsed.data == b"\xff\xfe"
+
+
+def test_every_routed_update_kind_has_a_test_here():
+    """The gap this file had: callback queries were routed but never driven.
+
+    Every other update kind gained in the layer-229 port got a test here;
+    callback queries predate it, so nobody thought to add one, and the broken
+    parser sat behind a `TypeError` the handler worker swallows.
+    """
+    source = pathlib.Path(__file__).read_text(encoding="utf-8")
+    client = pyrogram.Client("test", api_id=1, api_hash="x", in_memory=True)
+    routed = {update.__name__ for update in Dispatcher(client).update_parsers}
+
+    # Named individually so adding a routed update type without a test fails.
+    untested = sorted(name for name in routed if name not in source)
+
+    assert not untested, f"these update types are routed but never driven in this file: {untested}"
+
+
+# --- everything else the dispatcher routes ---------------------------------
+#
+# One fixture per routed update type. The assertion is deliberately weak -- the
+# parser runs and hands back the handler it is registered for -- because the
+# failure this catches is not a wrong value, it is an exception the handler
+# worker logs and swallows, which looks exactly like "that update never
+# arrives". The named-field tests above cover the values.
+
+MESSAGE = raw.types.Message(
+    id=1, peer_id=raw.types.PeerUser(user_id=7), date=1700000000, message="hi"
+)
+BUSINESS_MESSAGE = raw.types.Message(
+    id=1, peer_id=raw.types.PeerUser(user_id=7), date=1700000000, message="biz"
+)
+INLINE_ID = raw.types.InputBotInlineMessageID(dc_id=2, id=1, access_hash=0)
+
+
+def routed_updates():
+    return {
+        "UpdateNewMessage": raw.types.UpdateNewMessage(message=MESSAGE, pts=1, pts_count=1),
+        "UpdateNewChannelMessage": raw.types.UpdateNewChannelMessage(
+            message=MESSAGE, pts=1, pts_count=1
+        ),
+        "UpdateNewScheduledMessage": raw.types.UpdateNewScheduledMessage(message=MESSAGE),
+        "UpdateNewEphemeralMessage": raw.types.UpdateNewEphemeralMessage(message=MESSAGE),
+        "UpdateEditMessage": raw.types.UpdateEditMessage(message=MESSAGE, pts=1, pts_count=1),
+        "UpdateEditChannelMessage": raw.types.UpdateEditChannelMessage(
+            message=MESSAGE, pts=1, pts_count=1
+        ),
+        "UpdateEditEphemeralMessage": raw.types.UpdateEditEphemeralMessage(message=MESSAGE),
+        "UpdateDeleteEphemeralMessages": raw.types.UpdateDeleteEphemeralMessages(
+            peer=raw.types.PeerUser(user_id=7), ids=[1]
+        ),
+        "UpdateBotNewBusinessMessage": raw.types.UpdateBotNewBusinessMessage(
+            connection_id="c1", message=BUSINESS_MESSAGE, qts=1
+        ),
+        "UpdateBotEditBusinessMessage": raw.types.UpdateBotEditBusinessMessage(
+            connection_id="c1", message=BUSINESS_MESSAGE, qts=1
+        ),
+        "UpdateBotDeleteBusinessMessage": raw.types.UpdateBotDeleteBusinessMessage(
+            connection_id="c1", peer=raw.types.PeerUser(user_id=7), messages=[1], qts=1
+        ),
+        "UpdateBusinessBotCallbackQuery": raw.types.UpdateBusinessBotCallbackQuery(
+            query_id=1, user_id=7, connection_id="c1", message=MESSAGE, chat_instance=9
+        ),
+        "UpdateEphemeralBotCallbackQuery": raw.types.UpdateEphemeralBotCallbackQuery(
+            query_id=1, user_id=7, msg_id=1, data=b"d", message=MESSAGE
+        ),
+        "UpdateBotInlineSend": raw.types.UpdateBotInlineSend(user_id=7, query="q", id="r"),
+        "UpdateBotChatInviteRequester": raw.types.UpdateBotChatInviteRequester(
+            peer=raw.types.PeerChannel(channel_id=1234567890),
+            date=1700000000,
+            user_id=7,
+            about="hi",
+            invite=raw.types.ChatInviteExported(
+                link="https://t.me/+x", admin_id=7, date=1700000000
+            ),
+            qts=1,
+        ),
+        "UpdateChannelParticipant": raw.types.UpdateChannelParticipant(
+            channel_id=1234567890, date=1700000000, actor_id=7, user_id=7, qts=1
+        ),
+        "UpdateManagedBot": raw.types.UpdateManagedBot(user_id=7, bot_id=8, qts=1),
+        "UpdateMessagePoll": raw.types.UpdateMessagePoll(
+            poll_id=1,
+            results=raw.types.PollResults(),
+        ),
+        "UpdateMessagePollVote": raw.types.UpdateMessagePollVote(
+            poll_id=1,
+            peer=raw.types.PeerUser(user_id=7),
+            options=[b"0"],
+            positions=[0],
+            qts=1,
+        ),
+        "UpdateStory": raw.types.UpdateStory(
+            peer=raw.types.PeerUser(user_id=7),
+            story=raw.types.StoryItem(
+                id=1,
+                date=1700000000,
+                expire_date=1800000000,
+                media=raw.types.MessageMediaEmpty(),
+            ),
+        ),
+        "UpdateBotGuestChatQuery": raw.types.UpdateBotGuestChatQuery(
+            query_id=1, message=MESSAGE, qts=1
+        ),
+    }
+
+
+ROUTED = sorted(routed_updates().items())
+
+
+@pytest.mark.parametrize(("name", "update"), ROUTED, ids=[name for name, _ in ROUTED])
+async def test_the_routed_update_parses_without_raising(dispatcher, name, update):
+    chats = {
+        1234567890: raw.types.Channel(
+            id=1234567890,
+            title="Channel",
+            photo=None,
+            date=1700000000,
+            access_hash=0,
+            broadcast=True,
+        )
+    }
+
+    _parsed, handler = await dispatch(dispatcher, update, users={7: USER, 8: USER}, chats=chats)
+
+    assert handler is not type(None), f"{name} produced no handler"

@@ -178,8 +178,10 @@ class Dispatcher:
             )
 
         async def callback_query_parser(update, users, chats):
+            # CallbackQuery._parse takes no chats: it resolves the chat through
+            # the message the button sits under.
             return (
-                await pyrogram.types.CallbackQuery._parse(self.client, update, users, chats),
+                await pyrogram.types.CallbackQuery._parse(self.client, update, users),
                 CallbackQueryHandler,
             )
 
@@ -280,9 +282,9 @@ class Dispatcher:
 
             return (parsed, EditedBusinessMessageHandler)
 
-        async def deleted_business_messages_parser(update, users, chats):
-            # Deleted messages are parsed the same way as regular messages, but the handler is different
-            parsed, _ = await deleted_messages_parser(update, users, chats)
+        def deleted_business_messages_parser(update, users, chats):
+            # deleted_messages_parser is sync, so awaiting its tuple raises.
+            parsed, _ = deleted_messages_parser(update, users, chats)
 
             return (
                 parsed,
