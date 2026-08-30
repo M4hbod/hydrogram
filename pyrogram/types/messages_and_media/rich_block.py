@@ -23,6 +23,7 @@ from typing import Literal
 
 import pyrogram
 from pyrogram import raw, types
+from pyrogram.file_id import FileId
 from pyrogram.types.object import Object
 
 
@@ -305,6 +306,201 @@ class RichBlock(Object):
 
         return RichBlockUnsupported()
 
+    @staticmethod
+    def _write(block: RichBlock, media: RichMessageMedia):
+        """Serialise one block back to a ``PageBlock``.
+
+        The inverse of :meth:`_parse`, and the same shape: a single dispatcher.
+        ``media`` collects the photo and document vectors, because a block
+        references its media by id and the ids live on the message.
+
+        The return is unannotated for the same reason as
+        :meth:`RichText._write`: ``raw.base.PageBlock`` is a marker class, not
+        the union of the constructors it documents.
+        """
+        write_text = types.RichText._write
+
+        if isinstance(block, RichBlockParagraph):
+            return raw.types.PageBlockParagraph(text=write_text(block.text))
+
+        if isinstance(block, RichBlockSectionHeading):
+            headings = (
+                raw.types.PageBlockHeading1,
+                raw.types.PageBlockHeading2,
+                raw.types.PageBlockHeading3,
+                raw.types.PageBlockHeading4,
+                raw.types.PageBlockHeading5,
+                raw.types.PageBlockHeading6,
+            )
+            size = block.size or 1
+            if not 1 <= size <= len(headings):
+                raise ValueError(f"Heading size must be between 1 and {len(headings)}, got {size}")
+            return headings[size - 1](text=write_text(block.text))
+
+        if isinstance(block, RichBlockPreformatted):
+            return raw.types.PageBlockPreformatted(
+                text=write_text(block.text), language=block.language or ""
+            )
+
+        if isinstance(block, RichBlockFooter):
+            return raw.types.PageBlockFooter(text=write_text(block.text))
+
+        if isinstance(block, RichBlockDivider):
+            return raw.types.PageBlockDivider()
+
+        if isinstance(block, RichBlockAnchor):
+            return raw.types.PageBlockAnchor(name=block.name)
+
+        if isinstance(block, RichBlockMathematicalExpression):
+            return raw.types.PageBlockMath(source=block.expression)
+
+        if isinstance(block, RichBlockThinking):
+            return raw.types.PageBlockThinking(text=write_text(block.text))
+
+        if isinstance(block, RichBlockList):
+            items = block.items or []
+            # One RichBlockList covers both raw list kinds; an item that carries
+            # a number or a label type is what makes the list an ordered one.
+            ordered = any(i.value is not None or i.type is not None for i in items)
+            if ordered:
+                return raw.types.PageBlockOrderedList(
+                    items=[RichBlock._write_ordered_list_item(i, media) for i in items]
+                )
+            return raw.types.PageBlockList(
+                items=[RichBlock._write_list_item(i, media) for i in items]
+            )
+
+        if isinstance(block, RichBlockBlockQuotation):
+            return raw.types.PageBlockBlockquoteBlocks(
+                blocks=[RichBlock._write(b, media) for b in block.blocks or []],
+                caption=write_text(block.credit),
+            )
+
+        if isinstance(block, RichBlockPullQuotation):
+            return raw.types.PageBlockPullquote(
+                text=write_text(block.text), caption=write_text(block.credit)
+            )
+
+        if isinstance(block, RichBlockCollage):
+            return raw.types.PageBlockCollage(
+                items=[RichBlock._write(b, media) for b in block.blocks or []],
+                caption=RichBlockCaption._write_caption(block.caption),
+            )
+
+        if isinstance(block, RichBlockSlideshow):
+            return raw.types.PageBlockSlideshow(
+                items=[RichBlock._write(b, media) for b in block.blocks or []],
+                caption=RichBlockCaption._write_caption(block.caption),
+            )
+
+        if isinstance(block, RichBlockTable):
+            return raw.types.PageBlockTable(
+                # _parse wraps the raw `title` in a caption; unwrap it again.
+                title=write_text(block.caption.text if block.caption else None),
+                rows=[
+                    raw.types.PageTableRow(
+                        cells=[RichBlockTableCell._write_cell(cell) for cell in row or []]
+                    )
+                    for row in block.cells or []
+                ],
+                bordered=block.is_bordered or None,
+                striped=block.is_striped or None,
+            )
+
+        if isinstance(block, RichBlockDetails):
+            return raw.types.PageBlockDetails(
+                blocks=[RichBlock._write(b, media) for b in block.blocks or []],
+                title=write_text(block.summary),
+                open=block.is_open or None,
+            )
+
+        if isinstance(block, RichBlockPhoto):
+            return raw.types.PageBlockPhoto(
+                photo_id=media.photo(block.photo),
+                caption=RichBlockCaption._write_caption(block.caption),
+                spoiler=block.has_spoiler or None,
+            )
+
+        if isinstance(block, (RichBlockVideo, RichBlockAnimation)):
+            source = block.video if isinstance(block, RichBlockVideo) else block.animation
+            return raw.types.PageBlockVideo(
+                video_id=media.document(source),
+                caption=RichBlockCaption._write_caption(block.caption),
+                spoiler=block.has_spoiler or None,
+            )
+
+        if isinstance(block, (RichBlockAudio, RichBlockVoiceNote)):
+            source = block.audio if isinstance(block, RichBlockAudio) else block.voice_note
+            return raw.types.PageBlockAudio(
+                audio_id=media.document(source),
+                caption=RichBlockCaption._write_caption(block.caption),
+            )
+
+        raise ValueError(f"Cannot send {type(block).__name__} as a rich message block")
+
+    @staticmethod
+    def _write_list_item(item: RichBlockListItem, media: RichMessageMedia):
+        return raw.types.PageListItemBlocks(
+            blocks=[RichBlock._write(b, media) for b in item.blocks or []],
+            checkbox=item.has_checkbox or None,
+            checked=item.is_checked or None,
+        )
+
+    @staticmethod
+    def _write_ordered_list_item(item: RichBlockListItem, media: RichMessageMedia):
+        return raw.types.PageListOrderedItemBlocks(
+            blocks=[RichBlock._write(b, media) for b in item.blocks or []],
+            num=item.label,
+            value=item.value,
+            type=item.type,
+            checkbox=item.has_checkbox or None,
+            checked=item.is_checked or None,
+        )
+
+
+class RichMessageMedia:
+    """The photo and document vectors a rich message carries.
+
+    A ``PageBlock`` names its media by id, and the ids are only resolvable
+    through the ``photos`` and ``documents`` vectors on the message itself, so
+    the blocks and the message have to be built together.
+    """
+
+    def __init__(self) -> None:
+        self.photos: list[raw.types.InputPhoto] = []
+        self.documents: list[raw.types.InputDocument] = []
+
+    @staticmethod
+    def _decode(value: str | Object) -> FileId:
+        file_id = value if isinstance(value, str) else getattr(value, "file_id", None)
+        if not file_id:
+            raise ValueError(
+                f"Expected a file id or an object carrying one, got {type(value).__name__}"
+            )
+        return FileId.decode(file_id)
+
+    def photo(self, value: str | Object) -> int:
+        decoded = self._decode(value)
+        self.photos.append(
+            raw.types.InputPhoto(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+            )
+        )
+        return decoded.media_id
+
+    def document(self, value: str | Object) -> int:
+        decoded = self._decode(value)
+        self.documents.append(
+            raw.types.InputDocument(
+                id=decoded.media_id,
+                access_hash=decoded.access_hash,
+                file_reference=decoded.file_reference,
+            )
+        )
+        return decoded.media_id
+
 
 class RichBlockUnsupported(RichBlock):
     """A rich block unsupported yet."""
@@ -328,8 +524,8 @@ class RichBlockCaption(RichBlock):
 
     def __init__(
         self,
-        text: types.RichText,
-        credit: types.RichText | None = None,
+        text: str | list[types.RichText] | types.RichText | None,
+        credit: str | list[types.RichText] | types.RichText | None = None,
     ):
         super().__init__()
 
@@ -343,6 +539,18 @@ class RichBlockCaption(RichBlock):
                 text=await types.RichText._parse(client, caption.text),
                 credit=await types.RichText._parse(client, caption.credit),
             )
+        return None
+
+    @staticmethod
+    def _write_caption(caption: RichBlockCaption | None) -> raw.types.PageCaption:
+        # Both halves are required by the schema, so an absent caption is still
+        # a PageCaption, just an empty one.
+        if caption is None:
+            return raw.types.PageCaption(text=raw.types.TextEmpty(), credit=raw.types.TextEmpty())
+        return raw.types.PageCaption(
+            text=types.RichText._write(caption.text),
+            credit=types.RichText._write(caption.credit),
+        )
         return None
 
 
@@ -374,7 +582,7 @@ class RichBlockTableCell(RichBlock):
 
     def __init__(
         self,
-        text: types.RichText | None = None,
+        text: str | list[types.RichText] | types.RichText | None = None,
         is_header: bool | None = None,
         colspan: int | None = None,
         rowspan: int | None = None,
@@ -411,6 +619,20 @@ class RichBlockTableCell(RichBlock):
             rowspan=max(table_cell.rowspan or 1, 1),
             align=align,
             valign=valign,
+        )
+
+    @staticmethod
+    def _write_cell(cell: RichBlockTableCell) -> raw.types.PageTableCell:
+        # "left" and "top" are the defaults, carried by the absence of a flag.
+        return raw.types.PageTableCell(
+            text=types.RichText._write(cell.text) if cell.text is not None else None,
+            header=cell.is_header or None,
+            align_center=cell.align == "center" or None,
+            align_right=cell.align == "right" or None,
+            valign_middle=cell.valign == "middle" or None,
+            valign_bottom=cell.valign == "bottom" or None,
+            colspan=cell.colspan if (cell.colspan or 1) > 1 else None,
+            rowspan=cell.rowspan if (cell.rowspan or 1) > 1 else None,
         )
 
 
@@ -530,7 +752,7 @@ class RichBlockParagraph(RichBlock):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -551,7 +773,7 @@ class RichBlockSectionHeading(RichBlock):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
         size: int,
     ):
         super().__init__()
@@ -573,7 +795,7 @@ class RichBlockPreformatted(RichBlock):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
         language: str | None = None,
     ):
         super().__init__()
@@ -590,7 +812,7 @@ class RichBlockFooter(RichBlock):
             Text of the block.
     """
 
-    def __init__(self, text: types.RichText):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None):
         super().__init__()
 
         self.text = text
@@ -674,7 +896,11 @@ class RichBlockPullQuotation(RichBlock):
             Credit of the block.
     """
 
-    def __init__(self, text: types.RichText, credit: types.RichText | None = None):
+    def __init__(
+        self,
+        text: str | list[types.RichText] | types.RichText | None,
+        credit: str | list[types.RichText] | types.RichText | None = None,
+    ):
         super().__init__()
 
         self.text = text
@@ -767,11 +993,16 @@ class RichBlockTable(RichBlock):
                 if row_cells:
                     cells.append(row_cells)
 
+        # The raw field is `title`, a bare RichText, but `caption` is typed as a
+        # RichBlockCaption like every other block's, so wrap it rather than
+        # handing back a shape the annotation does not describe.
+        title = await types.RichText._parse(client, page_block.title)
+
         return RichBlockTable(
             cells=cells,
             is_bordered=page_block.bordered,
             is_striped=page_block.striped,
-            caption=await types.RichText._parse(client, page_block.title),
+            caption=types.RichBlockCaption(text=title) if title is not None else None,
         )
 
 
@@ -791,7 +1022,7 @@ class RichBlockDetails(RichBlock):
 
     def __init__(
         self,
-        summary: types.RichText,
+        summary: str | list[types.RichText] | types.RichText | None,
         blocks: list[types.RichBlock],
         is_open: bool | None = None,
     ):
@@ -972,7 +1203,7 @@ class RichBlockThinking(RichBlock):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 

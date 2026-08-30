@@ -122,6 +122,65 @@ class SendRichMessage:
                         [types.InlineKeyboardButton("Docs", url="https://docs.pyrogram.org")],
                     ]),
                 )
+
+            Structured blocks, which is what HTML and Markdown cannot express --
+            tables, checkboxes, collapsible sections, anchors and headings. The
+            classes are the same ones reading a rich message gives back, so a
+            message can be parsed, edited and sent again:
+
+            .. code-block:: python
+
+                from pyrogram import types
+
+                await app.send_rich_message(
+                    chat_id=chat_id,
+                    rich_message=types.InputRichMessage(
+                        blocks=[
+                            types.RichBlockSectionHeading(text="Now Playing", size=2),
+                            types.RichBlockParagraph(
+                                text=[
+                                    "by ",
+                                    types.RichTextBold(text="Artemis"),
+                                ]
+                            ),
+                            types.RichBlockTable(
+                                cells=[
+                                    [
+                                        types.RichBlockTableCell(text="Track", is_header=True),
+                                        types.RichBlockTableCell(
+                                            text="Length", is_header=True, align="right"
+                                        ),
+                                    ],
+                                    [
+                                        types.RichBlockTableCell(text="Intro"),
+                                        types.RichBlockTableCell(text="1:02", align="right"),
+                                    ],
+                                ],
+                                is_bordered=True,
+                            ),
+                            # A list whose items carry checkboxes is a checklist.
+                            types.RichBlockList(
+                                items=[
+                                    types.RichBlockListItem(
+                                        label="•",
+                                        blocks=[types.RichBlockParagraph(text="Downloaded")],
+                                        has_checkbox=True,
+                                        is_checked=True,
+                                    ),
+                                    types.RichBlockListItem(
+                                        label="•",
+                                        blocks=[types.RichBlockParagraph(text="Tagged")],
+                                        has_checkbox=True,
+                                    ),
+                                ]
+                            ),
+                            types.RichBlockDetails(
+                                summary="Metadata",
+                                blocks=[types.RichBlockParagraph(text="320kbps, FLAC source")],
+                            ),
+                        ]
+                    ),
+                )
         """
         if receiver_user_id:
             rpc = raw.functions.ephemeral.SendMessage(

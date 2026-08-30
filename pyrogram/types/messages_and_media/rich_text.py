@@ -265,6 +265,126 @@ class RichText(Object):
 
         return ""
 
+    @staticmethod
+    def _write(text: str | list[RichText] | RichText | None):
+        """Serialise the read side's own vocabulary back to a raw text span.
+
+        The return is deliberately unannotated. ``raw.base.RichText`` looks like
+        the type, but the generated module defines it as a marker class that
+        raises on construction and shadows its own ``Union``, so no constructor
+        is an instance of it and declaring it is simply wrong.
+
+        Otherwise the inverse of :meth:`_parse`, and deliberately the same
+        shape: one dispatcher rather than a ``write`` on each of the twenty-six
+        classes, because ``text`` may just as well be a plain ``str`` or a list.
+        """
+        if text is None:
+            return raw.types.TextEmpty()
+
+        if isinstance(text, str):
+            return raw.types.TextPlain(text=text) if text else raw.types.TextEmpty()
+
+        if isinstance(text, (list, tuple, types.List)):
+            return raw.types.TextConcat(texts=[RichText._write(item) for item in text])
+
+        # Wrappers around a nested RichText, one raw constructor each.
+        if isinstance(text, RichTextBold):
+            return raw.types.TextBold(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextItalic):
+            return raw.types.TextItalic(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextUnderline):
+            return raw.types.TextUnderline(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextStrikethrough):
+            return raw.types.TextStrike(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextSpoiler):
+            return raw.types.TextSpoiler(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextCode):
+            return raw.types.TextFixed(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextMarked):
+            return raw.types.TextMarked(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextSubscript):
+            return raw.types.TextSubscript(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextSuperscript):
+            return raw.types.TextSuperscript(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextMention):
+            return raw.types.TextMention(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextHashtag):
+            return raw.types.TextHashtag(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextCashtag):
+            return raw.types.TextCashtag(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextBotCommand):
+            return raw.types.TextBotCommand(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextBankCardNumber):
+            return raw.types.TextBankCard(text=RichText._write(text.text))
+
+        if isinstance(text, RichTextUrl):
+            return raw.types.TextUrl(text=RichText._write(text.text), url=text.url, webpage_id=0)
+
+        if isinstance(text, RichTextEmailAddress):
+            return raw.types.TextEmail(text=RichText._write(text.text), email=text.email_address)
+
+        if isinstance(text, RichTextPhoneNumber):
+            return raw.types.TextPhone(text=RichText._write(text.text), phone=text.phone_number)
+
+        if isinstance(text, RichTextMathematicalExpression):
+            return raw.types.TextMath(source=text.expression)
+
+        if isinstance(text, RichTextCustomEmoji):
+            return raw.types.TextCustomEmoji(
+                document_id=int(text.custom_emoji_id),
+                alt=RichText._to_plain_text(text.alternative_text),
+            )
+
+        if isinstance(text, RichTextTextMention):
+            return raw.types.TextMentionName(text=RichText._write(text.text), user_id=text.user.id)
+
+        # _parse reads an anchor with empty text as a target and one with text
+        # as a reference to it, so writing has to make the same distinction.
+        if isinstance(text, RichTextAnchor):
+            return raw.types.TextAnchor(text=raw.types.TextEmpty(), name=text.name)
+
+        if isinstance(text, RichTextReference):
+            return raw.types.TextAnchor(text=RichText._write(text.text), name=text.name)
+
+        # Both link forms are a url of "#" plus the target's name.
+        if isinstance(text, RichTextReferenceLink):
+            return raw.types.TextUrl(
+                text=RichText._write(text.text), url=f"#{text.reference_name}", webpage_id=0
+            )
+
+        if isinstance(text, RichTextAnchorLink):
+            return raw.types.TextUrl(
+                text=RichText._write(text.text), url=f"#{text.anchor_name}", webpage_id=0
+            )
+
+        if isinstance(text, RichTextDateTime):
+            fmt = text.date_time_format or ""
+            return raw.types.TextDate(
+                text=RichText._write(text.text),
+                date=int(text.date.timestamp()) if text.date else 0,
+                relative="r" in fmt or None,
+                day_of_week="w" in fmt or None,
+                short_date="d" in fmt or None,
+                long_date="D" in fmt or None,
+                short_time="t" in fmt or None,
+                long_time="T" in fmt or None,
+            )
+
+        raise ValueError(f"Cannot send {type(text).__name__} as rich text")
+
 
 class RichTextBold(RichText):
     """A bold text.
@@ -276,7 +396,7 @@ class RichTextBold(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -293,7 +413,7 @@ class RichTextItalic(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -310,7 +430,7 @@ class RichTextUnderline(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -327,7 +447,7 @@ class RichTextStrikethrough(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -344,7 +464,7 @@ class RichTextSpoiler(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -368,7 +488,7 @@ class RichTextDateTime(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
         date: datetime,
         date_time_format: str | None = None,
     ):
@@ -392,7 +512,7 @@ class RichTextTextMention(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
         user: types.User,
     ):
         super().__init__()
@@ -411,7 +531,7 @@ class RichTextSubscript(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -428,7 +548,7 @@ class RichTextSuperscript(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -445,7 +565,7 @@ class RichTextMarked(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -462,7 +582,7 @@ class RichTextCode(RichText):
 
     def __init__(
         self,
-        text: types.RichText,
+        text: str | list[types.RichText] | types.RichText | None,
     ):
         super().__init__()
 
@@ -516,7 +636,7 @@ class RichTextUrl(RichText):
             URL of the link.
     """
 
-    def __init__(self, text: types.RichText, url: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, url: str):
         super().__init__()
 
         self.text = text
@@ -534,7 +654,9 @@ class RichTextEmailAddress(RichText):
             The email address.
     """
 
-    def __init__(self, text: types.RichText, email_address: str):
+    def __init__(
+        self, text: str | list[types.RichText] | types.RichText | None, email_address: str
+    ):
         super().__init__()
 
         self.text = text
@@ -552,7 +674,9 @@ class RichTextPhoneNumber(RichText):
             The phone number.
     """
 
-    def __init__(self, text: types.RichText, phone_number: str):
+    def __init__(
+        self, text: str | list[types.RichText] | types.RichText | None, phone_number: str
+    ):
         super().__init__()
 
         self.text = text
@@ -570,7 +694,9 @@ class RichTextBankCardNumber(RichText):
             The bank card number.
     """
 
-    def __init__(self, text: types.RichText, bank_card_number: str):
+    def __init__(
+        self, text: str | list[types.RichText] | types.RichText | None, bank_card_number: str
+    ):
         super().__init__()
 
         self.text = text
@@ -588,7 +714,7 @@ class RichTextMention(RichText):
             The username.
     """
 
-    def __init__(self, text: types.RichText, username: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, username: str):
         super().__init__()
 
         self.text = text
@@ -606,7 +732,7 @@ class RichTextHashtag(RichText):
             The hashtag.
     """
 
-    def __init__(self, text: types.RichText, hashtag: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, hashtag: str):
         super().__init__()
 
         self.text = text
@@ -624,7 +750,7 @@ class RichTextCashtag(RichText):
             The cashtag.
     """
 
-    def __init__(self, text: types.RichText, cashtag: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, cashtag: str):
         super().__init__()
 
         self.text = text
@@ -642,7 +768,7 @@ class RichTextBotCommand(RichText):
             The bot command.
     """
 
-    def __init__(self, text: types.RichText, bot_command: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, bot_command: str):
         super().__init__()
 
         self.text = text
@@ -660,7 +786,7 @@ class RichTextAnchor(RichText):
             The name of the anchor.
     """
 
-    def __init__(self, text: types.RichText, name: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, name: str):
         super().__init__()
 
         self.text = text
@@ -679,7 +805,7 @@ class RichTextAnchorLink(RichText):
             If the name is empty, then the link brings back to the top of the message.
     """
 
-    def __init__(self, text: types.RichText, anchor_name: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, anchor_name: str):
         super().__init__()
 
         self.text = text
@@ -697,7 +823,7 @@ class RichTextReference(RichText):
             The name of the reference.
     """
 
-    def __init__(self, text: types.RichText, name: str):
+    def __init__(self, text: str | list[types.RichText] | types.RichText | None, name: str):
         super().__init__()
 
         self.text = text
@@ -715,7 +841,9 @@ class RichTextReferenceLink(RichText):
             The name of the reference.
     """
 
-    def __init__(self, text: types.RichText, reference_name: str):
+    def __init__(
+        self, text: str | list[types.RichText] | types.RichText | None, reference_name: str
+    ):
         super().__init__()
 
         self.text = text

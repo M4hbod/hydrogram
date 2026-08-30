@@ -19,14 +19,23 @@
 
 from __future__ import annotations
 
-from pyrogram import raw
+from pyrogram import raw, types
+from pyrogram.types.messages_and_media.rich_block import RichMessageMedia
 from pyrogram.types.object import Object
 
 
 class InputRichMessage(Object):
-    """Describes a checklist to create.
+    """Describes the content of a rich message to send.
+
+    Exactly one of ``blocks``, ``html`` or ``markdown`` must be given. ``blocks``
+    is the structured form: it carries tables, lists with checkboxes, collapsible
+    sections, headings, anchors, quotations, collages and media, using the same
+    :obj:`~pyrogram.types.RichBlock` classes that reading a rich message returns.
 
     Parameters:
+        blocks (List of :obj:`~pyrogram.types.RichBlock`, *optional*):
+            Content of the rich message as structured blocks.
+
         html (``str``, *optional*):
             Content of the rich message to send described using HTML formatting.
             See `rich message formatting options <https://core.telegram.org/bots/api#rich-message-formatting-options>`__ for more details.
@@ -45,6 +54,7 @@ class InputRichMessage(Object):
 
     def __init__(
         self,
+        blocks: list[types.RichBlock] | None = None,
         html: str | None = None,
         markdown: str | None = None,
         is_rtl: bool | None = None,
@@ -52,21 +62,35 @@ class InputRichMessage(Object):
     ):
         super().__init__()
 
+        self.blocks = blocks
         self.html = html
         self.markdown = markdown
         self.is_rtl = is_rtl
         self.skip_entity_detection = skip_entity_detection
 
     def write(self) -> raw.base.InputRichMessage:
+        if self.blocks:
+            # A block names its media by id, so the blocks and the message's
+            # photo and document vectors have to be built in one pass.
+            media = RichMessageMedia()
+            blocks = [types.RichBlock._write(block, media) for block in self.blocks]
+
+            return raw.types.InputRichMessage(
+                blocks=blocks,
+                rtl=self.is_rtl,
+                noautolink=self.skip_entity_detection,
+                photos=media.photos or None,
+                documents=media.documents or None,
+            )
+
         if self.html:
-            input_rich_message = raw.types.InputRichMessageHTML(
+            return raw.types.InputRichMessageHTML(
                 html=self.html, rtl=self.is_rtl, noautolink=self.skip_entity_detection
             )
-        elif self.markdown:
-            input_rich_message = raw.types.InputRichMessageMarkdown(
+
+        if self.markdown:
+            return raw.types.InputRichMessageMarkdown(
                 markdown=self.markdown, rtl=self.is_rtl, noautolink=self.skip_entity_detection
             )
-        else:
-            raise ValueError("You must provide either markdown or html in the rich message")
 
-        return input_rich_message
+        raise ValueError("You must provide blocks, html or markdown in the rich message")
