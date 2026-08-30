@@ -36,7 +36,6 @@ the set of untested methods is a thing you can read rather than a silence.
 
 from __future__ import annotations
 
-import asyncio
 import inspect
 
 import pytest
@@ -284,10 +283,15 @@ def test_most_of_the_surface_is_driveable():
 @pytest.mark.parametrize(
     ("name", "fn", "kwargs"), DRIVEABLE, ids=[name for name, _, _ in DRIVEABLE]
 )
-def test_the_method_builds_a_request(name, fn, kwargs):
-    client = recorder()
+async def test_the_method_builds_a_request(name, fn, kwargs):
+    # Async so pytest-asyncio owns the loop. Running our own with asyncio.run()
+    # closes it on the way out, and on Python 3.9 that leaves the tests after
+    # this one without one.
+    built = {}
 
-    async def drive():
+    try:
+        # Built inside the loop: Client.__init__ reaches for a running one.
+        client = built["client"] = recorder()
         result = fn(client, **kwargs)
 
         if inspect.isasyncgen(result):
@@ -295,13 +299,12 @@ def test_the_method_builds_a_request(name, fn, kwargs):
                 break
         else:
             await result
-
-    try:
-        asyncio.run(drive())
     except Recorded:
         return
     except (ValueError, NotImplementedError) as exc:
         pytest.skip(f"{name} rejects the stub arguments: {exc}")
 
-    if not client.sent:
+    client = built.get("client")
+
+    if client is None or not client.sent:
         pytest.skip(f"{name} returned without building a request")
