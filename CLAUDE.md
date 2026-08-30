@@ -18,7 +18,7 @@ packages import it by name. Three commits exist solely to keep those working:
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
 - `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
   `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
-  not a ceiling**, so the version is now `3.2.2` and no longer pinned. Keep it `>=1.2.20`.
+  not a ceiling**, so the version is now `3.2.3` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -75,13 +75,13 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 ## Current state (2026-08-30)
 
-- Branch `dev`, package `pyrogram`, `__version__` `3.2.2`.
+- Branch `dev`, package `pyrogram`, `__version__` `3.2.3`.
 - TL layer **229**. Every stage of `docs/dev/UPGRADE-PLAN.md` is done.
 - Surface: **445 public `Client` methods**, **397 types**, 43 enums, 30 handlers,
   **121 filters**, 55 `Message` members. Every gap with Kurigram — methods, types, enums,
   filters, bound methods and parameters — is closed except what is deliberate (see below).
-- Test suite: **5711 tests** across `tests/{unit,contract,integration}/`; coverage of the
-  non-generated tree gated at 58 % by a ratchet in `.coveragerc`.
+- Test suite: **5744 tests** across `tests/{unit,contract,integration}/`; coverage of the
+  non-generated tree gated at 60 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
   or a `tg://proxy` / `t.me/proxy` link.
@@ -141,6 +141,23 @@ These encode the porting hazards that actually bit, and they are cheap to run:
   depth, including enum members. `test_raw_references.py` only resolved the namespaces it knew,
   so `raw.pyrogram.ClientDHInnerData` never entered the checked set and broke every fresh login
   across 3.0.0 and 3.1.0. Docstrings count; `#` comments do not.
+- `test_call_arity.py` — the positional count and keyword names of every
+  `types.X.method(...)` call against the target's signature. `dispatcher.py` passed four
+  arguments to a three-argument `CallbackQuery._parse`, so every inline-keyboard button press
+  raised `TypeError` inside the handler worker and did nothing visible.
+- `test_optional_raw_fields_are_guarded.py` — two schema checks, both for defects that raise
+  inside a parser. First: no parser may iterate a raw field the schema marks optional, because
+  an optional `Vector` arrives as `None` and Kurigram's parsers assume `[]`. Second: no parser
+  may read a field no constructor its annotated input can hold declares, narrowing through
+  `isinstance` on both arms. Between them they found `Thumbnail._parse` on every document
+  without a thumbnail, `ChatPreview._parse` on every invite without a member preview, and
+  `ForumTopicCreated._parse` on anything but a service message. Note that a **wrong annotation
+  makes both checks pass vacuously**, so two were corrected as findings in their own right;
+  the analysed-function floor exists for the same reason.
+- `test_dispatcher_parsers.py` (unit, not contract) — builds a minimal live-shape fixture for
+  every routed update type and asserts it parses. `test_every_routed_update_kind_has_a_test_here`
+  greps the dispatcher's routing table and fails when a routed type has no fixture, which is the
+  only reason the gaps got closed rather than found one production outage at a time.
 
 ### Not done
 
