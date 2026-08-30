@@ -46,6 +46,14 @@ GENERATED = PACKAGE_ROOT / "raw"
 # `raw.types.Foo`, `raw.functions.messages.SendMessage`, `raw.base.Update`.
 REFERENCE_RE = re.compile(r"\braw\.(types|functions|base)((?:\.[A-Za-z_][A-Za-z0-9_]*)+)")
 
+# Any `raw.<namespace>.<something>` at all, regardless of whether <namespace> is one this suite
+# already knows to resolve. A typo'd namespace (`raw.pyrogram.Foo` for `raw.types.Foo`) does not
+# match REFERENCE_RE above, so it silently never gets resolved-checked -- this is what actually
+# shipped once. KNOWN_NAMESPACES is every namespace `raw` legitimately exposes to hand-written
+# code; anything else here is a typo, not a new namespace.
+NAMESPACE_RE = re.compile(r"\braw\.([A-Za-z_][A-Za-z0-9_]*)\.")
+KNOWN_NAMESPACES = {"types", "functions", "base", "core"}
+
 
 def source_files() -> list[Path]:
     return sorted(
@@ -71,7 +79,18 @@ def resolves(dotted: str) -> bool:
     return True
 
 
+def unknown_namespaces_in(path: Path) -> set[str]:
+    return {
+        match.group(1)
+        for match in NAMESPACE_RE.finditer(path.read_text(encoding="utf-8"))
+        if match.group(1) not in KNOWN_NAMESPACES
+    }
+
+
 ALL_REFERENCES = sorted({ref for path in source_files() for ref in references_in(path)})
+UNKNOWN_NAMESPACES = sorted({
+    (str(path), ns) for path in source_files() for ns in unknown_namespaces_in(path)
+})
 
 
 def test_the_scan_found_something():
@@ -86,6 +105,19 @@ def test_raw_reference_resolves(reference):
     assert resolves(reference), (
         f"{reference} does not exist in the compiled layer {raw.all.layer}. "
         f"It was renamed, moved namespace, or removed."
+    )
+
+
+def test_no_unknown_raw_namespace():
+    """Catches `raw.pyrogram.Foo`-style typos that REFERENCE_RE's fixed namespace list misses.
+
+    Regression test for session/auth.py's `raw.pyrogram.ClientDHInnerData`, which does not exist
+    (it should have been `raw.types.ClientDHInnerData`) and broke every DH key exchange, i.e.
+    every fresh login, without failing any existing test.
+    """
+    assert not UNKNOWN_NAMESPACES, (
+        f"raw.<X>.Y reference(s) use a namespace outside {sorted(KNOWN_NAMESPACES)}: "
+        f"{UNKNOWN_NAMESPACES}. This is almost certainly a typo for one of types/functions/base."
     )
 
 
