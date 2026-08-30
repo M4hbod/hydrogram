@@ -15,6 +15,49 @@ Changelog
 
 .. towncrier release notes start
 
+3.3.0 (2026-08-31)
+===================
+
+Features
+--------
+
+- :obj:`~pyrogram.types.InputRichMessage` now takes ``blocks``, so rich messages
+  can be sent in their structured form instead of only as HTML or Markdown. This
+  is what carries tables, lists with checkboxes, collapsible sections, headings,
+  anchors, nested quotations, collages and media. The blocks are the same
+  :obj:`~pyrogram.types.RichBlock` and :obj:`~pyrogram.types.RichText` classes
+  that reading a rich message already returns, so a message can be parsed, edited
+  and sent again rather than needing a parallel set of input types.
+  `#rich-message-blocks <https://github.com/M4hbod/hydrogram/issues/rich-message-blocks>`_
+
+
+Bugfixes
+--------
+
+- ``RichBlockTable._parse`` put a bare :obj:`~pyrogram.types.RichText` in
+  ``caption``, which its own docstring types as a
+  :obj:`~pyrogram.types.RichBlockCaption` like every other block's. It now wraps
+  the raw ``title`` in a ``RichBlockCaption``. Code reading ``table.caption``
+  directly as text must now read ``table.caption.text``.
+  `#rich-block-table-caption <https://github.com/M4hbod/hydrogram/issues/rich-block-table-caption>`_
+- The ``text``, ``summary`` and ``credit`` parameters of the
+  :obj:`~pyrogram.types.RichText` and :obj:`~pyrogram.types.RichBlock` classes
+  were annotated ``RichText``, but ``RichText`` is a union that includes ``str``
+  and a list of spans, which is what the parser has always passed them. The
+  annotations now say so.
+  `#rich-text-annotations <https://github.com/M4hbod/hydrogram/issues/rich-text-annotations>`_
+- Fifteen methods raised ``AttributeError: 'Updates' object has no attribute
+  'messages'`` on every call, ``send_rich_message`` among them. They passed the
+  result of an RPC that returns ``Updates`` straight to ``parse_messages``, which
+  reads a ``messages`` vector that ``Updates`` does not have. A user sending to
+  their own private chat gets the ``UpdateShortSentMessage`` shortcut, which the
+  methods did handle, so the broken branch was only ever reached by bots and in
+  groups. The new ``utils.parse_messages_from_updates`` reads the new messages out
+  of an ``Updates``, and a contract test resolves every ``parse_messages``
+  argument back to its RPC's declared return type.
+  `#updates-responses-parsed <https://github.com/M4hbod/hydrogram/issues/updates-responses-parsed>`_
+
+
 3.2.3 (2026-08-30)
 ===================
 

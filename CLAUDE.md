@@ -18,7 +18,7 @@ packages import it by name. Three commits exist solely to keep those working:
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
 - `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
   `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
-  not a ceiling**, so the version is now `3.2.3` and no longer pinned. Keep it `>=1.2.20`.
+  not a ceiling**, so the version is now `3.3.0` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -75,12 +75,12 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 ## Current state (2026-08-30)
 
-- Branch `dev`, package `pyrogram`, `__version__` `3.2.3`.
+- Branch `dev`, package `pyrogram`, `__version__` `3.3.0`.
 - TL layer **229**. Every stage of `docs/dev/UPGRADE-PLAN.md` is done.
 - Surface: **445 public `Client` methods**, **397 types**, 43 enums, 30 handlers,
   **121 filters**, 55 `Message` members. Every gap with Kurigram — methods, types, enums,
   filters, bound methods and parameters — is closed except what is deliberate (see below).
-- Test suite: **5865 tests** across `tests/{unit,contract,integration}/`; coverage of the
+- Test suite: **5877 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 62 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
@@ -168,6 +168,15 @@ These encode the porting hazards that actually bit, and they are cheap to run:
   `ForumTopicCreated._parse` on anything but a service message. Note that a **wrong annotation
   makes both checks pass vacuously**, so two were corrected as findings in their own right;
   the analysed-function floor exists for the same reason.
+- `test_updates_responses_are_parsed.py` — resolves every `parse_messages` argument back to the
+  RPC that produced it and checks the return type the **schema** declares. Most of the send and
+  edit family return `Updates`, which has no `messages` vector, so passing it raises
+  `AttributeError` on every call. Fifteen methods were in that state. It hid because a *user*
+  sending to their own private chat gets the `UpdateShortSentMessage` shortcut, which the methods
+  do handle — only bots and groups reach the broken branch.
+- `test_send_returns_a_message.py` (unit) — feeds methods a **bot-shaped** `Updates` and asserts a
+  `Message` comes back. `test_every_method_builds_a_request` stops at `invoke`, which is exactly
+  why fifteen methods could build a correct request and then die on the reply.
 - `test_dispatcher_parsers.py` (unit, not contract) — builds a minimal live-shape fixture for
   every routed update type and asserts it parses. `test_every_routed_update_kind_has_a_test_here`
   greps the dispatcher's routing table and fails when a routed type has no fixture, which is the
