@@ -42,6 +42,10 @@ class Connect:
         if self.is_connected:
             raise ConnectionError("Client is already connected")
 
+        # Same reason as Dispatcher.start(): these bind to the loop that first
+        # uses them, and a client may be started again on a different one.
+        self.rebuild_loop_bound_state()
+
         await self.load_session()
 
         self.session = Session(

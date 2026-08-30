@@ -335,6 +335,13 @@ class Dispatcher:
         }
 
     async def start(self):
+        # asyncio primitives bind to the loop that first uses them, so a client
+        # started, stopped, and started again under a different
+        # run_until_complete would put updates onto a queue bound to the dead
+        # loop. Rebuilt per start rather than per instance.
+        self.updates_queue = asyncio.Queue()
+        self.locks_list = []
+
         if callable(self.client.start_handler):
             try:
                 await self.client.start_handler(self.client)

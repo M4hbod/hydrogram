@@ -424,6 +424,8 @@ class Client(Methods):
         self.last_update_time = time.monotonic()
 
         self.listeners = {listener_type: [] for listener_type in ListenerTypes}
+        # Only used when `loop` is read with nothing running; see the property.
+        self._detached_loop: asyncio.AbstractEventLoop | None = None
 
     async def __aenter__(self):
         return await self.start()
@@ -432,14 +434,43 @@ class Client(Methods):
         with contextlib.suppress(ConnectionError):
             await self.stop()
 
-    @functools.cached_property
-    def loop(self):
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        """The loop this client is running on, resolved on every access.
+
+        Not cached. It used to be a ``cached_property``, which pinned whichever
+        loop first read it onto the instance for good -- so an app that starts
+        the client once, stops it, and starts it again under a second
+        ``run_until_complete`` did its socket I/O against the dead first loop
+        and got "got Future attached to a different loop" out of ``Session.send``.
+
+        With nothing running there is no right answer, so one loop is made and
+        kept: minting a fresh one per access would hand different callers
+        different loops.
+        """
         try:
             return asyncio.get_running_loop()
         except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            return loop
+            if self._detached_loop is None or self._detached_loop.is_closed():
+                self._detached_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self._detached_loop)
+
+            return self._detached_loop
+
+    def rebuild_loop_bound_state(self) -> None:
+        """Recreate the asyncio primitives that bind to whichever loop uses them.
+
+        A Lock, Event, Semaphore or Queue attaches to the first loop it is used
+        on and raises "attached to a different loop" on any other. Building them
+        in __init__ therefore ties the whole client to whichever loop happened
+        to run first, which breaks the common shape of starting a client once to
+        read something and again to actually run.
+        """
+        self.media_sessions_lock = asyncio.Lock()
+        self.file_lock = asyncio.Lock()
+        self.save_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
+        self.get_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
+        self.updates_watchdog_event = asyncio.Event()
 
     async def updates_watchdog(self):
         while True:

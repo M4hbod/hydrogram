@@ -15,6 +15,22 @@ Changelog
 
 .. towncrier release notes start
 
+3.2.2 (2026-08-30)
+===================
+
+Bugfixes
+--------
+
+- A client started, stopped, and started again under a different event loop
+  crashed with ``RuntimeError: got Future attached to a different loop`` out of
+  ``Session.send``. ``Client.loop`` was a ``functools.cached_property``, so the
+  first access pinned a loop onto the instance for good; it resolves per access
+  now. The dispatcher's update queue and the client's locks, semaphores and
+  watchdog event had the same affinity and are rebuilt on each ``connect()``
+  rather than in ``__init__``.
+
+
+
 3.2.1 (2026-08-30)
 ===================
 

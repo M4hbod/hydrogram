@@ -59,6 +59,7 @@ INTERNAL_METHODS = {
     "handle_updates",
     "load_plugins",
     "load_session",
+    "rebuild_loop_bound_state",
     "updates_watchdog",
 }
 
