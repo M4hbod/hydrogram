@@ -108,14 +108,26 @@ class SQLiteStorage(BaseStorage):
     USERNAME_TTL = 8 * 60 * 60
     FILE_EXTENSION = ".session"
 
+    #: How long a write waits for another connection's write lock before giving
+    #: up with "database is locked". Passed to sqlite3, which sets busy_timeout
+    #: from it; sqlite3's own default is 5 seconds, ample on local disk and not
+    #: always enough on a network volume where one commit can take seconds.
+    #:
+    #: Only two connections to the same session file can hit this at all: a
+    #: single Client per file never waits. Set the attribute before constructing
+    #: clients, or pass ``busy_timeout=`` to the storage, to change it.
+    BUSY_TIMEOUT = 15.0
+
     def __init__(
         self,
         name: str,
         workdir: Path | None = None,
         session_string: str | None = None,
         use_memory: bool = False,
+        busy_timeout: float | None = None,
     ):
         super().__init__(name)
+        self.busy_timeout: float = self.BUSY_TIMEOUT if busy_timeout is None else busy_timeout
         self.database: str | Path = (
             ":memory:"
             if use_memory
@@ -124,12 +136,14 @@ class SQLiteStorage(BaseStorage):
         self.session_string: str | None = session_string
         self.conn: aiosqlite.Connection | None = None
 
-    async def update(self) -> None:
+    async def update(self) -> bool:
+        """Apply any pending schema migrations. True if one actually ran."""
         if not self.conn:
             logging.warning("Database connection is not available.")
-            return
+            return False
 
         version: int | None = await self.version()
+        started_at = version
 
         if version == 1:
             await self.conn.execute("DELETE FROM peers")
@@ -145,6 +159,8 @@ class SQLiteStorage(BaseStorage):
 
         await self.version(version)
         await self.conn.commit()
+
+        return version != started_at
 
     async def create(self) -> None:
         if not self.conn:
@@ -167,13 +183,20 @@ class SQLiteStorage(BaseStorage):
         path = self.database
         file_exists = isinstance(path, Path) and path.is_file()
 
-        self.conn = await aiosqlite.connect(self.database)
+        self.conn = await aiosqlite.connect(self.database, timeout=self.busy_timeout)
 
         await self.conn.execute("PRAGMA journal_mode=WAL")
 
         if file_exists:
-            await self.update()
-            await self.conn.execute("VACUUM")
+            migrated = await self.update()
+
+            # VACUUM rewrites the whole file under an exclusive lock, for as long
+            # as that takes. Running it on every open bought nothing once the
+            # schema was current, and on a slow volume it is exactly the kind of
+            # long write lock that makes another connection's write fail with
+            # "database is locked".
+            if migrated:
+                await self.conn.execute("VACUUM")
         else:
             await self.create()
 
