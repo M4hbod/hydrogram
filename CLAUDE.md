@@ -18,7 +18,7 @@ packages import it by name. Three commits exist solely to keep those working:
 - `5a878348` + `a2784cb9` — `pyrogram/emoji.py`, needed by `pykeyboard`'s wildcard import,
 - `f81a62a4` — `__version__` was raised past the `py-tgcalls` floor. That package declares
   `pyrogram>=1.2.20; extra == "pyrogram"`, and Hydrogram's own `0.2.0` failed it. It is a **floor,
-  not a ceiling**, so the version is now `3.3.0` and no longer pinned. Keep it `>=1.2.20`.
+  not a ceiling**, so the version is now `3.3.1` and no longer pinned. Keep it `>=1.2.20`.
 
 Do not "clean up" any of the three without checking the dependents first.
 
@@ -75,12 +75,12 @@ make check-api-schema          # diff local TL against Telegram's published sche
 
 ## Current state (2026-08-30)
 
-- Branch `dev`, package `pyrogram`, `__version__` `3.3.0`.
+- Branch `dev`, package `pyrogram`, `__version__` `3.3.1`.
 - TL layer **229**. Every stage of `docs/dev/UPGRADE-PLAN.md` is done.
 - Surface: **445 public `Client` methods**, **397 types**, 43 enums, 30 handlers,
   **121 filters**, 55 `Message` members. Every gap with Kurigram — methods, types, enums,
   filters, bound methods and parameters — is closed except what is deliberate (see below).
-- Test suite: **5877 tests** across `tests/{unit,contract,integration}/`; coverage of the
+- Test suite: **5883 tests** across `tests/{unit,contract,integration}/`; coverage of the
   non-generated tree gated at 62 % by a ratchet in `.coveragerc`.
 - Proxies: SOCKS4/5 and HTTP through `python-socks[asyncio]`, plus Telegram's own **MTProxy**
   (plain, `dd` and `ee`/fake-TLS secrets) as a native transport. `Client(proxy=...)` takes a dict
@@ -112,6 +112,11 @@ make check-api-schema          # diff local TL against Telegram's published sche
   **The block path has never been run against a live server** — only round-tripped offline through
   our own parser. `tests/integration/test_send_rich_message_blocks.py` is the test to run when
   credentials are to hand.
+- Session storage: WAL, busy timeout 15s (`SQLiteStorage.BUSY_TIMEOUT`, was sqlite3's 5s
+  default). `open()` no longer `VACUUM`s every existing session file — only after a migration
+  actually runs. `sqlite3.OperationalError: database is locked` means the busy handler waited its
+  full timeout, **not** that there was no timeout; it needs two connections on one session file,
+  so rule out a second `Client` on the same file before touching the library.
 - `make sync-upstream` replays upstream Hydrogram commits through the namespace rename.
 - When checking CI, always pass `-R M4hbod/hydrogram` to `gh` — with two remotes it resolves to
   `hydrogram/hydrogram` and reports upstream's failures as if they were ours.
