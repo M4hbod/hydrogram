@@ -37,6 +37,7 @@ import aiosqlite
 import pytest
 
 from pyrogram.storage import SQLiteStorage
+from pyrogram.storage.base import UpdateState
 from pyrogram.storage.sqlite_storage import SCHEMA
 
 
@@ -167,4 +168,73 @@ async def test_a_write_waits_for_another_connection_instead_of_failing(session_p
     finally:
         await holder.rollback()
         await holder.close()
+        await store.close()
+
+
+# --- the write lock must not outlive the write --------------------------------
+
+
+@pytest.mark.asyncio
+async def test_writing_update_state_does_not_park_the_write_lock(session_path):
+    """The one that produced "database is locked" eight minutes into a run.
+
+    sqlite opens a write transaction on the first statement and holds the WAL
+    write lock until someone commits. ``set_update_state`` used to leave it
+    open, and the only periodic commit was the updates watchdog's ``save()``,
+    every fifteen minutes. A client receiving updates therefore held the write
+    lock more or less continuously, and any other connection to the same file
+    failed its writes for the whole window.
+    """
+    store = SQLiteStorage("s", workdir=session_path, busy_timeout=0.2)
+    await store.open()
+
+    try:
+        await store.set_update_state(UpdateState(id=0, pts=1, qts=1, date=1, seq=1))
+        assert not store.conn._conn.in_transaction, (
+            "the write transaction is still open, so the WAL write lock is still held"
+        )
+
+        # A second connection must be able to write while the client is idle.
+        other = await aiosqlite.connect(store.database, timeout=0.2)
+        try:
+            await other.execute("REPLACE INTO peers (id, access_hash, type) VALUES (1, 1, 'user')")
+            await other.commit()
+        finally:
+            await other.close()
+    finally:
+        await store.close()
+
+
+@pytest.mark.asyncio
+async def test_deleting_update_state_does_not_park_the_write_lock(session_path):
+    store = SQLiteStorage("s", workdir=session_path)
+    await store.open()
+
+    try:
+        await store.set_update_state(UpdateState(id=3, pts=1, qts=1, date=1, seq=1))
+        await store.delete_update_state(3)
+        assert not store.conn._conn.in_transaction
+    finally:
+        await store.close()
+
+
+@pytest.mark.asyncio
+async def test_update_state_is_visible_to_another_connection_at_once(session_path):
+    """Committed, not parked. Fifteen minutes of counters used to ride on one
+    uncommitted write, invisible to anything else and lost on a crash."""
+    store = SQLiteStorage("s", workdir=session_path)
+    await store.open()
+
+    reader = SQLiteStorage("s", workdir=session_path)
+    await reader.open()
+
+    try:
+        await store.set_update_state(UpdateState(id=0, pts=42, qts=1, date=1, seq=1))
+
+        states = await reader.get_update_states()
+        assert [s.pts for s in states] == [42], (
+            "the write is still sitting in an uncommitted transaction"
+        )
+    finally:
+        await reader.close()
         await store.close()

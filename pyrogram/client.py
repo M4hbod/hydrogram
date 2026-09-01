@@ -483,8 +483,8 @@ class Client(Methods):
             else:
                 break
 
-            # Update counters are written without a commit each, so a long-lived
-            # client checkpoints them here rather than only on a clean exit.
+            # Update counters commit as they are written; this records the
+            # session date so a long-lived client's file does not look stale.
             await self.storage.save()
 
             if time.monotonic() - self.last_update_time > self.UPDATES_WATCHDOG_INTERVAL:

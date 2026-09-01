@@ -238,9 +238,8 @@ class SQLiteStorage(BaseStorage):
         if not self.conn:
             return
 
-        # sqlite rolls an open transaction back on close, and update states are
-        # written without committing each one -- so closing without this throws
-        # away everything learned since the last save.
+        # sqlite rolls an open transaction back on close, so flush whatever the
+        # last statement left open rather than discarding it.
         try:
             await self.conn.commit()
         except Exception as e:
@@ -358,6 +357,13 @@ class SQLiteStorage(BaseStorage):
             "seq = COALESCE(excluded.seq, update_state.seq)",
             [(state.id, state.pts, state.qts, state.date, state.seq) for state in states],
         )
+        # Committing here is not about durability, it is about the lock. sqlite
+        # opens a write transaction on the first statement and holds the WAL
+        # write lock until someone commits, so leaving this uncommitted parked
+        # the lock until the updates watchdog's save() -- up to fifteen minutes,
+        # during which any other connection to the file failed its writes with
+        # "database is locked". It costs about 0.09ms per update.
+        await self.conn.commit()
 
     async def delete_update_state(self, state_id: int | Iterable[int]) -> None:
         if not self.conn:
@@ -374,6 +380,8 @@ class SQLiteStorage(BaseStorage):
         await self.conn.execute(
             f"DELETE FROM update_state WHERE id IN ({placeholders})", state_ids
         )
+        # Same reason as set_update_state: do not park the write lock.
+        await self.conn.commit()
 
     async def _get(self, attr: str) -> Any:
         if not self.conn:
