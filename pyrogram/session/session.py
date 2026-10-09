@@ -112,6 +112,7 @@ class Session:
         self.ping_task_event = asyncio.Event()
 
         self.recv_task = None
+        self.packet_tasks = set()
 
         self.is_started = asyncio.Event()
         self.restart_lock = asyncio.Lock()
@@ -192,8 +193,6 @@ class Session:
     async def stop(self):
         self.is_started.clear()
 
-        self.stored_msg_ids.clear()
-
         self.ping_task_event.set()
 
         if self.ping_task is not None:
@@ -211,6 +210,14 @@ class Session:
                 await asyncio.wait_for(self.recv_task, timeout=1.0)
 
             self.recv_task = None
+
+        # Old packet handlers must not mutate or close the next connection.
+        for task in self.packet_tasks:
+            task.cancel()
+        if self.packet_tasks:
+            await asyncio.gather(*self.packet_tasks, return_exceptions=True)
+        self.packet_tasks.clear()
+        self.stored_msg_ids.clear()
 
         if self.connection:
             await self.connection.close()
@@ -370,7 +377,9 @@ class Session:
 
                 break
 
-            self.client.loop.create_task(self.handle_packet(packet))
+            task = self.client.loop.create_task(self.handle_packet(packet))
+            self.packet_tasks.add(task)
+            task.add_done_callback(self.packet_tasks.discard)
 
         log.info("NetworkTask stopped")
 
