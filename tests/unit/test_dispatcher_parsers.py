@@ -32,7 +32,7 @@ import pathlib
 import pytest
 
 import pyrogram
-from pyrogram import enums, raw
+from pyrogram import enums, raw, types, utils
 from pyrogram.dispatcher import Dispatcher
 from pyrogram.handlers import (
     BusinessConnectionHandler,
@@ -41,6 +41,7 @@ from pyrogram.handlers import (
     ChatMemberUpdatedHandler,
     DeletedMessagesHandler,
     InlineQueryHandler,
+    MessageHandler,
     MessageReactionCountHandler,
     MessageReactionHandler,
     PreCheckoutQueryHandler,
@@ -48,6 +49,46 @@ from pyrogram.handlers import (
     ShippingQueryHandler,
     UserStatusHandler,
 )
+
+
+async def test_chatless_message_does_not_match_a_listener():
+    client = pyrogram.Client("test", api_id=1, api_hash="x", in_memory=True)
+    assert await MessageHandler.check_if_has_matching_listener(client, types.Message(id=1)) == (
+        False,
+        None,
+    )
+
+
+def test_forbidden_basic_chat_uses_basic_chat_parser():
+    chat = types.Chat._parse_chat(None, raw.types.ChatForbidden(id=23, title="Forbidden"))
+    assert chat.id == -23
+    assert chat.type == enums.ChatType.GROUP
+    assert types.Chat._parse_chat(None, raw.types.ChatEmpty(id=23)) is None
+
+
+def test_empty_wallpaper_document_is_not_parsed_as_a_file():
+    background = raw.types.WallPaper(
+        id=1, access_hash=0, slug="", document=raw.types.DocumentEmpty(id=3)
+    )
+    parsed = types.ChatBackground._parse(None, background)
+    assert parsed.id == 1
+    assert parsed.document is None
+
+
+@pytest.mark.parametrize("date", [None, 1700000000])
+async def test_poll_answer_timestamp_is_converted_to_datetime(date):
+    answer = raw.types.PollAnswer(
+        text=raw.types.TextWithEntities(text="yes", entities=[]), option=b"1", date=date
+    )
+    poll = raw.types.Poll(
+        id=1,
+        hash=0,
+        question=raw.types.TextWithEntities(text="question", entities=[]),
+        answers=[answer],
+    )
+    media = raw.types.MessageMediaPoll(poll=poll, results=raw.types.PollResults(total_voters=0))
+    result = await types.Poll._parse(None, media)
+    assert result.options[0].addition_date == utils.timestamp_to_datetime(date)
 
 
 @pytest.fixture

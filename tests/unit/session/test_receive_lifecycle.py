@@ -61,3 +61,27 @@ async def test_stop_cancels_inflight_packet_before_it_can_touch_next_connection(
 
     assert not mutated, "an old connection's packet handler survived stop()"
     assert session.stored_msg_ids == []
+
+
+async def test_stop_also_drains_spawned_update_tasks(monkeypatch):
+    entered = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def handle_updates(_):
+        entered.set()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    loop = asyncio.get_running_loop()
+    client = SimpleNamespace(loop=loop, disconnect_handler=None, handle_updates=handle_updates)
+    session = Session(client, dc_id=5, auth_key=bytes(256), test_mode=False)
+    packet = SimpleNamespace(body=object(), seq_no=0, msg_id=1)
+    monkeypatch.setattr(loop, "run_in_executor", AsyncMock(return_value=packet))
+    await session.handle_packet(b"test")
+    await asyncio.wait_for(entered.wait(), 1)
+    assert len(session.packet_tasks) == 1
+    await session.stop()
+    assert cancelled.is_set()
+    assert not session.packet_tasks

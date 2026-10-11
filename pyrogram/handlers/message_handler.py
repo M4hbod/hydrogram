@@ -79,6 +79,8 @@ class MessageHandler(Handler):
             ``tuple``: A tuple of two elements, the first one is whether the message has a matching listener or not,
             the second one is the matching listener if exists.
         """
+        if message.chat is None:
+            return False, None
         from_user = message.from_user
         from_user_id = from_user.id if from_user else None
         from_user_username = from_user.username if from_user else None

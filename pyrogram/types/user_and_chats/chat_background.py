@@ -139,7 +139,7 @@ class ChatBackground(Object):
         settings = getattr(background, "settings", None)
         document = None
 
-        if getattr(background, "document", None):
+        if isinstance(getattr(background, "document", None), raw.types.Document):
             document = types.Document._parse(client, background.document, "wallpaper.jpg")
 
         if only_for_self is not None:

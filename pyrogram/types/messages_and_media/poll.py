@@ -218,7 +218,7 @@ class Poll(Object, Update):
                     added_by_chat=types.Chat._parse_chat(
                         client, chats.get(utils.get_raw_peer_id(answer.added_by))
                     ),
-                    addition_date=utils.datetime_to_timestamp(getattr(answer, "date", None)),
+                    addition_date=utils.timestamp_to_datetime(getattr(answer, "date", None)),
                     client=client,
                 )
             )

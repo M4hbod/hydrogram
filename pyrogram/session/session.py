@@ -211,7 +211,7 @@ class Session:
 
             self.recv_task = None
 
-        # Old packet handlers must not mutate or close the next connection.
+        # Old packet handlers and their update tasks must not touch closed storage.
         for task in self.packet_tasks:
             task.cancel()
         if self.packet_tasks:
@@ -243,6 +243,11 @@ class Session:
             self.last_reconnect_attempt = now
             await self.stop()
             await self.start()
+
+    def _update_done(self, task):
+        self.packet_tasks.discard(task)
+        if not task.cancelled() and (error := task.exception()) is not None:
+            log.error("Update processing failed: %s", type(error).__name__)
 
     async def handle_packet(self, packet):
         data = await self.client.loop.run_in_executor(
@@ -319,7 +324,9 @@ class Session:
             elif isinstance(msg.body, raw.types.Pong):
                 msg_id = msg.body.msg_id
             elif self.client is not None:
-                self.client.loop.create_task(self.client.handle_updates(msg.body))
+                task = self.client.loop.create_task(self.client.handle_updates(msg.body))
+                self.packet_tasks.add(task)
+                task.add_done_callback(self._update_done)
 
             if msg_id in self.results:
                 self.results[msg_id].value = getattr(msg.body, "result", msg.body)

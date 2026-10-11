@@ -1044,7 +1044,7 @@ class Chat(Object):
         """
         if chat is None:
             return None
-        if isinstance(chat, raw.types.Chat):
+        if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden, raw.types.ChatEmpty)):
             return Chat._parse_chat_chat(client, chat)
         if isinstance(chat, raw.types.User):
             return Chat._parse_user_chat(client, chat)
