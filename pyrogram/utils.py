@@ -241,7 +241,8 @@ def unpack_inline_message_id(inline_message_id: str) -> raw.base.InputBotInlineM
 
 
 MIN_CHANNEL_ID_OLD = -1002147483647
-MIN_CHANNEL_ID = -1007852516352
+# https://core.telegram.org/api/bots/ids#supergroup-channel-ids
+MIN_CHANNEL_ID = -1997852516352
 MAX_CHANNEL_ID = -1000000000000
 MIN_CHAT_ID_OLD = -2147483647
 MIN_CHAT_ID = -999999999999

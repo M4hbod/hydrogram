@@ -65,6 +65,8 @@ def test_unknown_peer_type_is_rejected():
         (-1, "chat"),
         (MIN_CHAT_ID, "chat"),
         (MIN_CHANNEL_ID, "channel"),
+        (-1008840918989, "channel"),
+        (-1997852516352, "channel"),
         (MAX_CHANNEL_ID - 1, "channel"),
     ],
 )
@@ -83,6 +85,13 @@ def test_the_three_ranges_do_not_overlap():
     assert MAX_USER_ID > 0
     assert MIN_CHAT_ID < 0
     assert MIN_CHANNEL_ID < MAX_CHANNEL_ID <= MIN_CHAT_ID
+
+
+def test_large_channel_id_round_trips():
+    packed = utils.get_peer_id(raw.types.PeerChannel(channel_id=8840918989))
+    assert packed == -1008840918989
+    assert utils.get_peer_type(packed) == "channel"
+    assert utils.get_channel_id(packed) == 8840918989
 
 
 @pytest.mark.parametrize(
